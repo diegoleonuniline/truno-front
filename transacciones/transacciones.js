@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v5
- * Con modales completos de gasto/venta idénticos al original
+ * TRUNO - Transacciones v6
+ * Con diseño consistente e impuestos múltiples
  */
 (function() {
   'use strict';
@@ -16,8 +16,8 @@
   const elements = {
     sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
     orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
-    searchInput: $('searchInput'), filterType: $('filterType'), filterCuenta: $('filterCuenta'), 
-    filterContacto: $('filterContacto'), filterConciliado: $('filterConciliado'),
+    ingresosMes: $('ingresosMes'), egresosMes: $('egresosMes'), sinConciliar: $('sinConciliar'), balance: $('balance'),
+    searchInput: $('searchInput'), filterType: $('filterType'), filterCuenta: $('filterCuenta'), filterConciliado: $('filterConciliado'),
     tableContainer: $('tableContainer'), tableBody: $('tableBody'), mobileCards: $('mobileCards'), emptyState: $('emptyState'),
     pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
     prevPage: $('prevPage'), nextPage: $('nextPage'),
@@ -32,25 +32,24 @@
     tipo: $('tipo'), cuentaId: $('cuentaId'), monto: $('monto'), fecha: $('fecha'),
     contactoId: $('contactoId'), descripcion: $('descripcion'), referencia: $('referencia'),
     addCuentaBtn: $('addCuentaBtn'),
-    // Gasto Modal (completo)
+    // Gasto Modal
     gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
     cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
     gastoFromTxInfo: $('gastoFromTxInfo'), gastoFromTxBox: $('gastoFromTxBox'),
     gastoConcepto: $('gastoConcepto'), gastoProveedor: $('gastoProveedor'),
     gastoFecha: $('gastoFecha'), gastoFechaVencimiento: $('gastoFechaVencimiento'),
     gastoCategoria: $('gastoCategoria'), gastoSubcategoria: $('gastoSubcategoria'),
-    gastoSubtotal: $('gastoSubtotal'), gastoImpuesto: $('gastoImpuesto'), gastoTotal: $('gastoTotal'),
+    gastoSubtotal: $('gastoSubtotal'), gastoTotal: $('gastoTotal'),
+    gastoImpuestosContainer: $('gastoImpuestosContainer'),
     gastoMoneda: $('gastoMoneda'), gastoMetodoPago: $('gastoMetodoPago'),
     gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
-    gastoFacturaRecibida: $('gastoFacturaRecibida'),
     gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
     // Venta Modal
     ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
     cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
     ventaFromTxInfo: $('ventaFromTxInfo'), ventaFromTxBox: $('ventaFromTxBox'),
     ventaFolio: $('ventaFolio'), ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
-    ventaSubtotal: $('ventaSubtotal'), ventaImpuesto: $('ventaImpuesto'), ventaTotal: $('ventaTotal'),
-    ventaConcepto: $('ventaConcepto'),
+    ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'), ventaConcepto: $('ventaConcepto'),
     // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
     cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
@@ -60,10 +59,11 @@
 
   let state = {
     user: null, org: null, 
-    transacciones: [], cuentas: [], contactos: [], categorias: [],
+    transacciones: [], cuentas: [], contactos: [], categorias: [], impuestosCatalogo: [],
+    gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, deletingId: null, viewingTx: null,
-    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', contacto_id: '', conciliado: '' }
+    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
   };
 
   const utils = {
@@ -73,14 +73,11 @@
     redirect: url => window.location.href = url,
     getInitials: n => (n?.charAt(0) || '') + (n?.split(' ')[1]?.charAt(0) || ''),
     formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
-    formatDate: d => {
+    formatDate(d) {
       if (!d) return '-';
-      // Manejar diferentes formatos de fecha
       let date;
       if (typeof d === 'string') {
-        // Si es formato ISO con T, extraer solo la fecha
         if (d.includes('T')) d = d.split('T')[0];
-        // Si es formato YYYY-MM-DD
         if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
           date = new Date(d + 'T12:00:00');
         } else {
@@ -113,7 +110,6 @@
       if (p.buscar) params.buscar = p.buscar;
       if (p.tipo) params.tipo = p.tipo;
       if (p.cuenta_bancaria_id) params.cuenta_bancaria_id = p.cuenta_bancaria_id;
-      if (p.contacto_id) params.contacto_id = p.contacto_id;
       if (p.conciliado === '1') params.conciliado = '1';
       if (p.conciliado === '0') params.sin_conciliar = '1';
       return this.request(`/api/transacciones?${new URLSearchParams(params)}`);
@@ -126,6 +122,7 @@
     getContactos: () => api.request('/api/contactos?limite=200'),
     getCategorias: () => api.request('/api/categorias?tipo=gasto'),
     getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
+    getImpuestos: () => api.request('/api/impuestos'),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
     createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
     getGasto: id => api.request(`/api/gastos/${id}`),
@@ -135,6 +132,22 @@
   const render = {
     user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre); },
     org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
+    stats() {
+      const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+      let ingresos = 0, egresos = 0, sinConc = 0;
+      state.transacciones.forEach(t => {
+        const f = new Date(t.fecha), monto = parseFloat(t.monto) || 0;
+        if (f.getMonth() === m && f.getFullYear() === y) {
+          if (t.tipo === 'ingreso') ingresos += monto;
+          else egresos += monto;
+        }
+        if (!t.gasto_id && !t.venta_id) sinConc++;
+      });
+      elements.ingresosMes.textContent = utils.formatMoney(ingresos);
+      elements.egresosMes.textContent = utils.formatMoney(egresos);
+      elements.sinConciliar.textContent = sinConc;
+      elements.balance.textContent = utils.formatMoney(ingresos - egresos);
+    },
     cuentas() {
       const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
       elements.cuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
@@ -143,9 +156,8 @@
     contactos() {
       const provOpts = state.contactos.filter(c => c.tipo === 'proveedor' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       const cliOpts = state.contactos.filter(c => c.tipo === 'cliente' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-      const allOpts = state.contactos.map(c => `<option value="${c.id}">${c.nombre}${c.tipo !== 'ambos' ? ` (${c.tipo})` : ''}</option>`).join('');
+      const allOpts = state.contactos.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       elements.contactoId.innerHTML = '<option value="">-- Sin contacto --</option>' + allOpts;
-      elements.filterContacto.innerHTML = '<option value="">Contacto</option>' + allOpts;
       elements.gastoProveedor.innerHTML = '<option value="">-- Seleccionar --</option>' + provOpts;
       elements.ventaCliente.innerHTML = '<option value="">-- Seleccionar --</option>' + cliOpts;
     },
@@ -154,6 +166,72 @@
     },
     subcategorias(subcats) {
       elements.gastoSubcategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + (subcats || []).map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+    },
+    gastoImpuestos() {
+      const container = elements.gastoImpuestosContainer;
+      if (!container) return;
+      
+      if (!state.gastoImpuestosTemp.length) {
+        container.innerHTML = '<div class="impuestos-empty">Sin impuestos agregados</div>';
+        return;
+      }
+      
+      const selectOpts = state.impuestosCatalogo.map(i => 
+        `<option value="${i.id}" data-tasa="${i.tasa}" data-tipo="${i.tipo}">${i.nombre}</option>`
+      ).join('');
+      
+      container.innerHTML = state.gastoImpuestosTemp.map((imp, idx) => {
+        return `<div class="impuesto-row" data-idx="${idx}">
+          <select class="imp-select">
+            <option value="">-- Seleccionar --</option>
+            ${selectOpts}
+          </select>
+          <span class="impuesto-tipo ${imp.tipo || 'traslado'}">${imp.tipo === 'retencion' ? 'Ret.' : 'Tras.'}</span>
+          <input type="number" class="imp-importe" value="${imp.importe || ''}" placeholder="0.00" step="0.01">
+          <button type="button" class="btn-remove-imp" title="Eliminar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+      
+      container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
+        const select = row.querySelector('.imp-select');
+        const impInput = row.querySelector('.imp-importe');
+        const tipoSpan = row.querySelector('.impuesto-tipo');
+        const removeBtn = row.querySelector('.btn-remove-imp');
+        
+        if (state.gastoImpuestosTemp[idx].impuesto_id) {
+          select.value = state.gastoImpuestosTemp[idx].impuesto_id;
+        }
+        
+        select.addEventListener('change', () => {
+          const opt = select.selectedOptions[0];
+          const tasa = parseFloat(opt?.dataset?.tasa) || 0;
+          const tipo = opt?.dataset?.tipo || 'traslado';
+          state.gastoImpuestosTemp[idx].impuesto_id = select.value;
+          state.gastoImpuestosTemp[idx].tasa = tasa;
+          state.gastoImpuestosTemp[idx].tipo = tipo;
+          tipoSpan.textContent = tipo === 'retencion' ? 'Ret.' : 'Tras.';
+          tipoSpan.className = `impuesto-tipo ${tipo}`;
+          const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+          if (subtotal > 0 && tasa > 0) {
+            impInput.value = (subtotal * tasa).toFixed(2);
+            state.gastoImpuestosTemp[idx].importe = parseFloat(impInput.value);
+          }
+          handlers.calcGastoTotal();
+        });
+        
+        impInput.addEventListener('input', () => {
+          state.gastoImpuestosTemp[idx].importe = parseFloat(impInput.value) || 0;
+          handlers.calcGastoTotal();
+        });
+        
+        removeBtn.addEventListener('click', () => {
+          state.gastoImpuestosTemp.splice(idx, 1);
+          render.gastoImpuestos();
+          handlers.calcGastoTotal();
+        });
+      });
     },
     transacciones() {
       const { transacciones, paginacion } = state;
@@ -185,7 +263,7 @@
           <td>${t.nombre_cuenta || '-'}</td>
           <td>${t.nombre_contacto || '-'}</td>
           <td><div class="badges-group">
-            <span class="badge ${t.tipo}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+            <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
             ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Pendiente</span>'}
           </div></td>
           <td style="text-align:right;"><div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div></td>
@@ -202,20 +280,19 @@
         return `<div class="mobile-card" data-id="${t.id}">
           <div class="mobile-card-header">
             <div class="mobile-card-title">${t.descripcion || 'Sin descripción'}</div>
-            <div class="mobile-card-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div>
+            <div class="mobile-card-amount ${isIncome ? 'income' : ''}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div>
           </div>
           <div class="mobile-card-meta">
             <span>${utils.formatDate(t.fecha)}</span>
             <span>${t.nombre_cuenta || '-'}</span>
           </div>
           <div class="mobile-card-badges">
-            <span class="badge ${t.tipo}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+            <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
             ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Pendiente</span>'}
           </div>
         </div>`;
       }).join('');
 
-      // Events
       elements.tableBody.querySelectorAll('tr').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('.action-btn')) return;
@@ -239,22 +316,33 @@
     closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes, catRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes, impRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
           api.getContactos(),
-          api.getCategorias().catch(() => ({ categorias: [] }))
+          api.getCategorias().catch(() => ({ categorias: [] })),
+          api.getImpuestos().catch(() => ({ impuestos: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
         state.cuentas = cuentasRes.cuentas || [];
         state.contactos = contactosRes.contactos || [];
         state.categorias = catRes.categorias || [];
+        state.impuestosCatalogo = impRes.impuestos || [];
         render.cuentas();
         render.contactos();
         render.categorias();
+        render.stats();
         render.transacciones();
       } catch (e) { console.error(e); }
+    },
+    async loadSubcategorias() {
+      const catId = elements.gastoCategoria.value;
+      if (!catId) { render.subcategorias([]); return; }
+      try {
+        const res = await api.getSubcategorias(catId);
+        render.subcategorias(res.subcategorias || []);
+      } catch (e) { render.subcategorias([]); }
     },
     // Detail Modal
     async openDetailModal(tx) {
@@ -367,37 +455,60 @@
       this.closeDetailModal();
       
       elements.gastoForm.reset();
+      state.gastoImpuestosTemp = [];
       elements.gastoFromTxBox.style.display = 'block';
       elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      
+      // Heredar datos de la transacción
       elements.gastoConcepto.value = tx.descripcion || '';
       elements.gastoProveedor.value = tx.contacto_id || '';
       elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
       elements.gastoTotal.value = tx.monto;
-      elements.gastoSubtotal.value = '';
-      elements.gastoImpuesto.value = '';
+      elements.gastoSubtotal.value = tx.monto;
+      
       elements.gastoFiscalFields.style.display = 'none';
       elements.gastoEsFiscal.checked = false;
       render.subcategorias([]);
+      render.gastoImpuestos();
       
       elements.gastoModal.classList.add('active');
     },
     closeGastoModal() { elements.gastoModal.classList.remove('active'); },
-    async loadSubcategorias() {
-      const catId = elements.gastoCategoria.value;
-      if (!catId) { render.subcategorias([]); return; }
-      try {
-        const res = await api.getSubcategorias(catId);
-        render.subcategorias(res.subcategorias || []);
-      } catch (e) { render.subcategorias([]); }
+    addGastoImpuesto() {
+      state.gastoImpuestosTemp.push({ impuesto_id: '', tasa: 0, tipo: 'traslado', importe: 0 });
+      render.gastoImpuestos();
     },
     calcGastoTotal() {
-      const sub = parseFloat(elements.gastoSubtotal.value) || 0;
-      const iva = parseFloat(elements.gastoImpuesto.value) || 0;
-      if (sub > 0) elements.gastoTotal.value = (sub + iva).toFixed(2);
+      const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+      let traslados = 0, retenciones = 0;
+      state.gastoImpuestosTemp.forEach(imp => {
+        if (imp.tipo === 'retencion') retenciones += (imp.importe || 0);
+        else traslados += (imp.importe || 0);
+      });
+      const total = subtotal + traslados - retenciones;
+      if (subtotal > 0 || state.gastoImpuestosTemp.length > 0) {
+        elements.gastoTotal.value = total.toFixed(2);
+      }
+    },
+    recalcGastoImpuestos() {
+      const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+      state.gastoImpuestosTemp.forEach(imp => {
+        if (imp.tasa > 0 && subtotal > 0) {
+          imp.importe = subtotal * imp.tasa;
+        }
+      });
+      render.gastoImpuestos();
+      this.calcGastoTotal();
     },
     async submitGasto(e) {
       e.preventDefault();
       const tx = state.viewingTx;
+      
+      let totalImpuesto = 0;
+      state.gastoImpuestosTemp.forEach(imp => {
+        if (imp.tipo === 'traslado') totalImpuesto += (imp.importe || 0);
+        else totalImpuesto -= (imp.importe || 0);
+      });
       
       const gastoData = {
         concepto: elements.gastoConcepto.value.trim(),
@@ -409,20 +520,24 @@
         metodo_pago: elements.gastoMetodoPago.value || null,
         moneda: elements.gastoMoneda.value,
         subtotal: parseFloat(elements.gastoSubtotal.value) || parseFloat(elements.gastoTotal.value),
-        impuesto: parseFloat(elements.gastoImpuesto.value) || 0,
+        impuesto: Math.abs(totalImpuesto),
         total: parseFloat(elements.gastoTotal.value),
         es_fiscal: elements.gastoEsFiscal.checked ? 1 : 0,
-        factura_recibida: elements.gastoFacturaRecibida?.checked ? 1 : 0,
         uuid_cfdi: elements.gastoUuid.value.trim() || null,
         folio_cfdi: elements.gastoFolio.value.trim() || null,
         notas: elements.gastoNotas.value.trim() || null,
-        transaccion_id: tx?.id || null
+        transaccion_id: tx?.id || null,
+        estatus_pago: 'pagado',
+        impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
+          impuesto_id: i.impuesto_id,
+          base: parseFloat(elements.gastoSubtotal.value) || parseFloat(elements.gastoTotal.value),
+          importe: i.importe || 0
+        }))
       };
       
       elements.submitGastoModal.disabled = true;
       try {
         const result = await api.createGasto(gastoData);
-        // Vincular transacción al gasto
         if (tx?.id && result.id) {
           await api.updateTransaccion(tx.id, { gasto_id: result.id });
         }
@@ -442,21 +557,17 @@
       elements.ventaForm.reset();
       elements.ventaFromTxBox.style.display = 'block';
       elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      
+      // Heredar datos de la transacción
       elements.ventaCliente.value = tx.contacto_id || '';
       elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
       elements.ventaTotal.value = tx.monto;
-      elements.ventaSubtotal.value = '';
-      elements.ventaImpuesto.value = '';
+      elements.ventaSubtotal.value = tx.monto;
       elements.ventaConcepto.value = tx.descripcion || '';
       
       elements.ventaModal.classList.add('active');
     },
     closeVentaModal() { elements.ventaModal.classList.remove('active'); },
-    calcVentaTotal() {
-      const sub = parseFloat(elements.ventaSubtotal.value) || 0;
-      const iva = parseFloat(elements.ventaImpuesto.value) || 0;
-      if (sub > 0) elements.ventaTotal.value = (sub + iva).toFixed(2);
-    },
     async submitVenta(e) {
       e.preventDefault();
       const tx = state.viewingTx;
@@ -515,7 +626,6 @@
       state.filters.buscar = elements.searchInput.value.trim();
       state.filters.tipo = elements.filterType.value;
       state.filters.cuenta_bancaria_id = elements.filterCuenta.value;
-      state.filters.contacto_id = elements.filterContacto.value;
       state.filters.conciliado = elements.filterConciliado.value;
       state.paginacion.pagina = 1;
       this.loadData();
@@ -562,19 +672,17 @@
     elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
     elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
     elements.gastoCategoria.addEventListener('change', () => handlers.loadSubcategorias());
-    elements.gastoSubtotal.addEventListener('input', () => handlers.calcGastoTotal());
-    elements.gastoImpuesto.addEventListener('input', () => handlers.calcGastoTotal());
+    elements.gastoSubtotal.addEventListener('input', () => handlers.recalcGastoImpuestos());
     elements.gastoEsFiscal.addEventListener('change', () => {
       elements.gastoFiscalFields.style.display = elements.gastoEsFiscal.checked ? 'block' : 'none';
     });
+    $('addGastoImpuestoBtn')?.addEventListener('click', () => handlers.addGastoImpuesto());
 
     // Venta modal
     elements.closeVentaModal.addEventListener('click', () => handlers.closeVentaModal());
     elements.cancelVentaModal.addEventListener('click', () => handlers.closeVentaModal());
     elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
     elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
-    elements.ventaSubtotal.addEventListener('input', () => handlers.calcVentaTotal());
-    elements.ventaImpuesto.addEventListener('input', () => handlers.calcVentaTotal());
 
     // Cuenta modal
     elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
@@ -593,7 +701,6 @@
     elements.searchInput.addEventListener('input', df);
     elements.filterType.addEventListener('change', () => handlers.applyFilters());
     elements.filterCuenta.addEventListener('change', () => handlers.applyFilters());
-    elements.filterContacto.addEventListener('change', () => handlers.applyFilters());
     elements.filterConciliado.addEventListener('change', () => handlers.applyFilters());
     elements.prevPage.addEventListener('click', () => handlers.prevPage());
     elements.nextPage.addEventListener('click', () => handlers.nextPage());
@@ -607,7 +714,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v5');
+    console.log('🚀 TRUNO Transacciones v6');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

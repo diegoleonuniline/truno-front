@@ -90,7 +90,22 @@
     redirect: (url) => window.location.href = url,
     getInitials(n, a) { return (n?.charAt(0).toUpperCase() || '') + (a?.charAt(0).toUpperCase() || '') || '??'; },
     formatMoney(amount, currency = 'MXN') { return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(amount || 0); },
-    formatDate(d) { if (!d) return '-'; return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); },
+    formatDate(d) {
+      if (!d) return '-';
+      let date;
+      if (typeof d === 'string') {
+        if (d.includes('T')) d = d.split('T')[0];
+        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          date = new Date(d + 'T12:00:00');
+        } else {
+          date = new Date(d);
+        }
+      } else {
+        date = new Date(d);
+      }
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
     formatDateInput(d) { return d ? d.split('T')[0] : ''; },
     today() { return new Date().toISOString().split('T')[0]; },
     isOverdue(d) { return d && new Date(d) < new Date(); },

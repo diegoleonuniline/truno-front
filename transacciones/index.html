@@ -30,6 +30,10 @@
           <a href="../gastos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Gastos</a>
           <a href="../contactos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contactos</a>
         </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Análisis</div>
+          <a href="../reportes/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>Reportes</a>
+        </div>
       </nav>
       <div class="sidebar-org">
         <button class="org-switcher" id="orgSwitcher">
@@ -44,7 +48,7 @@
       <header class="header">
         <div class="header-left">
           <button class="menu-toggle" id="menuToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-          <h1 class="header-title">Movimientos</h1>
+          <h1 class="header-title">Transacciones</h1>
         </div>
         <div class="header-right"><div class="user-avatar" id="userAvatar">DL</div></div>
       </header>
@@ -61,14 +65,20 @@
           </button>
         </div>
 
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-card-label">Ingresos del Mes</div><div class="stat-card-value success" id="ingresosMes">$0.00</div></div>
+          <div class="stat-card"><div class="stat-card-label">Egresos del Mes</div><div class="stat-card-value danger" id="egresosMes">$0.00</div></div>
+          <div class="stat-card"><div class="stat-card-label">Sin Conciliar</div><div class="stat-card-value warning" id="sinConciliar">0</div></div>
+          <div class="stat-card"><div class="stat-card-label">Balance</div><div class="stat-card-value info" id="balance">$0.00</div></div>
+        </div>
+
         <div class="filters-bar">
           <div class="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" placeholder="Buscar...">
+            <input type="text" id="searchInput" placeholder="Buscar movimiento...">
           </div>
           <select class="filter-select" id="filterType"><option value="">Tipo</option><option value="ingreso">Ingresos</option><option value="egreso">Egresos</option></select>
           <select class="filter-select" id="filterCuenta"><option value="">Cuenta</option></select>
-          <select class="filter-select" id="filterContacto"><option value="">Contacto</option></select>
           <select class="filter-select" id="filterConciliado"><option value="">Estado</option><option value="1">Conciliados</option><option value="0">Sin conciliar</option></select>
         </div>
 
@@ -101,7 +111,7 @@
         <div class="empty-state" id="emptyState" style="display:none;">
           <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
           <h3>Sin movimientos</h3>
-          <p>Registra tu primer ingreso o egreso</p>
+          <p>Registra tu primer movimiento bancario</p>
           <button class="btn btn-primary" id="addFirstTxBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Movimiento</button>
         </div>
       </div>
@@ -109,7 +119,7 @@
     <button class="fab" id="fabBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
   </div>
 
-  <!-- Modal: Detalle del Movimiento -->
+  <!-- Modal: Detalle -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal modal-lg">
       <div class="modal-header">
@@ -121,7 +131,7 @@
         <div class="detail-grid" id="detailGrid"></div>
         <div class="detail-section" id="detailConciliacion"></div>
       </div>
-      <div class="modal-footer" id="detailFooter">
+      <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="closeDetailBtn">Cerrar</button>
         <button type="button" class="btn btn-outline" id="editFromDetailBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
       </div>
@@ -137,54 +147,57 @@
       </div>
       <form id="txForm">
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Tipo</label>
-              <select class="form-select" id="tipo" required>
-                <option value="egreso">💸 Egreso</option>
-                <option value="ingreso">💰 Ingreso</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label required">Cuenta</label>
-              <div class="select-with-add">
-                <select class="form-select" id="cuentaId" required></select>
-                <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Información del Movimiento</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required">Tipo</label>
+                <select class="form-select" id="tipo" required>
+                  <option value="egreso">💸 Egreso</option>
+                  <option value="ingreso">💰 Ingreso</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Cuenta</label>
+                <div class="select-with-add">
+                  <select class="form-select" id="cuentaId" required></select>
+                  <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Monto</label>
-              <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required">Monto</label>
+                <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Fecha</label>
+                <input type="date" class="form-input" id="fecha" required>
+              </div>
             </div>
             <div class="form-group">
-              <label class="form-label required">Fecha</label>
-              <input type="date" class="form-input" id="fecha" required>
+              <label class="form-label">Contacto</label>
+              <select class="form-select" id="contactoId"><option value="">-- Sin contacto --</option></select>
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Contacto</label>
-            <select class="form-select" id="contactoId"><option value="">-- Sin contacto --</option></select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Descripción</label>
-            <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Referencia</label>
-            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia">
+            <div class="form-group">
+              <label class="form-label">Descripción</label>
+              <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Referencia</label>
+              <input type="text" class="form-input" id="referencia" placeholder="Número de referencia bancaria">
+            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="submitModal"><span class="btn-text">Guardar</span></button>
+          <button type="submit" class="btn btn-primary" id="submitModal">Guardar</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Crear Gasto desde Transacción (IDÉNTICO AL ORIGINAL) -->
+  <!-- Modal: Crear Gasto (completo con impuestos) -->
   <div class="modal-overlay" id="gastoModal">
     <div class="modal">
       <div class="modal-header">
@@ -193,12 +206,10 @@
       </div>
       <form id="gastoForm">
         <div class="modal-body">
-          <!-- Info de transacción origen -->
           <div class="form-info-box" id="gastoFromTxBox">
             <strong>💡 Desde transacción:</strong> <span id="gastoFromTxInfo"></span>
           </div>
 
-          <!-- Información básica -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Información del Gasto</div>
             <div class="form-group">
@@ -206,16 +217,16 @@
               <input type="text" class="form-input" id="gastoConcepto" placeholder="¿Qué compraste o pagaste?" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Proveedor / A quién le pagaste</label>
+              <label class="form-label">Proveedor</label>
               <select class="form-select" id="gastoProveedor"><option value="">-- Seleccionar --</option></select>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label required">Fecha del gasto</label>
+                <label class="form-label required">Fecha</label>
                 <input type="date" class="form-input" id="gastoFecha" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Fecha de vencimiento</label>
+                <label class="form-label">Vencimiento</label>
                 <input type="date" class="form-input" id="gastoFechaVencimiento">
               </div>
             </div>
@@ -231,22 +242,25 @@
             </div>
           </div>
 
-          <!-- Montos -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
-            <div class="form-row-3">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Subtotal</label>
                 <input type="number" class="form-input" id="gastoSubtotal" placeholder="0.00" step="0.01" min="0">
               </div>
               <div class="form-group">
-                <label class="form-label">IVA</label>
-                <input type="number" class="form-input" id="gastoImpuesto" placeholder="0.00" step="0.01" min="0">
-              </div>
-              <div class="form-group">
                 <label class="form-label required">Total</label>
                 <input type="number" class="form-input" id="gastoTotal" placeholder="0.00" step="0.01" min="0" required>
               </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Impuestos</label>
+              <div class="impuestos-container" id="gastoImpuestosContainer"></div>
+              <button type="button" class="btn btn-xs btn-secondary" id="addGastoImpuestoBtn" style="margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Agregar impuesto
+              </button>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -254,7 +268,6 @@
                 <select class="form-select" id="gastoMoneda">
                   <option value="MXN">MXN - Peso Mexicano</option>
                   <option value="USD">USD - Dólar</option>
-                  <option value="EUR">EUR - Euro</option>
                 </select>
               </div>
               <div class="form-group">
@@ -265,48 +278,38 @@
                   <option value="efectivo">Efectivo</option>
                   <option value="tarjeta_debito">Tarjeta Débito</option>
                   <option value="tarjeta_credito">Tarjeta Crédito</option>
-                  <option value="cheque">Cheque</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <!-- Fiscal -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Información Fiscal</div>
             <div class="toggle-row">
               <div class="toggle-info">
                 <div class="toggle-info-label">¿Es gasto fiscal?</div>
-                <div class="toggle-info-hint">Marca si este gasto es deducible de impuestos</div>
+                <div class="toggle-info-hint">Marca si es deducible de impuestos</div>
               </div>
               <label class="toggle"><input type="checkbox" id="gastoEsFiscal"><span class="toggle-slider"></span></label>
             </div>
-            <div id="gastoFiscalFields" style="display:none; margin-top: 16px;">
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-info-label">¿Ya recibiste la factura?</div>
-                  <div class="toggle-info-hint">El proveedor ya te envió el CFDI</div>
-                </div>
-                <label class="toggle"><input type="checkbox" id="gastoFacturaRecibida"><span class="toggle-slider"></span></label>
-              </div>
-              <div class="form-row" style="margin-top: 16px;">
+            <div id="gastoFiscalFields" style="display:none; margin-top:16px;">
+              <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">UUID CFDI</label>
-                  <input type="text" class="form-input" id="gastoUuid" placeholder="Ej: 6ba7b810-9dad-11d1-80b4-00c04fd430c8">
+                  <input type="text" class="form-input" id="gastoUuid" placeholder="UUID de la factura">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Folio Fiscal</label>
-                  <input type="text" class="form-input" id="gastoFolio" placeholder="Ej: A-1234">
+                  <label class="form-label">Folio</label>
+                  <input type="text" class="form-input" id="gastoFolio" placeholder="Folio fiscal">
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Notas -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Notas</div>
             <div class="form-group" style="margin-bottom:0;">
-              <textarea class="form-textarea" id="gastoNotas" rows="2" placeholder="Notas adicionales sobre este gasto..."></textarea>
+              <textarea class="form-textarea" id="gastoNotas" rows="2" placeholder="Notas adicionales..."></textarea>
             </div>
           </div>
         </div>
@@ -318,7 +321,7 @@
     </div>
   </div>
 
-  <!-- Modal: Crear Venta desde Transacción -->
+  <!-- Modal: Crear Venta -->
   <div class="modal-overlay" id="ventaModal">
     <div class="modal">
       <div class="modal-header">
@@ -331,13 +334,12 @@
             <strong>💡 Desde transacción:</strong> <span id="ventaFromTxInfo"></span>
           </div>
 
-          <!-- Info básica -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Información de la Venta</div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Folio</label>
-                <input type="text" class="form-input" id="ventaFolio" placeholder="Automático si vacío">
+                <input type="text" class="form-input" id="ventaFolio" placeholder="Automático">
               </div>
               <div class="form-group">
                 <label class="form-label required">Fecha</label>
@@ -354,17 +356,12 @@
             </div>
           </div>
 
-          <!-- Montos -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
-            <div class="form-row-3">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Subtotal</label>
                 <input type="number" class="form-input" id="ventaSubtotal" placeholder="0.00" step="0.01" min="0">
-              </div>
-              <div class="form-group">
-                <label class="form-label">IVA</label>
-                <input type="number" class="form-input" id="ventaImpuesto" placeholder="0.00" step="0.01" min="0">
               </div>
               <div class="form-group">
                 <label class="form-label required">Total</label>
@@ -420,7 +417,7 @@
         <h2 class="modal-title">Eliminar Movimiento</h2>
         <button class="modal-close" id="closeDeleteModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="modal-body"><p>¿Eliminar este movimiento?</p></div>
+      <div class="modal-body"><p>¿Estás seguro de eliminar este movimiento?</p></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
