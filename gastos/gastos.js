@@ -61,6 +61,7 @@
 
   let state = {
     user: null, org: null, gastos: [], proveedores: [], categorias: [], subcategorias: [], cuentas: [], transacciones: [],
+    impuestosCatalogo: [], impuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
     editingId: null, deletingId: null, comprobanteData: null,
     filters: { buscar: '', estatus: '', categoria: '', es_fiscal: '' }
@@ -107,7 +108,8 @@
     getCuentas() { return this.request('/api/cuentas-bancarias'); },
     createCuenta(d) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }); },
     getTransacciones() { return this.request('/api/transacciones?tipo=egreso&limite=50&sin_conciliar=1'); },
-    createTransaccion(d) { return this.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }); }
+    createTransaccion(d) { return this.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }); },
+    getImpuestos() { return this.request('/api/impuestos'); }
   };
 
   const render = {
@@ -192,6 +194,75 @@
       const opts = state.subcategorias.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
       elements.subcategoriaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
     },
+    impuestos() {
+      const container = $('impuestosContainer');
+      if (!container) return;
+      
+      if (!state.impuestosTemp.length) {
+        container.innerHTML = '<div class="impuestos-empty">Sin impuestos agregados</div>';
+        return;
+      }
+      
+      const selectOpts = state.impuestosCatalogo.map(i => 
+        `<option value="${i.id}" data-tasa="${i.tasa}" data-tipo="${i.tipo}">${i.nombre}</option>`
+      ).join('');
+      
+      container.innerHTML = state.impuestosTemp.map((imp, idx) => {
+        const selected = state.impuestosCatalogo.find(i => i.id === imp.impuesto_id);
+        return `<div class="impuesto-row" data-idx="${idx}">
+          <select class="imp-select">
+            <option value="">-- Seleccionar --</option>
+            ${selectOpts}
+          </select>
+          <span class="impuesto-tipo ${imp.tipo || 'traslado'}">${imp.tipo === 'retencion' ? 'Ret.' : 'Tras.'}</span>
+          <input type="number" class="imp-importe" value="${imp.importe || ''}" placeholder="0.00" step="0.01">
+          <button type="button" class="btn-remove-imp" title="Eliminar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+      
+      // Set selected values and bind events
+      container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
+        const select = row.querySelector('.imp-select');
+        const impInput = row.querySelector('.imp-importe');
+        const tipoSpan = row.querySelector('.impuesto-tipo');
+        const removeBtn = row.querySelector('.btn-remove-imp');
+        
+        if (state.impuestosTemp[idx].impuesto_id) {
+          select.value = state.impuestosTemp[idx].impuesto_id;
+        }
+        
+        select.addEventListener('change', () => {
+          const opt = select.selectedOptions[0];
+          const tasa = parseFloat(opt?.dataset?.tasa) || 0;
+          const tipo = opt?.dataset?.tipo || 'traslado';
+          state.impuestosTemp[idx].impuesto_id = select.value;
+          state.impuestosTemp[idx].tasa = tasa;
+          state.impuestosTemp[idx].tipo = tipo;
+          tipoSpan.textContent = tipo === 'retencion' ? 'Ret.' : 'Tras.';
+          tipoSpan.className = `impuesto-tipo ${tipo}`;
+          // Auto-calculate importe
+          const subtotal = parseFloat(elements.subtotal.value) || 0;
+          if (subtotal > 0 && tasa > 0) {
+            impInput.value = (subtotal * tasa).toFixed(2);
+            state.impuestosTemp[idx].importe = parseFloat(impInput.value);
+          }
+          handlers.calcTotal();
+        });
+        
+        impInput.addEventListener('input', () => {
+          state.impuestosTemp[idx].importe = parseFloat(impInput.value) || 0;
+          handlers.calcTotal();
+        });
+        
+        removeBtn.addEventListener('click', () => {
+          state.impuestosTemp.splice(idx, 1);
+          render.impuestos();
+          handlers.calcTotal();
+        });
+      });
+    },
     cuentas() {
       const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
       elements.txCuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
@@ -205,12 +276,13 @@
   const handlers = {
     async loadData() {
       try {
-        const [gastosData, provData, catData, cuentasData, txData] = await Promise.all([
+        const [gastosData, provData, catData, cuentasData, txData, impData] = await Promise.all([
           api.getGastos({ ...state.filters, pagina: state.paginacion.pagina }),
           api.getProveedores().catch(() => ({ contactos: [] })),
           api.getCategorias().catch(() => ({ categorias: [] })),
           api.getCuentas().catch(() => ({ cuentas: [] })),
-          api.getTransacciones().catch(() => ({ transacciones: [] }))
+          api.getTransacciones().catch(() => ({ transacciones: [] })),
+          api.getImpuestos().catch(() => ({ impuestos: [] }))
         ]);
         state.gastos = gastosData.gastos || [];
         state.paginacion = gastosData.paginacion || state.paginacion;
@@ -218,6 +290,7 @@
         state.categorias = catData.categorias || [];
         state.cuentas = cuentasData.cuentas || [];
         state.transacciones = txData.transacciones || [];
+        state.impuestosCatalogo = impData.impuestos || [];
         render.gastos(); render.stats(); render.proveedores(); render.categorias(); render.cuentas(); render.transacciones();
       } catch (e) { console.error('Error:', e); }
     },
@@ -239,6 +312,7 @@
     // Gasto Modal
     openCreateModal() {
       state.editingId = null; state.comprobanteData = null;
+      state.impuestosTemp = [];
       elements.modalTitle.textContent = 'Nuevo Gasto';
       elements.gastoForm.reset();
       elements.fecha.value = utils.today();
@@ -246,11 +320,13 @@
       elements.validadaRow.style.display = 'none';
       elements.comprobanteUpload.classList.remove('has-file');
       elements.comprobantePreview.style.display = 'none';
+      render.impuestos();
       elements.gastoModal.classList.add('active');
       elements.concepto.focus();
     },
     async openEditModal(g) {
       state.editingId = g.id; state.comprobanteData = g.comprobante_url || null;
+      state.impuestosTemp = [];
       elements.modalTitle.textContent = 'Editar Gasto';
       elements.concepto.value = g.concepto || '';
       elements.proveedorId.value = g.proveedor_id || '';
@@ -260,7 +336,6 @@
       if (g.categoria_id) await this.loadSubcategorias(g.categoria_id);
       elements.subcategoriaId.value = g.subcategoria_id || '';
       elements.subtotal.value = g.subtotal || '';
-      elements.impuesto.value = g.impuesto || '';
       elements.total.value = g.total || '';
       elements.moneda.value = g.moneda || 'MXN';
       elements.metodoPago.value = g.metodo_pago || '';
@@ -273,6 +348,14 @@
       elements.folioCfdi.value = g.folio_cfdi || '';
       elements.transaccionId.value = g.transaccion_id || '';
       elements.notas.value = g.notas || '';
+      // Legacy: si hay impuesto simple, agregarlo como IVA
+      if (g.impuesto && parseFloat(g.impuesto) > 0) {
+        const iva16 = state.impuestosCatalogo.find(i => i.nombre.includes('IVA 16'));
+        if (iva16) {
+          state.impuestosTemp.push({ impuesto_id: iva16.id, tasa: iva16.tasa, tipo: iva16.tipo, importe: parseFloat(g.impuesto) });
+        }
+      }
+      render.impuestos();
       if (g.comprobante_url) {
         elements.comprobanteUpload.classList.add('has-file');
         elements.comprobantePreview.style.display = 'flex';
@@ -286,6 +369,13 @@
     closeGastoModal() { elements.gastoModal.classList.remove('active'); elements.gastoForm.reset(); state.editingId = null; state.comprobanteData = null; },
     async submitGasto(e) {
       e.preventDefault();
+      // Calcular impuesto total para compatibilidad
+      let totalImpuesto = 0;
+      state.impuestosTemp.forEach(imp => {
+        if (imp.tipo === 'traslado') totalImpuesto += (imp.importe || 0);
+        else totalImpuesto -= (imp.importe || 0);
+      });
+      
       const d = {
         concepto: elements.concepto.value.trim(),
         proveedor_id: elements.proveedorId.value || null,
@@ -294,7 +384,7 @@
         categoria_id: elements.categoriaId.value || null,
         subcategoria_id: elements.subcategoriaId.value || null,
         subtotal: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
-        impuesto: parseFloat(elements.impuesto.value) || 0,
+        impuesto: Math.abs(totalImpuesto),
         total: parseFloat(elements.total.value),
         moneda: elements.moneda.value,
         metodo_pago: elements.metodoPago.value || null,
@@ -305,7 +395,12 @@
         folio_cfdi: elements.folioCfdi.value.trim() || null,
         transaccion_id: elements.transaccionId.value || null,
         notas: elements.notas.value.trim() || null,
-        comprobante_url: state.comprobanteData || null
+        comprobante_url: state.comprobanteData || null,
+        impuestos: state.impuestosTemp.filter(i => i.impuesto_id).map(i => ({
+          impuesto_id: i.impuesto_id,
+          base: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
+          importe: i.importe || 0
+        }))
       };
       elements.submitModal.classList.add('loading'); elements.submitModal.disabled = true;
       try {
@@ -427,7 +522,32 @@
     },
     prevPage() { if (state.paginacion.pagina > 1) { state.paginacion.pagina--; this.loadData(); } },
     nextPage() { if (state.paginacion.pagina < state.paginacion.paginas) { state.paginacion.pagina++; this.loadData(); } },
-    calcTotal() { const s = parseFloat(elements.subtotal.value) || 0, i = parseFloat(elements.impuesto.value) || 0; if (s > 0) elements.total.value = (s + i).toFixed(2); },
+    calcTotal() { 
+      const subtotal = parseFloat(elements.subtotal.value) || 0;
+      let traslados = 0, retenciones = 0;
+      state.impuestosTemp.forEach(imp => {
+        if (imp.tipo === 'retencion') retenciones += (imp.importe || 0);
+        else traslados += (imp.importe || 0);
+      });
+      const total = subtotal + traslados - retenciones;
+      if (subtotal > 0 || state.impuestosTemp.length > 0) {
+        elements.total.value = total.toFixed(2);
+      }
+    },
+    addImpuesto() {
+      state.impuestosTemp.push({ impuesto_id: '', tasa: 0, tipo: 'traslado', importe: 0 });
+      render.impuestos();
+    },
+    recalcImpuestos() {
+      const subtotal = parseFloat(elements.subtotal.value) || 0;
+      state.impuestosTemp.forEach(imp => {
+        if (imp.tasa > 0 && subtotal > 0) {
+          imp.importe = subtotal * imp.tasa;
+        }
+      });
+      render.impuestos();
+      this.calcTotal();
+    },
     handleFiscalToggle() { elements.fiscalFields.style.display = elements.esFiscal.checked ? 'block' : 'none'; },
     handleFacturaRecibidaToggle() { elements.validadaRow.style.display = elements.facturaRecibida.checked ? 'flex' : 'none'; },
     handleFileSelect(e) {
@@ -471,14 +591,16 @@
     elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
 
     // Form interactions
-    elements.subtotal.addEventListener('input', () => handlers.calcTotal());
-    elements.impuesto.addEventListener('input', () => handlers.calcTotal());
+    elements.subtotal.addEventListener('input', () => handlers.recalcImpuestos());
     elements.esFiscal.addEventListener('change', () => handlers.handleFiscalToggle());
     elements.facturaRecibida.addEventListener('change', () => handlers.handleFacturaRecibidaToggle());
     elements.categoriaId.addEventListener('change', () => handlers.loadSubcategorias(elements.categoriaId.value));
     elements.comprobanteUpload.addEventListener('click', () => elements.comprobanteFile.click());
     elements.comprobanteFile.addEventListener('change', e => handlers.handleFileSelect(e));
     elements.removeComprobante.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
+    
+    // Impuestos
+    $('addImpuestoBtn')?.addEventListener('click', () => handlers.addImpuesto());
 
     // Quick create buttons
     elements.addProveedorBtn.addEventListener('click', () => handlers.openProveedorModal());

@@ -73,7 +73,25 @@
     redirect: url => window.location.href = url,
     getInitials: n => (n?.charAt(0) || '') + (n?.split(' ')[1]?.charAt(0) || ''),
     formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
-    formatDate: d => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+    formatDate: d => {
+      if (!d) return '-';
+      // Manejar diferentes formatos de fecha
+      let date;
+      if (typeof d === 'string') {
+        // Si es formato ISO con T, extraer solo la fecha
+        if (d.includes('T')) d = d.split('T')[0];
+        // Si es formato YYYY-MM-DD
+        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          date = new Date(d + 'T12:00:00');
+        } else {
+          date = new Date(d);
+        }
+      } else {
+        date = new Date(d);
+      }
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
     formatDateInput: d => d ? d.split('T')[0] : '',
     today: () => new Date().toISOString().split('T')[0],
     debounce: (fn, delay) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }

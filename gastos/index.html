@@ -175,19 +175,24 @@
           <!-- Montos -->
           <div class="form-section">
             <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
-            <div class="form-row-3">
+            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Subtotal</label>
                 <input type="number" class="form-input" id="subtotal" placeholder="0.00" step="0.01" min="0">
               </div>
               <div class="form-group">
-                <label class="form-label">IVA</label>
-                <input type="number" class="form-input" id="impuesto" placeholder="0.00" step="0.01" min="0">
-              </div>
-              <div class="form-group">
                 <label class="form-label required">Total</label>
                 <input type="number" class="form-input" id="total" placeholder="0.00" step="0.01" min="0" required>
               </div>
+            </div>
+            <!-- Impuestos múltiples -->
+            <div class="form-group">
+              <label class="form-label">Impuestos</label>
+              <div class="impuestos-container" id="impuestosContainer"></div>
+              <button type="button" class="btn btn-xs btn-secondary" id="addImpuestoBtn" style="margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Agregar impuesto
+              </button>
             </div>
             <div class="form-row">
               <div class="form-group">

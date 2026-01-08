@@ -291,3 +291,21 @@ a { color: inherit; text-decoration: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .table tbody tr { animation: fadeIn 0.2s ease-out both; }
 .mobile-card { animation: fadeIn 0.2s ease-out both; }
+
+/* Impuestos múltiples */
+.impuestos-container { display: flex; flex-direction: column; gap: 8px; }
+.impuesto-row { display: flex; gap: 8px; align-items: center; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.impuesto-row select { flex: 2; padding: 8px 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--font-size-sm); }
+.impuesto-row input { flex: 1; padding: 8px 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); font-size: var(--font-size-sm); text-align: right; }
+.impuesto-row .impuesto-tipo { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; min-width: 60px; text-align: center; }
+.impuesto-row .impuesto-tipo.traslado { background: rgba(52,211,153,0.15); color: #34d399; }
+.impuesto-row .impuesto-tipo.retencion { background: rgba(248,113,113,0.15); color: #f87171; }
+.impuesto-row .btn-remove-imp { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer; flex-shrink: 0; }
+.impuesto-row .btn-remove-imp:hover { border-color: var(--error); background: rgba(248,113,113,0.1); }
+.impuesto-row .btn-remove-imp svg { width: 14px; height: 14px; stroke: var(--text-muted); }
+.impuesto-row .btn-remove-imp:hover svg { stroke: var(--error); }
+.impuestos-empty { padding: 12px; text-align: center; color: var(--text-muted); font-size: var(--font-size-sm); background: var(--bg-secondary); border: 1px dashed var(--border-color); border-radius: var(--radius-md); }
+.impuestos-totals { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius-md); font-size: var(--font-size-sm); }
+.impuestos-totals .total-row { display: flex; justify-content: space-between; }
+.impuestos-totals .total-row.traslados { color: #34d399; }
+.impuestos-totals .total-row.retenciones { color: #f87171; }
