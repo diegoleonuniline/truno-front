@@ -306,8 +306,25 @@
     elements.nextPage.addEventListener('click', () => handlers.nextPage());
     document.addEventListener('keydown', e => { if (e.key === 'Escape') { handlers.closeVentaModal(); handlers.closeCobroModal(); handlers.closeDeleteModal(); } });
 
-    handlers.loadData();
-    console.log('🚀 TRUNO Ventas initialized');
+    handlers.loadData().then(() => {
+      // Check URL params for creating from transaccion
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('crear') === '1') {
+        setTimeout(() => {
+          handlers.openCreateModal();
+          // Prellenar datos desde transacción
+          if (params.get('monto')) elements.total.value = params.get('monto');
+          if (params.get('fecha')) elements.fecha.value = params.get('fecha');
+          if (params.get('contacto_id')) elements.contactoId.value = params.get('contacto_id');
+          if (params.get('descripcion')) elements.concepto && (elements.concepto.value = params.get('descripcion'));
+          if (params.get('from_tx')) {
+            state.fromTransaccionId = params.get('from_tx');
+          }
+          window.history.replaceState({}, '', window.location.pathname);
+        }, 300);
+      }
+    });
+    console.log('🚀 TRUNO Ventas v2');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

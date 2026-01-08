@@ -541,8 +541,27 @@
       }
     });
 
-    handlers.loadData();
-    console.log('🚀 TRUNO Gastos v2 initialized');
+    handlers.loadData().then(() => {
+      // Check URL params for creating from transaccion
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('crear') === '1') {
+        setTimeout(() => {
+          handlers.openCreateModal();
+          // Prellenar datos desde transacción
+          if (params.get('monto')) elements.total.value = params.get('monto');
+          if (params.get('fecha')) elements.fecha.value = params.get('fecha');
+          if (params.get('contacto_id')) elements.proveedorId.value = params.get('contacto_id');
+          if (params.get('descripcion')) elements.concepto.value = params.get('descripcion');
+          if (params.get('from_tx')) {
+            // Guardar referencia a transacción para conciliar después
+            state.fromTransaccionId = params.get('from_tx');
+          }
+          // Limpiar URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }, 300);
+      }
+    });
+    console.log('🚀 TRUNO Gastos v3');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

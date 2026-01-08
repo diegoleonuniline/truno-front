@@ -68,11 +68,12 @@
         <div class="filters-bar">
           <div class="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="searchInput" placeholder="Buscar por descripción, referencia...">
+            <input type="text" id="searchInput" placeholder="Buscar...">
           </div>
           <select class="filter-select" id="filterType"><option value="">Tipo</option><option value="ingreso">Ingresos</option><option value="egreso">Egresos</option></select>
           <select class="filter-select" id="filterCuenta"><option value="">Cuenta</option></select>
-          <select class="filter-select" id="filterConciliado"><option value="">Conciliación</option><option value="1">Conciliados</option><option value="0">Sin conciliar</option></select>
+          <select class="filter-select" id="filterContacto"><option value="">Contacto</option></select>
+          <select class="filter-select" id="filterConciliado"><option value="">Estado</option><option value="1">Conciliados</option><option value="0">Sin conciliar</option></select>
         </div>
 
         <div class="table-container" id="tableContainer">
@@ -82,14 +83,13 @@
                 <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Cuenta</th>
+                <th>Contacto</th>
                 <th>Estado</th>
                 <th style="text-align:right;">Monto</th>
                 <th style="width:80px;"></th>
               </tr>
             </thead>
-            <tbody id="tableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 48px;"><div class="empty-state-icon" style="margin: 0 auto 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Cargando...</h3></td></tr>
-            </tbody>
+            <tbody id="tableBody"></tbody>
           </table>
           <div class="pagination" id="pagination" style="display:none;">
             <div class="pagination-info">Mostrando <span id="showingStart">0</span>-<span id="showingEnd">0</span> de <span id="totalRecords">0</span></div>
@@ -113,7 +113,26 @@
     <button class="fab" id="fabBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
   </div>
 
-  <!-- Modal: Nuevo/Editar Movimiento (Simple) -->
+  <!-- Modal: Detalle del Movimiento -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">Detalle del Movimiento</h2>
+        <button class="modal-close" id="closeDetailModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-amount" id="detailAmount"></div>
+        <div class="detail-grid" id="detailGrid"></div>
+        <div class="detail-section" id="detailConciliacion"></div>
+      </div>
+      <div class="modal-footer" id="detailFooter">
+        <button type="button" class="btn btn-secondary" id="closeDetailBtn">Cerrar</button>
+        <button type="button" class="btn btn-outline" id="editFromDetailBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nuevo/Editar Movimiento -->
   <div class="modal-overlay" id="txModal">
     <div class="modal">
       <div class="modal-header">
@@ -149,24 +168,23 @@
             </div>
           </div>
           <div class="form-group">
+            <label class="form-label">Contacto</label>
+            <select class="form-select" id="contactoId"><option value="">-- Sin contacto --</option></select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Descripción</label>
             <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
           </div>
           <div class="form-group">
             <label class="form-label">Referencia bancaria</label>
-            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia del banco">
+            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia">
           </div>
-
-          <!-- Comprobante -->
           <div class="form-group">
             <label class="form-label">Comprobante</label>
             <div class="file-upload" id="comprobanteUpload">
               <div class="file-upload-content">
                 <div class="file-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-                <div class="file-upload-text">
-                  <div class="file-upload-text-main"><strong>Subir</strong> comprobante</div>
-                  <div class="file-upload-text-hint">Foto o PDF del voucher</div>
-                </div>
+                <div class="file-upload-text">Subir comprobante</div>
               </div>
               <input type="file" id="comprobanteFile" accept="image/*,.pdf">
             </div>
@@ -175,25 +193,21 @@
               <button type="button" class="btn btn-xs btn-danger" id="removeComprobante">Quitar</button>
             </div>
           </div>
-
-          <!-- Conciliación -->
           <div class="form-group">
-            <label class="form-label">Conciliar con Gasto o Venta</label>
+            <label class="form-label">Conciliar</label>
             <select class="form-select" id="conciliarTipo">
               <option value="">-- Sin conciliar --</option>
-              <option value="gasto">Vincular con un Gasto</option>
-              <option value="venta">Vincular con una Venta</option>
+              <option value="gasto">Vincular con Gasto</option>
+              <option value="venta">Vincular con Venta</option>
             </select>
           </div>
           <div class="form-group" id="conciliarGastoGroup" style="display:none;">
-            <label class="form-label">Seleccionar Gasto</label>
+            <label class="form-label">Gasto</label>
             <select class="form-select" id="gastoId"></select>
-            <span class="form-hint">Gastos pendientes de conciliar</span>
           </div>
           <div class="form-group" id="conciliarVentaGroup" style="display:none;">
-            <label class="form-label">Seleccionar Venta</label>
+            <label class="form-label">Venta</label>
             <select class="form-select" id="ventaId"></select>
-            <span class="form-hint">Ventas pendientes de cobro</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -204,23 +218,23 @@
     </div>
   </div>
 
-  <!-- Modal: Crear Cuenta Rápida -->
+  <!-- Modal: Crear Cuenta -->
   <div class="modal-overlay" id="cuentaModal">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">Nueva Cuenta Bancaria</h2>
+        <h2 class="modal-title">Nueva Cuenta</h2>
         <button class="modal-close" id="closeCuentaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="cuentaForm">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label required">Nombre de la cuenta</label>
-            <input type="text" class="form-input" id="cuentaNombre" placeholder="Ej: BBVA Principal, Efectivo Caja" required>
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="cuentaNombre" placeholder="BBVA Principal" required>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Banco</label>
-              <input type="text" class="form-input" id="cuentaBanco" placeholder="BBVA, Banorte, Efectivo...">
+              <input type="text" class="form-input" id="cuentaBanco" placeholder="BBVA">
             </div>
             <div class="form-group">
               <label class="form-label">Saldo inicial</label>
@@ -234,25 +248,23 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelCuentaModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear Cuenta</span></button>
+          <button type="submit" class="btn btn-primary">Crear</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Confirmar Eliminar -->
+  <!-- Modal: Eliminar -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Eliminar Movimiento</h2>
         <button class="modal-close" id="closeDeleteModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="modal-body">
-        <p>¿Eliminar este movimiento? El saldo de la cuenta se actualizará.</p>
-      </div>
+      <div class="modal-body"><p>¿Eliminar este movimiento?</p></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete"><span class="btn-text">Eliminar</span></button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
       </div>
     </div>
   </div>
