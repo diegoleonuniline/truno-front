@@ -10,7 +10,7 @@
   // CONFIGURACIÓN
   // ============================================
   const CONFIG = {
-    API_URL: 'https://api.truno.app', // Cambiar por tu URL real
+    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com', // Cambiar por tu URL real
     ENDPOINTS: {
       LOGIN: '/api/auth/login'
     },
