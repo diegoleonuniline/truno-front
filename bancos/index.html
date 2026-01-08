@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e14">
+  <title>Bancos | TRUNO</title>
+  <link rel="stylesheet" href="bancos.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
+            <path d="M4 10v11"/><path d="M20 10v11"/>
+            <path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/>
+          </svg>
+        </div>
+        <span class="sidebar-brand">TRUNO</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="../dashboard/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Dashboard
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Finanzas</div>
+          <a href="index.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Bancos
+          </a>
+          <a href="../transacciones/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+              <polyline points="17 6 23 6 23 12"/>
+            </svg>
+            Transacciones
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Operaciones</div>
+          <a href="../ventas/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Ventas
+          </a>
+          <a href="../gastos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Gastos
+          </a>
+          <a href="../contactos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Contactos
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Análisis</div>
+          <a href="../reportes/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+            Reportes
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-org">
+        <button class="org-switcher" id="orgSwitcher">
+          <div class="org-switcher-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
+              <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
+              <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+            </svg>
+          </div>
+          <div class="org-switcher-info">
+            <div class="org-switcher-name" id="orgName">Cargando...</div>
+            <div class="org-switcher-plan" id="orgPlan">Plan Free</div>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main -->
+    <main class="main-content">
+      <header class="header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Bancos</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-avatar" id="userAvatar">DL</div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Cuentas Bancarias</h2>
+            <p>Administra tus cuentas y controla tus saldos</p>
+          </div>
+          <button class="btn btn-primary" id="addAccountBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="btn-text">Nueva Cuenta</span>
+          </button>
+        </div>
+
+        <!-- Total Card -->
+        <div class="total-card">
+          <div class="total-card-info">
+            <h3>Saldo Total</h3>
+            <div class="total-card-value" id="totalBalance">$0.00</div>
+            <div class="total-card-meta"><span id="accountCount">0</span> cuentas activas</div>
+          </div>
+        </div>
+
+        <!-- Accounts Grid -->
+        <div class="accounts-grid" id="accountsGrid">
+          <!-- Loading -->
+          <div class="empty-state" id="loadingState">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+              </svg>
+            </div>
+            <h3>Cargando cuentas...</h3>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="empty-state-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <h3>Sin cuentas bancarias</h3>
+          <p>Agrega tu primera cuenta para comenzar a registrar tus movimientos</p>
+          <button class="btn btn-primary" id="addFirstAccountBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Agregar Cuenta
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- FAB Mobile -->
+    <button class="fab" id="fabBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Modal: Nueva/Editar Cuenta -->
+  <div class="modal-overlay" id="accountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Nueva Cuenta</h2>
+        <button class="modal-close" id="closeModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="accountForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Nombre de la Cuenta *</label>
+            <input type="text" class="form-input" id="accountName" placeholder="Ej. Cuenta Principal" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Banco</label>
+            <input type="text" class="form-input" id="accountBank" placeholder="Ej. BBVA, Banorte, Santander">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Número de Cuenta</label>
+              <input type="text" class="form-input" id="accountNumber" placeholder="****1234">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CLABE</label>
+              <input type="text" class="form-input" id="accountClabe" placeholder="18 dígitos" maxlength="18">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Moneda</label>
+              <select class="form-input" id="accountCurrency">
+                <option value="MXN">MXN - Peso Mexicano</option>
+                <option value="USD">USD - Dólar</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Saldo Inicial</label>
+              <input type="number" class="form-input" id="accountBalance" placeholder="0.00" step="0.01">
+              <span class="form-hint">Solo para cuentas nuevas</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <input type="text" class="form-input" id="accountNotes" placeholder="Notas opcionales">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitModal">
+            <span class="btn-text">Guardar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Ajustar Saldo -->
+  <div class="modal-overlay" id="adjustModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Ajustar Saldo</h2>
+        <button class="modal-close" id="closeAdjustModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="adjustForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Saldo Actual</label>
+            <input type="text" class="form-input" id="currentBalance" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nuevo Saldo *</label>
+            <input type="number" class="form-input" id="newBalance" placeholder="0.00" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Motivo del Ajuste *</label>
+            <input type="text" class="form-input" id="adjustReason" placeholder="Ej. Conciliación bancaria" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelAdjustModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitAdjust">
+            <span class="btn-text">Ajustar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Eliminar -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Eliminar Cuenta</h2>
+        <button class="modal-close" id="closeDeleteModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de eliminar la cuenta <strong id="deleteAccountName"></strong>?</p>
+        <p style="color: var(--text-muted); margin-top: var(--spacing-sm); font-size: var(--font-size-sm);">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">
+          <span class="btn-text">Eliminar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="bancos.js"></script>
+</body>
+</html>
