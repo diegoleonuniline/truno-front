@@ -10,7 +10,7 @@
   // CONFIGURACIÓN
   // ============================================
   const CONFIG = {
-    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com', // Cambiar por tu URL real
+    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
     ENDPOINTS: {
       LOGIN: '/api/auth/login'
     },
@@ -19,8 +19,8 @@
       USER: 'truno_user'
     },
     REDIRECT: {
-      SUCCESS: '/organizations/select.html',
-      ALREADY_LOGGED: '/dashboard/index.html'
+      SUCCESS: '/truno-front/organizaciones/seleccionar.html',
+      ALREADY_LOGGED: '/truno-front/dashboard/index.html'
     }
   };
 
@@ -47,26 +47,22 @@
   // UTILITIES
   // ============================================
   const utils = {
-    // Validar email
     isValidEmail(email) {
       const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return regex.test(email);
     },
 
-    // Mostrar error
     showError(message) {
       elements.errorMessage.textContent = message;
       elements.formError.classList.add('visible');
       elements.formError.setAttribute('aria-hidden', 'false');
     },
 
-    // Ocultar error
     hideError() {
       elements.formError.classList.remove('visible');
       elements.formError.setAttribute('aria-hidden', 'true');
     },
 
-    // Set loading state
     setLoading(loading) {
       isSubmitting = loading;
       elements.submitBtn.classList.toggle('loading', loading);
@@ -75,13 +71,11 @@
       elements.password.disabled = loading;
     },
 
-    // Guardar sesión
-    saveSession(token, user) {
+    saveSession(token, usuario) {
       localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
-      localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(user));
+      localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(usuario));
     },
 
-    // Verificar sesión existente
     checkExistingSession() {
       const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
       if (token) {
@@ -91,7 +85,6 @@
       return false;
     },
 
-    // Redirect
     redirect(url) {
       window.location.href = url;
     }
@@ -101,13 +94,13 @@
   // API CALLS
   // ============================================
   const api = {
-    async login(email, password) {
+    async login(correo, contrasena) {
       const response = await fetch(`${CONFIG.API_URL}${CONFIG.ENDPOINTS.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ correo, contrasena })
       });
 
       const data = await response.json();
@@ -124,7 +117,6 @@
   // EVENT HANDLERS
   // ============================================
   const handlers = {
-    // Toggle password visibility
     togglePassword() {
       const type = elements.password.type === 'password' ? 'text' : 'password';
       elements.password.type = type;
@@ -134,44 +126,42 @@
       );
     },
 
-    // Input focus - clear error
     onInputFocus() {
       utils.hideError();
       this.classList.remove('error');
     },
 
-    // Form submit
     async onSubmit(e) {
       e.preventDefault();
 
       if (isSubmitting) return;
 
-      const email = elements.email.value.trim();
-      const password = elements.password.value;
+      const correo = elements.email.value.trim();
+      const contrasena = elements.password.value;
 
       // Validaciones
-      if (!email) {
+      if (!correo) {
         utils.showError('Ingresa tu correo electrónico');
         elements.email.classList.add('error');
         elements.email.focus();
         return;
       }
 
-      if (!utils.isValidEmail(email)) {
+      if (!utils.isValidEmail(correo)) {
         utils.showError('Ingresa un correo electrónico válido');
         elements.email.classList.add('error');
         elements.email.focus();
         return;
       }
 
-      if (!password) {
+      if (!contrasena) {
         utils.showError('Ingresa tu contraseña');
         elements.password.classList.add('error');
         elements.password.focus();
         return;
       }
 
-      if (password.length < 8) {
+      if (contrasena.length < 8) {
         utils.showError('La contraseña debe tener al menos 8 caracteres');
         elements.password.classList.add('error');
         elements.password.focus();
@@ -183,10 +173,10 @@
       utils.hideError();
 
       try {
-        const data = await api.login(email, password);
+        const data = await api.login(correo, contrasena);
         
         // Guardar sesión
-        utils.saveSession(data.token, data.user);
+        utils.saveSession(data.token, data.usuario);
         
         // Redirect
         utils.redirect(CONFIG.REDIRECT.SUCCESS);
@@ -201,9 +191,7 @@
       }
     },
 
-    // Face ID (simulado)
     onFaceId() {
-      // Verificar si hay credenciales guardadas para biometría
       const savedEmail = localStorage.getItem('truno_biometric_email');
       
       if (!savedEmail) {
@@ -211,13 +199,9 @@
         return;
       }
 
-      // En producción: usar Web Authentication API
-      // navigator.credentials.get({ publicKey: ... })
-      
       utils.showError('Face ID no disponible en esta versión');
     },
 
-    // Keyboard navigation
     onKeyDown(e) {
       if (e.key === 'Enter' && e.target === elements.email) {
         e.preventDefault();
@@ -230,10 +214,8 @@
   // INITIALIZATION
   // ============================================
   function init() {
-    // Check existing session
     if (utils.checkExistingSession()) return;
 
-    // Event listeners
     elements.form.addEventListener('submit', handlers.onSubmit);
     elements.passwordToggle.addEventListener('click', handlers.togglePassword);
     elements.faceIdBtn.addEventListener('click', handlers.onFaceId);
@@ -241,10 +223,8 @@
     elements.password.addEventListener('focus', handlers.onInputFocus);
     elements.email.addEventListener('keydown', handlers.onKeyDown);
 
-    // Auto-focus email
     elements.email.focus();
 
-    // Check for error params (ej: redirect desde página protegida)
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
     
@@ -257,7 +237,6 @@
     console.log('🚀 TRUNO Login initialized');
   }
 
-  // Run on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
