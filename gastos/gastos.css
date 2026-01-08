@@ -309,3 +309,50 @@ a { color: inherit; text-decoration: none; }
 .impuestos-totals .total-row { display: flex; justify-content: space-between; }
 .impuestos-totals .total-row.traslados { color: #34d399; }
 .impuestos-totals .total-row.retenciones { color: #f87171; }
+
+/* Tabs */
+.tabs-container { margin-bottom: var(--spacing-lg); }
+.tabs { display: flex; gap: var(--spacing-xs); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-xs); overflow-x: auto; }
+.tab { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); background: transparent; border: none; border-radius: var(--radius-md); color: var(--text-secondary); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer; white-space: nowrap; transition: all var(--transition-fast); }
+.tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.tab.active { background: var(--brand-primary); color: var(--text-primary); }
+.tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: var(--warning); color: #000; font-size: 11px; font-weight: 600; border-radius: 10px; }
+.tab.active .tab-badge { background: rgba(255,255,255,0.3); color: var(--text-primary); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Por Pagar List */
+.por-pagar-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.por-pagar-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-lg); display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-md); transition: all var(--transition-fast); }
+.por-pagar-card:hover { border-color: var(--brand-primary); }
+.por-pagar-card.vencido { border-left: 4px solid var(--error); }
+.por-pagar-card.proximo { border-left: 4px solid var(--warning); }
+.por-pagar-info { flex: 1; min-width: 0; }
+.por-pagar-concepto { font-weight: 600; font-size: var(--font-size-md); margin-bottom: 4px; }
+.por-pagar-meta { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--text-muted); }
+.por-pagar-monto { text-align: right; }
+.por-pagar-total { font-size: var(--font-size-lg); font-weight: 700; color: var(--error); }
+.por-pagar-vence { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px; }
+.por-pagar-vence.vencido { color: var(--error); font-weight: 600; }
+.por-pagar-actions { display: flex; gap: var(--spacing-sm); }
+
+/* Programación */
+.programacion-header { margin-bottom: var(--spacing-lg); }
+.programacion-header h3 { font-size: var(--font-size-lg); margin-bottom: var(--spacing-xs); }
+.programacion-header p { color: var(--text-muted); font-size: var(--font-size-sm); }
+.programacion-filters { margin-bottom: var(--spacing-md); }
+.programacion-list { display: flex; flex-direction: column; gap: var(--spacing-md); }
+.programacion-group { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+.programacion-group-header { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) var(--spacing-lg); background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); }
+.programacion-group-title { font-weight: 600; display: flex; align-items: center; gap: var(--spacing-sm); }
+.programacion-group-total { font-weight: 700; color: var(--error); }
+.programacion-items { padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-sm); }
+.programacion-item { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--spacing-md); background: var(--bg-secondary); border-radius: var(--radius-md); }
+.programacion-item-info { display: flex; align-items: center; gap: var(--spacing-md); }
+.programacion-item-concepto { font-weight: 500; }
+.programacion-item-proveedor { font-size: var(--font-size-sm); color: var(--text-muted); }
+.programacion-item-monto { font-weight: 600; color: var(--error); }
+
+/* Loading/Empty States */
+.loading-state, .empty-list-state { text-align: center; padding: var(--spacing-2xl); color: var(--text-muted); }
+.empty-list-state svg { width: 48px; height: 48px; margin-bottom: var(--spacing-md); opacity: 0.5; }

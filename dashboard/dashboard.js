@@ -85,7 +85,18 @@
 
     formatDate(dateStr) {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
+      let date;
+      if (typeof dateStr === 'string') {
+        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          date = new Date(dateStr + 'T12:00:00');
+        } else {
+          date = new Date(dateStr);
+        }
+      } else {
+        date = new Date(dateStr);
+      }
+      if (isNaN(date.getTime())) return '-';
       return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
     },
 

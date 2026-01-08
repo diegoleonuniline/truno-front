@@ -17,12 +17,16 @@
   const elements = {
     sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
     orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
-    totalMes: $('totalMes'), pendientes: $('pendientes'), sinFactura: $('sinFactura'), pagados: $('pagados'),
+    totalMes: $('totalMes'), pendientes: $('pendientes'), vencidos: $('vencidos'), pagados: $('pagados'),
     searchInput: $('searchInput'), filterStatus: $('filterStatus'), filterCategoria: $('filterCategoria'), filterFiscal: $('filterFiscal'),
     tableContainer: $('tableContainer'), tableBody: $('tableBody'), mobileCards: $('mobileCards'), emptyState: $('emptyState'),
     pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
     prevPage: $('prevPage'), nextPage: $('nextPage'),
     addGastoBtn: $('addGastoBtn'), addFirstGastoBtn: $('addFirstGastoBtn'), fabBtn: $('fabBtn'),
+    // Tabs
+    tabTodos: $('tabTodos'), tabPorPagar: $('tabPorPagar'), tabProgramacion: $('tabProgramacion'),
+    tabBadgePorPagar: $('tabBadgePorPagar'),
+    porPagarList: $('porPagarList'), programacionList: $('programacionList'), filterPeriodo: $('filterPeriodo'),
     // Gasto Modal
     gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), modalTitle: $('modalTitle'),
     closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
@@ -54,16 +58,22 @@
     // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
     cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
+    // Pago Modal
+    pagoModal: $('pagoModal'), pagoForm: $('pagoForm'), closePagoModal: $('closePagoModal'),
+    cancelPagoModal: $('cancelPagoModal'), submitPagoModal: $('submitPagoModal'),
+    pagoGastoInfo: $('pagoGastoInfo'), pagoMonto: $('pagoMonto'), pagoFecha: $('pagoFecha'),
+    pagoCuenta: $('pagoCuenta'), pagoMetodo: $('pagoMetodo'), pagoReferencia: $('pagoReferencia'),
     // Delete Modal
     deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'),
     confirmDelete: $('confirmDelete'), deleteGastoName: $('deleteGastoName')
   };
 
   let state = {
-    user: null, org: null, gastos: [], proveedores: [], categorias: [], subcategorias: [], cuentas: [], transacciones: [],
+    user: null, org: null, gastos: [], gastosPorPagar: [], proveedores: [], categorias: [], subcategorias: [], cuentas: [], transacciones: [],
     impuestosCatalogo: [], impuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
-    editingId: null, deletingId: null, comprobanteData: null,
+    editingId: null, deletingId: null, payingGasto: null, comprobanteData: null,
+    currentTab: 'todos',
     filters: { buscar: '', estatus: '', categoria: '', es_fiscal: '' }
   };
 
@@ -74,7 +84,22 @@
     redirect: (url) => window.location.href = url,
     getInitials(n) { return (n?.charAt(0).toUpperCase() || '') + (n?.split(' ')[1]?.charAt(0).toUpperCase() || n?.charAt(1)?.toUpperCase() || ''); },
     formatMoney(a, c = 'MXN') { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0); },
-    formatDate(d) { if (!d) return '-'; return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); },
+    formatDate(d) {
+      if (!d) return '-';
+      let date;
+      if (typeof d === 'string') {
+        if (d.includes('T')) d = d.split('T')[0];
+        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          date = new Date(d + 'T12:00:00');
+        } else {
+          date = new Date(d);
+        }
+      } else {
+        date = new Date(d);
+      }
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
     formatDateInput(d) { return d ? d.split('T')[0] : ''; },
     today() { return new Date().toISOString().split('T')[0]; },
     debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
@@ -116,19 +141,27 @@
     user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre); },
     org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
     stats() {
-      const now = new Date(), m = now.getMonth(), y = now.getFullYear();
-      let totalMes = 0, pendientes = 0, sinFactura = 0, pagados = 0;
+      const now = new Date(), m = now.getMonth(), y = now.getFullYear(), today = new Date().setHours(0,0,0,0);
+      let totalMes = 0, pendientes = 0, vencidos = 0, pagados = 0;
+      state.gastosPorPagar = [];
       state.gastos.forEach(g => {
         const f = new Date(g.fecha), tot = parseFloat(g.total) || 0;
         if (f.getMonth() === m && f.getFullYear() === y) totalMes += tot;
-        if (g.estatus_pago === 'pagado') pagados += tot;
-        else pendientes += tot;
-        if (g.es_fiscal && !g.factura_recibida) sinFactura++;
+        if (g.estatus_pago === 'pagado') {
+          pagados += tot;
+        } else {
+          pendientes += tot;
+          state.gastosPorPagar.push(g);
+          if (g.fecha_vencimiento && new Date(g.fecha_vencimiento).setHours(0,0,0,0) < today) {
+            vencidos += tot;
+          }
+        }
       });
       elements.totalMes.textContent = utils.formatMoney(totalMes);
       elements.pendientes.textContent = utils.formatMoney(pendientes);
-      elements.sinFactura.textContent = sinFactura;
+      elements.vencidos.textContent = utils.formatMoney(vencidos);
       elements.pagados.textContent = utils.formatMoney(pagados);
+      if (elements.tabBadgePorPagar) elements.tabBadgePorPagar.textContent = state.gastosPorPagar.length;
     },
     gastos() {
       const { gastos, paginacion } = state;
@@ -266,10 +299,143 @@
     cuentas() {
       const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
       elements.txCuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      if (elements.pagoCuenta) elements.pagoCuenta.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
     },
     transacciones() {
       const opts = state.transacciones.map(t => `<option value="${t.id}">${utils.formatDate(t.fecha)} - ${utils.formatMoney(t.monto)} - ${t.descripcion || t.referencia || 'Sin desc'}</option>`).join('');
       elements.transaccionId.innerHTML = '<option value="">-- Sin conciliar --</option>' + opts;
+    },
+    porPagar() {
+      const today = new Date().setHours(0,0,0,0);
+      const gastos = state.gastosPorPagar.sort((a, b) => {
+        const fA = a.fecha_vencimiento ? new Date(a.fecha_vencimiento) : new Date('2099-12-31');
+        const fB = b.fecha_vencimiento ? new Date(b.fecha_vencimiento) : new Date('2099-12-31');
+        return fA - fB;
+      });
+      
+      if (!gastos.length) {
+        elements.porPagarList.innerHTML = `<div class="empty-list-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <h3>¡Sin gastos pendientes!</h3>
+          <p>Todos tus gastos están pagados</p>
+        </div>`;
+        return;
+      }
+      
+      elements.porPagarList.innerHTML = gastos.map(g => {
+        const vencimiento = g.fecha_vencimiento ? new Date(g.fecha_vencimiento).setHours(0,0,0,0) : null;
+        const isVencido = vencimiento && vencimiento < today;
+        const isProximo = vencimiento && !isVencido && (vencimiento - today) < 7 * 24 * 60 * 60 * 1000;
+        const cardClass = isVencido ? 'vencido' : (isProximo ? 'proximo' : '');
+        const venceClass = isVencido ? 'vencido' : '';
+        const venceText = g.fecha_vencimiento ? `Vence: ${utils.formatDate(g.fecha_vencimiento)}` : 'Sin vencimiento';
+        
+        return `<div class="por-pagar-card ${cardClass}" data-id="${g.id}">
+          <div class="por-pagar-info">
+            <div class="por-pagar-concepto">${g.concepto || 'Sin concepto'}</div>
+            <div class="por-pagar-meta">
+              <span>${g.nombre_proveedor || 'Sin proveedor'}</span>
+              <span>•</span>
+              <span>${g.nombre_categoria || 'Sin categoría'}</span>
+            </div>
+          </div>
+          <div class="por-pagar-monto">
+            <div class="por-pagar-total">${utils.formatMoney(g.total)}</div>
+            <div class="por-pagar-vence ${venceClass}">${venceText}</div>
+          </div>
+          <div class="por-pagar-actions">
+            <button class="btn btn-primary btn-sm" data-action="pagar" data-id="${g.id}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Pagar
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+      
+      elements.porPagarList.querySelectorAll('[data-action="pagar"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const g = state.gastos.find(x => x.id === btn.dataset.id);
+          if (g) handlers.openPagoModal(g);
+        });
+      });
+    },
+    programacion() {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const periodo = elements.filterPeriodo?.value || 'mes';
+      
+      let fechaFin;
+      if (periodo === 'semana') {
+        fechaFin = new Date(today);
+        fechaFin.setDate(fechaFin.getDate() + 7);
+      } else if (periodo === 'mes') {
+        fechaFin = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      } else {
+        fechaFin = new Date('2099-12-31');
+      }
+      
+      const gastos = state.gastosPorPagar.filter(g => {
+        if (!g.fecha_vencimiento) return periodo === 'todos';
+        const fv = new Date(g.fecha_vencimiento);
+        fv.setHours(0,0,0,0);
+        return fv <= fechaFin;
+      }).sort((a, b) => {
+        const fA = a.fecha_vencimiento ? new Date(a.fecha_vencimiento) : new Date('2099-12-31');
+        const fB = b.fecha_vencimiento ? new Date(b.fecha_vencimiento) : new Date('2099-12-31');
+        return fA - fB;
+      });
+      
+      if (!gastos.length) {
+        elements.programacionList.innerHTML = `<div class="empty-list-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <h3>Sin pagos programados</h3>
+          <p>No hay gastos con vencimiento en este periodo</p>
+        </div>`;
+        return;
+      }
+      
+      // Agrupar por fecha
+      const grupos = {};
+      gastos.forEach(g => {
+        const key = g.fecha_vencimiento || 'sin-fecha';
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(g);
+      });
+      
+      let html = '';
+      Object.keys(grupos).sort().forEach(fecha => {
+        const items = grupos[fecha];
+        const totalGrupo = items.reduce((sum, g) => sum + (parseFloat(g.total) || 0), 0);
+        const fechaLabel = fecha === 'sin-fecha' ? 'Sin fecha de vencimiento' : utils.formatDate(fecha);
+        const isVencido = fecha !== 'sin-fecha' && new Date(fecha) < today;
+        const icon = isVencido ? '⚠️' : '📅';
+        
+        html += `<div class="programacion-group">
+          <div class="programacion-group-header">
+            <div class="programacion-group-title">${icon} ${fechaLabel}</div>
+            <div class="programacion-group-total">${utils.formatMoney(totalGrupo)}</div>
+          </div>
+          <div class="programacion-items">
+            ${items.map(g => `<div class="programacion-item">
+              <div class="programacion-item-info">
+                <div class="programacion-item-concepto">${g.concepto || 'Sin concepto'}</div>
+                <div class="programacion-item-proveedor">${g.nombre_proveedor || ''}</div>
+              </div>
+              <div class="programacion-item-monto">${utils.formatMoney(g.total)}</div>
+              <button class="btn btn-primary btn-sm" data-action="pagar" data-id="${g.id}">Pagar</button>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      });
+      
+      elements.programacionList.innerHTML = html;
+      
+      elements.programacionList.querySelectorAll('[data-action="pagar"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const g = state.gastos.find(x => x.id === btn.dataset.id);
+          if (g) handlers.openPagoModal(g);
+        });
+      });
     }
   };
 
@@ -566,7 +732,80 @@
       elements.comprobanteUpload.classList.remove('has-file');
       elements.comprobantePreview.style.display = 'none';
     },
-    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); }
+    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); },
+    // Tabs
+    switchTab(tabName) {
+      state.currentTab = tabName;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if (tabName === 'todos') {
+        elements.tabTodos.classList.add('active');
+      } else if (tabName === 'por-pagar') {
+        elements.tabPorPagar.classList.add('active');
+        render.porPagar();
+      } else if (tabName === 'programacion') {
+        elements.tabProgramacion.classList.add('active');
+        render.programacion();
+      }
+    },
+    // Pago Modal
+    openPagoModal(gasto) {
+      state.payingGasto = gasto;
+      elements.pagoForm.reset();
+      elements.pagoGastoInfo.innerHTML = `<strong>💰 ${gasto.concepto || 'Sin concepto'}</strong><br>
+        Proveedor: ${gasto.nombre_proveedor || '-'} • Total: ${utils.formatMoney(gasto.total)}`;
+      elements.pagoMonto.value = gasto.total;
+      elements.pagoFecha.value = utils.today();
+      render.cuentas();
+      elements.pagoModal.classList.add('active');
+    },
+    closePagoModal() {
+      elements.pagoModal.classList.remove('active');
+      state.payingGasto = null;
+    },
+    async submitPago(e) {
+      e.preventDefault();
+      if (!state.payingGasto) return;
+      
+      const monto = parseFloat(elements.pagoMonto.value);
+      const cuentaId = elements.pagoCuenta.value;
+      
+      if (!cuentaId) { alert('Selecciona una cuenta bancaria'); return; }
+      
+      elements.submitPagoModal.disabled = true;
+      try {
+        // 1. Crear transacción de egreso
+        const txData = {
+          tipo: 'egreso',
+          cuenta_bancaria_id: cuentaId,
+          monto: monto,
+          fecha: elements.pagoFecha.value,
+          contacto_id: state.payingGasto.proveedor_id || null,
+          descripcion: `Pago: ${state.payingGasto.concepto || 'Gasto'}`,
+          referencia: elements.pagoReferencia.value || null
+        };
+        const txResult = await api.createTransaccion(txData);
+        const txId = txResult.transaccion?.id || txResult.id;
+        
+        // 2. Actualizar gasto como pagado y vincular transacción
+        await api.updateGasto(state.payingGasto.id, {
+          estatus_pago: 'pagado',
+          transaccion_id: txId,
+          metodo_pago: elements.pagoMetodo.value
+        });
+        
+        this.closePagoModal();
+        await this.loadData();
+        
+        // Actualizar tabs si estamos en ellos
+        if (state.currentTab === 'por-pagar') render.porPagar();
+        else if (state.currentTab === 'programacion') render.programacion();
+        
+        alert('✅ Pago registrado correctamente');
+      } catch (e) { alert('Error: ' + e.message); }
+      finally { elements.submitPagoModal.disabled = false; }
+    }
   };
 
   function init() {
@@ -645,6 +884,18 @@
     elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
     elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => handlers.switchTab(tab.dataset.tab));
+    });
+    elements.filterPeriodo?.addEventListener('change', () => render.programacion());
+
+    // Pago modal
+    elements.closePagoModal?.addEventListener('click', () => handlers.closePagoModal());
+    elements.cancelPagoModal?.addEventListener('click', () => handlers.closePagoModal());
+    elements.pagoForm?.addEventListener('submit', e => handlers.submitPago(e));
+    elements.pagoModal?.addEventListener('click', e => { if (e.target === elements.pagoModal) handlers.closePagoModal(); });
+
     // Filters
     const df = utils.debounce(() => handlers.applyFilters(), 300);
     elements.searchInput.addEventListener('input', df);
@@ -659,7 +910,7 @@
       if (e.key === 'Escape') {
         handlers.closeGastoModal(); handlers.closeCategoriaModal(); handlers.closeSubcategoriaModal();
         handlers.closeProveedorModal(); handlers.closeTransaccionModal(); handlers.closeCuentaModal();
-        handlers.closeDeleteModal();
+        handlers.closeDeleteModal(); handlers.closePagoModal();
       }
     });
 
@@ -683,7 +934,7 @@
         }, 300);
       }
     });
-    console.log('🚀 TRUNO Gastos v3');
+    console.log('🚀 TRUNO Gastos v4');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
