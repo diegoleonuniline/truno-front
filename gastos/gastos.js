@@ -1,5 +1,6 @@
 /**
- * TRUNO - Gastos Module
+ * TRUNO - Gastos Module v2
+ * Con creación inline tipo Odoo
  */
 
 (function() {
@@ -7,776 +8,542 @@
 
   const CONFIG = {
     API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
-    STORAGE_KEYS: {
-      TOKEN: 'truno_token',
-      USER: 'truno_user',
-      ORG: 'truno_org'
-    },
-    REDIRECT: {
-      LOGIN: '/truno-front/login/login.html',
-      SELECT_ORG: '/truno-front/organizaciones/seleccionar.html'
-    }
+    STORAGE_KEYS: { TOKEN: 'truno_token', USER: 'truno_user', ORG: 'truno_org' },
+    REDIRECT: { LOGIN: '/truno-front/login/login.html', SELECT_ORG: '/truno-front/organizaciones/seleccionar.html' }
   };
 
+  const $ = id => document.getElementById(id);
+
   const elements = {
-    // Sidebar
-    sidebar: document.getElementById('sidebar'),
-    sidebarOverlay: document.getElementById('sidebarOverlay'),
-    menuToggle: document.getElementById('menuToggle'),
-    orgSwitcher: document.getElementById('orgSwitcher'),
-    orgName: document.getElementById('orgName'),
-    orgPlan: document.getElementById('orgPlan'),
-    userAvatar: document.getElementById('userAvatar'),
-    // Stats
-    totalMes: document.getElementById('totalMes'),
-    porPagar: document.getElementById('porPagar'),
-    vencidos: document.getElementById('vencidos'),
-    pagados: document.getElementById('pagados'),
-    // Filters
-    searchInput: document.getElementById('searchInput'),
-    filterStatus: document.getElementById('filterStatus'),
-    filterCategory: document.getElementById('filterCategory'),
-    // Table
-    tableContainer: document.getElementById('tableContainer'),
-    tableBody: document.getElementById('tableBody'),
-    mobileCards: document.getElementById('mobileCards'),
-    emptyState: document.getElementById('emptyState'),
-    pagination: document.getElementById('pagination'),
-    showingStart: document.getElementById('showingStart'),
-    showingEnd: document.getElementById('showingEnd'),
-    totalRecords: document.getElementById('totalRecords'),
-    prevPage: document.getElementById('prevPage'),
-    nextPage: document.getElementById('nextPage'),
-    // Buttons
-    addGastoBtn: document.getElementById('addGastoBtn'),
-    addFirstGastoBtn: document.getElementById('addFirstGastoBtn'),
-    fabBtn: document.getElementById('fabBtn'),
+    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
+    orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
+    totalMes: $('totalMes'), pendientes: $('pendientes'), sinFactura: $('sinFactura'), pagados: $('pagados'),
+    searchInput: $('searchInput'), filterStatus: $('filterStatus'), filterCategoria: $('filterCategoria'), filterFiscal: $('filterFiscal'),
+    tableContainer: $('tableContainer'), tableBody: $('tableBody'), mobileCards: $('mobileCards'), emptyState: $('emptyState'),
+    pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
+    prevPage: $('prevPage'), nextPage: $('nextPage'),
+    addGastoBtn: $('addGastoBtn'), addFirstGastoBtn: $('addFirstGastoBtn'), fabBtn: $('fabBtn'),
     // Gasto Modal
-    gastoModal: document.getElementById('gastoModal'),
-    gastoForm: document.getElementById('gastoForm'),
-    modalTitle: document.getElementById('modalTitle'),
-    closeModal: document.getElementById('closeModal'),
-    cancelModal: document.getElementById('cancelModal'),
-    submitModal: document.getElementById('submitModal'),
-    // Form fields
-    contactoId: document.getElementById('contactoId'),
-    numeroGasto: document.getElementById('numeroGasto'),
-    fecha: document.getElementById('fecha'),
-    fechaVencimiento: document.getElementById('fechaVencimiento'),
-    categoria: document.getElementById('categoria'),
-    categoriasList: document.getElementById('categoriasList'),
-    subtotal: document.getElementById('subtotal'),
-    impuesto: document.getElementById('impuesto'),
-    total: document.getElementById('total'),
-    moneda: document.getElementById('moneda'),
-    tipoCambio: document.getElementById('tipoCambio'),
-    uuidCfdi: document.getElementById('uuidCfdi'),
-    folioCfdi: document.getElementById('folioCfdi'),
-    notas: document.getElementById('notas'),
-    // Pago Modal
-    pagoModal: document.getElementById('pagoModal'),
-    pagoForm: document.getElementById('pagoForm'),
-    closePagoModal: document.getElementById('closePagoModal'),
-    cancelPagoModal: document.getElementById('cancelPagoModal'),
-    pagoGastoInfo: document.getElementById('pagoGastoInfo'),
-    pagoTotal: document.getElementById('pagoTotal'),
-    pagoPendiente: document.getElementById('pagoPendiente'),
-    pagoMonto: document.getElementById('pagoMonto'),
-    pagoFecha: document.getElementById('pagoFecha'),
-    pagoCuenta: document.getElementById('pagoCuenta'),
-    pagoMetodo: document.getElementById('pagoMetodo'),
-    submitPago: document.getElementById('submitPago'),
+    gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), modalTitle: $('modalTitle'),
+    closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
+    concepto: $('concepto'), proveedorId: $('proveedorId'), fecha: $('fecha'), fechaVencimiento: $('fechaVencimiento'),
+    categoriaId: $('categoriaId'), subcategoriaId: $('subcategoriaId'),
+    subtotal: $('subtotal'), impuesto: $('impuesto'), total: $('total'), moneda: $('moneda'), metodoPago: $('metodoPago'),
+    esFiscal: $('esFiscal'), fiscalFields: $('fiscalFields'), facturaRecibida: $('facturaRecibida'),
+    validadaRow: $('validadaRow'), facturaValidada: $('facturaValidada'), uuidCfdi: $('uuidCfdi'), folioCfdi: $('folioCfdi'),
+    comprobanteUpload: $('comprobanteUpload'), comprobanteFile: $('comprobanteFile'),
+    comprobantePreview: $('comprobantePreview'), comprobanteFileName: $('comprobanteFileName'),
+    viewComprobante: $('viewComprobante'), removeComprobante: $('removeComprobante'),
+    transaccionId: $('transaccionId'), notas: $('notas'),
+    // Quick create modals
+    addProveedorBtn: $('addProveedorBtn'), addCategoriaBtn: $('addCategoriaBtn'),
+    addSubcategoriaBtn: $('addSubcategoriaBtn'), addTransaccionBtn: $('addTransaccionBtn'), addCuentaBtn: $('addCuentaBtn'),
+    // Categoria Modal
+    categoriaModal: $('categoriaModal'), categoriaForm: $('categoriaForm'), closeCategoriaModal: $('closeCategoriaModal'),
+    cancelCategoriaModal: $('cancelCategoriaModal'), categoriaNombre: $('categoriaNombre'), categoriaDescripcion: $('categoriaDescripcion'),
+    // Subcategoria Modal
+    subcategoriaModal: $('subcategoriaModal'), subcategoriaForm: $('subcategoriaForm'), closeSubcategoriaModal: $('closeSubcategoriaModal'),
+    cancelSubcategoriaModal: $('cancelSubcategoriaModal'), subcategoriaPadre: $('subcategoriaPadre'), subcategoriaNombre: $('subcategoriaNombre'),
+    // Proveedor Modal
+    proveedorModal: $('proveedorModal'), proveedorForm: $('proveedorForm'), closeProveedorModal: $('closeProveedorModal'),
+    cancelProveedorModal: $('cancelProveedorModal'), proveedorNombre: $('proveedorNombre'),
+    proveedorRfc: $('proveedorRfc'), proveedorTelefono: $('proveedorTelefono'), proveedorEmail: $('proveedorEmail'),
+    // Transaccion Modal
+    transaccionModal: $('transaccionModal'), transaccionForm: $('transaccionForm'), closeTransaccionModal: $('closeTransaccionModal'),
+    cancelTransaccionModal: $('cancelTransaccionModal'), txCuentaId: $('txCuentaId'), txMonto: $('txMonto'), txFecha: $('txFecha'), txReferencia: $('txReferencia'),
+    // Cuenta Modal
+    cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
+    cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
     // Delete Modal
-    deleteModal: document.getElementById('deleteModal'),
-    closeDeleteModal: document.getElementById('closeDeleteModal'),
-    cancelDeleteModal: document.getElementById('cancelDeleteModal'),
-    confirmDelete: document.getElementById('confirmDelete'),
-    deleteGastoName: document.getElementById('deleteGastoName')
+    deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'),
+    confirmDelete: $('confirmDelete'), deleteGastoName: $('deleteGastoName')
   };
 
   let state = {
-    user: null,
-    org: null,
-    gastos: [],
-    contactos: [],
-    cuentas: [],
-    categorias: [],
+    user: null, org: null, gastos: [], proveedores: [], categorias: [], subcategorias: [], cuentas: [], transacciones: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
-    editingId: null,
-    deletingId: null,
-    payingGasto: null,
-    filters: { buscar: '', estatus: '', categoria: '' }
+    editingId: null, deletingId: null, comprobanteData: null,
+    filters: { buscar: '', estatus: '', categoria: '', es_fiscal: '' }
   };
 
-  // ============================================
-  // UTILITIES
-  // ============================================
   const utils = {
     getToken: () => localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN),
     getUser: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.USER) || 'null'),
     getOrg: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.ORG) || 'null'),
     redirect: (url) => window.location.href = url,
-
-    getInitials(nombre, apellido) {
-      const n = nombre?.charAt(0).toUpperCase() || '';
-      const a = apellido?.charAt(0).toUpperCase() || '';
-      return n + a || '??';
-    },
-
-    formatMoney(amount, currency = 'MXN') {
-      return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: currency
-      }).format(amount || 0);
-    },
-
-    formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const date = new Date(dateStr + 'T00:00:00');
-      return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
-    },
-
-    formatDateInput(dateStr) {
-      if (!dateStr) return '';
-      return dateStr.split('T')[0];
-    },
-
-    today() {
-      return new Date().toISOString().split('T')[0];
-    },
-
-    isOverdue(dateStr) {
-      if (!dateStr) return false;
-      return new Date(dateStr) < new Date();
-    },
-
-    debounce(fn, delay) {
-      let timeout;
-      return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn(...args), delay);
-      };
-    }
+    getInitials(n) { return (n?.charAt(0).toUpperCase() || '') + (n?.split(' ')[1]?.charAt(0).toUpperCase() || n?.charAt(1)?.toUpperCase() || ''); },
+    formatMoney(a, c = 'MXN') { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0); },
+    formatDate(d) { if (!d) return '-'; return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); },
+    formatDateInput(d) { return d ? d.split('T')[0] : ''; },
+    today() { return new Date().toISOString().split('T')[0]; },
+    debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
   };
 
-  // ============================================
-  // API
-  // ============================================
   const api = {
     async request(endpoint, options = {}) {
-      const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+      const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
         ...options,
-        headers: {
-          'Authorization': `Bearer ${utils.getToken()}`,
-          'X-Organization-Id': state.org?.id,
-          'Content-Type': 'application/json',
-          ...options.headers
-        }
+        headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
       });
-
-      if (response.status === 401) {
-        utils.redirect(CONFIG.REDIRECT.LOGIN);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error en la petición');
-      }
-
+      if (r.status === 401) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
       return data;
     },
-
-    getGastos(params = {}) {
-      const query = new URLSearchParams({
-        pagina: params.pagina || 1,
-        limite: params.limite || 20,
-        ...(params.buscar && { buscar: params.buscar }),
-        ...(params.estatus && { estatus: params.estatus }),
-        ...(params.categoria && { categoria: params.categoria })
-      });
-      return this.request(`/api/gastos?${query}`);
+    getGastos(p = {}) {
+      const q = new URLSearchParams({ pagina: p.pagina || 1, limite: p.limite || 20, ...Object.fromEntries(Object.entries(p).filter(([k, v]) => v)) });
+      return this.request(`/api/gastos?${q}`);
     },
-
-    getGasto(id) {
-      return this.request(`/api/gastos/${id}`);
-    },
-
-    createGasto(data) {
-      return this.request('/api/gastos', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-    },
-
-    updateGasto(id, data) {
-      return this.request(`/api/gastos/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
-    },
-
-    deleteGasto(id) {
-      return this.request(`/api/gastos/${id}`, {
-        method: 'DELETE'
-      });
-    },
-
-    getContactos() {
-      return this.request('/api/contactos?tipo=proveedor&limite=100');
-    },
-
-    getCuentas() {
-      return this.request('/api/cuentas-bancarias');
-    },
-
-    getCategorias() {
-      return this.request('/api/gastos/meta/categorias');
-    },
-
-    registrarPago(data) {
-      return this.request('/api/pagos', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
-    }
+    getGasto(id) { return this.request(`/api/gastos/${id}`); },
+    createGasto(d) { return this.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }); },
+    updateGasto(id, d) { return this.request(`/api/gastos/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
+    deleteGasto(id) { return this.request(`/api/gastos/${id}`, { method: 'DELETE' }); },
+    getProveedores() { return this.request('/api/contactos?tipo=proveedor&limite=200'); },
+    createProveedor(d) { return this.request('/api/contactos', { method: 'POST', body: JSON.stringify({ ...d, tipo: 'proveedor' }) }); },
+    getCategorias() { return this.request('/api/categorias?tipo=gasto'); },
+    createCategoria(d) { return this.request('/api/categorias', { method: 'POST', body: JSON.stringify({ ...d, tipo: 'gasto' }) }); },
+    getSubcategorias(catId) { return this.request(`/api/categorias/${catId}/subcategorias`); },
+    createSubcategoria(catId, d) { return this.request(`/api/categorias/${catId}/subcategorias`, { method: 'POST', body: JSON.stringify(d) }); },
+    getCuentas() { return this.request('/api/cuentas-bancarias'); },
+    createCuenta(d) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }); },
+    getTransacciones() { return this.request('/api/transacciones?tipo=egreso&limite=50&sin_conciliar=1'); },
+    createTransaccion(d) { return this.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }); }
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
   const render = {
-    user() {
-      if (!state.user) return;
-      elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido);
-    },
-
-    org() {
-      if (!state.org) return;
-      elements.orgName.textContent = state.org.nombre;
-      elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`;
-    },
-
+    user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre); },
+    org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
     stats() {
-      const { gastos } = state;
-      
-      const now = new Date();
-      const mesActual = now.getMonth();
-      const añoActual = now.getFullYear();
-
-      let totalMes = 0, porPagar = 0, vencidos = 0, pagados = 0;
-
-      gastos.forEach(g => {
-        const fechaGasto = new Date(g.fecha);
-        const total = parseFloat(g.total) || 0;
-        const pagado = parseFloat(g.monto_pagado) || 0;
-        const pendiente = total - pagado;
-
-        if (fechaGasto.getMonth() === mesActual && fechaGasto.getFullYear() === añoActual) {
-          totalMes += total;
-        }
-
-        if (g.estatus_pago === 'pagado') {
-          pagados += total;
-        } else if (g.estatus_pago === 'vencido' || (g.fecha_vencimiento && utils.isOverdue(g.fecha_vencimiento) && pendiente > 0)) {
-          vencidos += pendiente;
-        } else if (pendiente > 0) {
-          porPagar += pendiente;
-        }
+      const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+      let totalMes = 0, pendientes = 0, sinFactura = 0, pagados = 0;
+      state.gastos.forEach(g => {
+        const f = new Date(g.fecha), tot = parseFloat(g.total) || 0;
+        if (f.getMonth() === m && f.getFullYear() === y) totalMes += tot;
+        if (g.estatus_pago === 'pagado') pagados += tot;
+        else pendientes += tot;
+        if (g.es_fiscal && !g.factura_recibida) sinFactura++;
       });
-
       elements.totalMes.textContent = utils.formatMoney(totalMes);
-      elements.porPagar.textContent = utils.formatMoney(porPagar);
-      elements.vencidos.textContent = utils.formatMoney(vencidos);
+      elements.pendientes.textContent = utils.formatMoney(pendientes);
+      elements.sinFactura.textContent = sinFactura;
       elements.pagados.textContent = utils.formatMoney(pagados);
     },
-
     gastos() {
       const { gastos, paginacion } = state;
+      if (!gastos.length) { elements.tableContainer.style.display = 'none'; elements.mobileCards.innerHTML = ''; elements.emptyState.style.display = 'block'; elements.pagination.style.display = 'none'; return; }
+      elements.emptyState.style.display = 'none'; elements.tableContainer.style.display = 'block'; elements.pagination.style.display = 'flex';
+      const start = (paginacion.pagina - 1) * paginacion.limite + 1, end = Math.min(paginacion.pagina * paginacion.limite, paginacion.total);
+      elements.showingStart.textContent = start; elements.showingEnd.textContent = end; elements.totalRecords.textContent = paginacion.total;
+      elements.prevPage.disabled = paginacion.pagina <= 1; elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
-      if (!gastos.length) {
-        elements.tableContainer.style.display = 'none';
-        elements.mobileCards.innerHTML = '';
-        elements.emptyState.style.display = 'block';
-        elements.pagination.style.display = 'none';
-        return;
-      }
-
-      elements.emptyState.style.display = 'none';
-      elements.tableContainer.style.display = 'block';
-      elements.pagination.style.display = 'flex';
-
-      // Pagination info
-      const start = (paginacion.pagina - 1) * paginacion.limite + 1;
-      const end = Math.min(paginacion.pagina * paginacion.limite, paginacion.total);
-      elements.showingStart.textContent = start;
-      elements.showingEnd.textContent = end;
-      elements.totalRecords.textContent = paginacion.total;
-      elements.prevPage.disabled = paginacion.pagina <= 1;
-      elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
-
-      // Table
       elements.tableBody.innerHTML = gastos.map(g => {
-        const pendiente = parseFloat(g.total) - parseFloat(g.monto_pagado || 0);
-        const statusClass = g.estatus_pago || 'pendiente';
-        const statusLabel = {
-          'pendiente': 'Pendiente',
-          'parcial': 'Parcial',
-          'pagado': 'Pagado',
-          'vencido': 'Vencido',
-          'cancelado': 'Cancelado'
-        }[statusClass] || statusClass;
+        const badges = [];
+        if (g.es_fiscal) badges.push(`<span class="badge fiscal">Fiscal</span>`);
+        if (g.es_fiscal && g.factura_validada) badges.push(`<span class="badge validada">Validada</span>`);
+        else if (g.es_fiscal && !g.factura_recibida) badges.push(`<span class="badge sin-factura">Sin factura</span>`);
+        if (g.transaccion_id) badges.push(`<span class="badge conciliado">Conciliado</span>`);
+        const statusBadge = { pendiente: 'pendiente', pagado: 'pagado', vencido: 'vencido', cancelado: 'cancelado' }[g.estatus_pago] || 'pendiente';
+        const statusLabel = { pendiente: 'Pendiente', pagado: 'Pagado', vencido: 'Vencido', cancelado: 'Cancelado' }[g.estatus_pago] || 'Pendiente';
 
-        return `
-          <tr data-id="${g.id}">
-            <td>
-              <div class="cell-main">${g.nombre_contacto || g.numero_gasto || 'Sin proveedor'}</div>
-              <div class="cell-sub">${g.numero_gasto ? `#${g.numero_gasto}` : ''} ${g.categoria || ''}</div>
-            </td>
-            <td>${utils.formatDate(g.fecha)}</td>
-            <td>${g.categoria || '-'}</td>
-            <td>${g.fecha_vencimiento ? utils.formatDate(g.fecha_vencimiento) : '-'}</td>
-            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-            <td style="text-align:right;">
-              <div class="cell-amount expense">${utils.formatMoney(g.total, g.moneda)}</div>
-              ${pendiente > 0 && pendiente < parseFloat(g.total) ? `<div class="cell-sub">Pend: ${utils.formatMoney(pendiente)}</div>` : ''}
-            </td>
-            <td>
-              <div class="table-actions">
-                ${pendiente > 0 ? `
-                  <button class="action-btn" title="Registrar pago" data-action="pay" data-id="${g.id}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </button>
-                ` : ''}
-                <button class="action-btn" title="Editar" data-action="edit" data-id="${g.id}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${g.id}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+        return `<tr data-id="${g.id}">
+          <td><div class="cell-main">${g.concepto || 'Sin concepto'}</div><div class="cell-sub">${g.nombre_proveedor || ''}</div></td>
+          <td>${utils.formatDate(g.fecha)}</td>
+          <td>${g.nombre_categoria || '-'}${g.nombre_subcategoria ? ` / ${g.nombre_subcategoria}` : ''}</td>
+          <td><div class="badges-group">${badges.join('') || '<span class="badge no-fiscal">No fiscal</span>'}</div></td>
+          <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+          <td style="text-align:right;"><div class="cell-amount expense">${utils.formatMoney(g.total, g.moneda)}</div></td>
+          <td><div class="table-actions">
+            <button class="action-btn" title="Editar" data-action="edit" data-id="${g.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${g.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+          </div></td></tr>`;
       }).join('');
 
-      // Mobile cards
       elements.mobileCards.innerHTML = gastos.map(g => {
-        const pendiente = parseFloat(g.total) - parseFloat(g.monto_pagado || 0);
-        const statusClass = g.estatus_pago || 'pendiente';
-        const statusLabel = {
-          'pendiente': 'Pendiente',
-          'parcial': 'Parcial',
-          'pagado': 'Pagado',
-          'vencido': 'Vencido',
-          'cancelado': 'Cancelado'
-        }[statusClass] || statusClass;
-
-        return `
-          <div class="mobile-card" data-id="${g.id}">
-            <div class="mobile-card-header">
-              <div class="mobile-card-title">${g.nombre_contacto || g.numero_gasto || 'Sin proveedor'}</div>
-              <div class="mobile-card-amount">${utils.formatMoney(g.total, g.moneda)}</div>
+        const badges = [];
+        if (g.es_fiscal) badges.push(`<span class="badge fiscal">Fiscal</span>`);
+        if (g.transaccion_id) badges.push(`<span class="badge conciliado">Conciliado</span>`);
+        const statusBadge = g.estatus_pago || 'pendiente';
+        const statusLabel = { pendiente: 'Pendiente', pagado: 'Pagado', vencido: 'Vencido' }[g.estatus_pago] || 'Pendiente';
+        return `<div class="mobile-card" data-id="${g.id}">
+          <div class="mobile-card-header"><div class="mobile-card-title">${g.concepto || 'Sin concepto'}</div><div class="mobile-card-amount">${utils.formatMoney(g.total)}</div></div>
+          <div class="mobile-card-meta"><span>${utils.formatDate(g.fecha)}</span><span>${g.nombre_proveedor || ''}</span></div>
+          <div class="mobile-card-badges">${badges.join('')}<span class="badge ${statusBadge}">${statusLabel}</span></div>
+          <div class="mobile-card-footer"><span>${g.nombre_categoria || ''}</span>
+            <div class="table-actions">
+              <button class="action-btn" data-action="edit" data-id="${g.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="action-btn danger" data-action="delete" data-id="${g.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>
-            <div class="mobile-card-meta">
-              <span>${utils.formatDate(g.fecha)}</span>
-              <span>${g.categoria || ''}</span>
-            </div>
-            <div class="mobile-card-footer">
-              <span class="status-badge ${statusClass}">${statusLabel}</span>
-              <div class="table-actions">
-                ${pendiente > 0 ? `
-                  <button class="action-btn" title="Pagar" data-action="pay" data-id="${g.id}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                  </button>
-                ` : ''}
-                <button class="action-btn" title="Editar" data-action="edit" data-id="${g.id}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${g.id}">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
+          </div></div>`;
       }).join('');
 
-      // Bind action buttons
-      document.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const action = btn.dataset.action;
-          const id = btn.dataset.id;
-          handlers.handleAction(action, id);
-        });
-      });
+      document.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); handlers.handleAction(b.dataset.action, b.dataset.id); }));
     },
-
-    contactos() {
-      elements.contactoId.innerHTML = '<option value="">-- Sin proveedor --</option>' +
-        state.contactos.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    proveedores() {
+      const opts = state.proveedores.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+      elements.proveedorId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
     },
-
-    cuentas() {
-      elements.pagoCuenta.innerHTML = '<option value="">-- Sin registrar en banco --</option>' +
-        state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
-    },
-
     categorias() {
-      elements.categoriasList.innerHTML = state.categorias.map(c => `<option value="${c.categoria}">`).join('');
-      elements.filterCategory.innerHTML = '<option value="">Todas las categorías</option>' +
-        state.categorias.map(c => `<option value="${c.categoria}">${c.categoria} (${c.total})</option>`).join('');
+      const opts = state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      elements.categoriaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      elements.subcategoriaPadre.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      elements.filterCategoria.innerHTML = '<option value="">Categoría</option>' + opts;
+    },
+    subcategorias() {
+      const opts = state.subcategorias.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+      elements.subcategoriaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+    },
+    cuentas() {
+      const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
+      elements.txCuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+    },
+    transacciones() {
+      const opts = state.transacciones.map(t => `<option value="${t.id}">${utils.formatDate(t.fecha)} - ${utils.formatMoney(t.monto)} - ${t.descripcion || t.referencia || 'Sin desc'}</option>`).join('');
+      elements.transaccionId.innerHTML = '<option value="">-- Sin conciliar --</option>' + opts;
     }
   };
 
-  // ============================================
-  // HANDLERS
-  // ============================================
   const handlers = {
     async loadData() {
       try {
-        const [gastosData, contactosData, cuentasData] = await Promise.all([
+        const [gastosData, provData, catData, cuentasData, txData] = await Promise.all([
           api.getGastos({ ...state.filters, pagina: state.paginacion.pagina }),
-          api.getContactos().catch(() => ({ contactos: [] })),
-          api.getCuentas().catch(() => ({ cuentas: [] }))
+          api.getProveedores().catch(() => ({ contactos: [] })),
+          api.getCategorias().catch(() => ({ categorias: [] })),
+          api.getCuentas().catch(() => ({ cuentas: [] })),
+          api.getTransacciones().catch(() => ({ transacciones: [] }))
         ]);
-
         state.gastos = gastosData.gastos || [];
         state.paginacion = gastosData.paginacion || state.paginacion;
-        state.contactos = contactosData.contactos || [];
+        state.proveedores = provData.contactos || [];
+        state.categorias = catData.categorias || [];
         state.cuentas = cuentasData.cuentas || [];
-
-        // Get categories
-        api.getCategorias().then(data => {
-          state.categorias = data || [];
-          render.categorias();
-        }).catch(() => {});
-
-        render.gastos();
-        render.stats();
-        render.contactos();
-        render.cuentas();
-      } catch (error) {
-        console.error('Error loading data:', error);
-      }
+        state.transacciones = txData.transacciones || [];
+        render.gastos(); render.stats(); render.proveedores(); render.categorias(); render.cuentas(); render.transacciones();
+      } catch (e) { console.error('Error:', e); }
     },
-
-    toggleSidebar() {
-      elements.sidebar.classList.toggle('open');
-      elements.sidebarOverlay.classList.toggle('active');
+    async loadSubcategorias(catId) {
+      if (!catId) { state.subcategorias = []; render.subcategorias(); return; }
+      try {
+        const data = await api.getSubcategorias(catId);
+        state.subcategorias = data.subcategorias || [];
+        render.subcategorias();
+      } catch (e) { state.subcategorias = []; render.subcategorias(); }
     },
-
-    closeSidebar() {
-      elements.sidebar.classList.remove('open');
-      elements.sidebarOverlay.classList.remove('active');
-    },
-
+    toggleSidebar() { elements.sidebar.classList.toggle('open'); elements.sidebarOverlay.classList.toggle('active'); },
+    closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
     handleAction(action, id) {
-      const gasto = state.gastos.find(g => g.id === id);
-      switch (action) {
-        case 'edit': this.openEditModal(gasto); break;
-        case 'delete': this.openDeleteModal(gasto); break;
-        case 'pay': this.openPagoModal(gasto); break;
-      }
+      const g = state.gastos.find(x => x.id === id);
+      if (action === 'edit') this.openEditModal(g);
+      else if (action === 'delete') this.openDeleteModal(g);
     },
-
     // Gasto Modal
     openCreateModal() {
-      state.editingId = null;
+      state.editingId = null; state.comprobanteData = null;
       elements.modalTitle.textContent = 'Nuevo Gasto';
       elements.gastoForm.reset();
       elements.fecha.value = utils.today();
+      elements.fiscalFields.style.display = 'none';
+      elements.validadaRow.style.display = 'none';
+      elements.comprobanteUpload.classList.remove('has-file');
+      elements.comprobantePreview.style.display = 'none';
       elements.gastoModal.classList.add('active');
-      elements.contactoId.focus();
+      elements.concepto.focus();
     },
-
-    openEditModal(gasto) {
-      state.editingId = gasto.id;
+    async openEditModal(g) {
+      state.editingId = g.id; state.comprobanteData = g.comprobante_url || null;
       elements.modalTitle.textContent = 'Editar Gasto';
-      
-      elements.contactoId.value = gasto.contacto_id || '';
-      elements.numeroGasto.value = gasto.numero_gasto || '';
-      elements.fecha.value = utils.formatDateInput(gasto.fecha);
-      elements.fechaVencimiento.value = utils.formatDateInput(gasto.fecha_vencimiento);
-      elements.categoria.value = gasto.categoria || '';
-      elements.subtotal.value = gasto.subtotal || '';
-      elements.impuesto.value = gasto.impuesto || '';
-      elements.total.value = gasto.total || '';
-      elements.moneda.value = gasto.moneda || 'MXN';
-      elements.tipoCambio.value = gasto.tipo_cambio || 1;
-      elements.uuidCfdi.value = gasto.uuid_cfdi || '';
-      elements.folioCfdi.value = gasto.folio_cfdi || '';
-      elements.notas.value = gasto.notas || '';
-
+      elements.concepto.value = g.concepto || '';
+      elements.proveedorId.value = g.proveedor_id || '';
+      elements.fecha.value = utils.formatDateInput(g.fecha);
+      elements.fechaVencimiento.value = utils.formatDateInput(g.fecha_vencimiento);
+      elements.categoriaId.value = g.categoria_id || '';
+      if (g.categoria_id) await this.loadSubcategorias(g.categoria_id);
+      elements.subcategoriaId.value = g.subcategoria_id || '';
+      elements.subtotal.value = g.subtotal || '';
+      elements.impuesto.value = g.impuesto || '';
+      elements.total.value = g.total || '';
+      elements.moneda.value = g.moneda || 'MXN';
+      elements.metodoPago.value = g.metodo_pago || '';
+      elements.esFiscal.checked = g.es_fiscal || false;
+      elements.fiscalFields.style.display = g.es_fiscal ? 'block' : 'none';
+      elements.facturaRecibida.checked = g.factura_recibida || false;
+      elements.validadaRow.style.display = g.factura_recibida ? 'flex' : 'none';
+      elements.facturaValidada.checked = g.factura_validada || false;
+      elements.uuidCfdi.value = g.uuid_cfdi || '';
+      elements.folioCfdi.value = g.folio_cfdi || '';
+      elements.transaccionId.value = g.transaccion_id || '';
+      elements.notas.value = g.notas || '';
+      if (g.comprobante_url) {
+        elements.comprobanteUpload.classList.add('has-file');
+        elements.comprobantePreview.style.display = 'flex';
+        elements.comprobanteFileName.textContent = 'Comprobante guardado';
+      } else {
+        elements.comprobanteUpload.classList.remove('has-file');
+        elements.comprobantePreview.style.display = 'none';
+      }
       elements.gastoModal.classList.add('active');
     },
-
-    closeGastoModal() {
-      elements.gastoModal.classList.remove('active');
-      elements.gastoForm.reset();
-      state.editingId = null;
-    },
-
+    closeGastoModal() { elements.gastoModal.classList.remove('active'); elements.gastoForm.reset(); state.editingId = null; state.comprobanteData = null; },
     async submitGasto(e) {
       e.preventDefault();
-
-      const data = {
-        contacto_id: elements.contactoId.value || null,
-        numero_gasto: elements.numeroGasto.value.trim() || null,
+      const d = {
+        concepto: elements.concepto.value.trim(),
+        proveedor_id: elements.proveedorId.value || null,
         fecha: elements.fecha.value,
         fecha_vencimiento: elements.fechaVencimiento.value || null,
-        categoria: elements.categoria.value.trim() || null,
+        categoria_id: elements.categoriaId.value || null,
+        subcategoria_id: elements.subcategoriaId.value || null,
         subtotal: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
         impuesto: parseFloat(elements.impuesto.value) || 0,
         total: parseFloat(elements.total.value),
         moneda: elements.moneda.value,
-        tipo_cambio: parseFloat(elements.tipoCambio.value) || 1,
+        metodo_pago: elements.metodoPago.value || null,
+        es_fiscal: elements.esFiscal.checked,
+        factura_recibida: elements.facturaRecibida.checked,
+        factura_validada: elements.facturaValidada.checked,
         uuid_cfdi: elements.uuidCfdi.value.trim() || null,
         folio_cfdi: elements.folioCfdi.value.trim() || null,
-        notas: elements.notas.value.trim() || null
+        transaccion_id: elements.transaccionId.value || null,
+        notas: elements.notas.value.trim() || null,
+        comprobante_url: state.comprobanteData || null
       };
-
-      elements.submitModal.classList.add('loading');
-      elements.submitModal.disabled = true;
-
+      elements.submitModal.classList.add('loading'); elements.submitModal.disabled = true;
       try {
-        if (state.editingId) {
-          await api.updateGasto(state.editingId, data);
-        } else {
-          await api.createGasto(data);
-        }
-
-        this.closeGastoModal();
-        await this.loadData();
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        elements.submitModal.classList.remove('loading');
-        elements.submitModal.disabled = false;
-      }
+        if (state.editingId) await api.updateGasto(state.editingId, d); else await api.createGasto(d);
+        this.closeGastoModal(); await this.loadData();
+      } catch (e) { alert(e.message); }
+      finally { elements.submitModal.classList.remove('loading'); elements.submitModal.disabled = false; }
     },
-
-    // Pago Modal
-    openPagoModal(gasto) {
-      state.payingGasto = gasto;
-      const pendiente = parseFloat(gasto.total) - parseFloat(gasto.monto_pagado || 0);
-      
-      elements.pagoGastoInfo.value = gasto.nombre_contacto || gasto.numero_gasto || `Gasto ${gasto.id.slice(0, 8)}`;
-      elements.pagoTotal.value = utils.formatMoney(gasto.total);
-      elements.pagoPendiente.value = utils.formatMoney(pendiente);
-      elements.pagoMonto.value = pendiente.toFixed(2);
-      elements.pagoMonto.max = pendiente;
-      elements.pagoFecha.value = utils.today();
-      elements.pagoCuenta.value = '';
-      elements.pagoMetodo.value = 'transferencia';
-
-      elements.pagoModal.classList.add('active');
-      elements.pagoMonto.focus();
-    },
-
-    closePagoModal() {
-      elements.pagoModal.classList.remove('active');
-      elements.pagoForm.reset();
-      state.payingGasto = null;
-    },
-
-    async submitPago(e) {
+    // Quick creates
+    openCategoriaModal() { elements.categoriaForm.reset(); elements.categoriaModal.classList.add('active'); elements.categoriaNombre.focus(); },
+    closeCategoriaModal() { elements.categoriaModal.classList.remove('active'); },
+    async submitCategoria(e) {
       e.preventDefault();
-
-      const data = {
-        tipo: 'gasto',
-        referencia_id: state.payingGasto.id,
-        monto: parseFloat(elements.pagoMonto.value),
-        fecha: elements.pagoFecha.value,
-        metodo_pago: elements.pagoMetodo.value,
-        cuenta_bancaria_id: elements.pagoCuenta.value || null
-      };
-
-      elements.submitPago.classList.add('loading');
-      elements.submitPago.disabled = true;
-
       try {
-        await api.registrarPago(data);
-        this.closePagoModal();
-        await this.loadData();
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        elements.submitPago.classList.remove('loading');
-        elements.submitPago.disabled = false;
-      }
+        const data = await api.createCategoria({ nombre: elements.categoriaNombre.value.trim(), descripcion: elements.categoriaDescripcion.value.trim() || null });
+        state.categorias.push(data.categoria || data);
+        render.categorias();
+        elements.categoriaId.value = data.categoria?.id || data.id;
+        this.closeCategoriaModal();
+      } catch (e) { alert(e.message); }
     },
-
-    // Delete Modal
-    openDeleteModal(gasto) {
-      state.deletingId = gasto.id;
-      elements.deleteGastoName.textContent = gasto.nombre_contacto || gasto.numero_gasto || `Gasto del ${utils.formatDate(gasto.fecha)}`;
-      elements.deleteModal.classList.add('active');
+    openSubcategoriaModal() {
+      elements.subcategoriaForm.reset();
+      elements.subcategoriaPadre.innerHTML = '<option value="">-- Seleccionar --</option>' + state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      if (elements.categoriaId.value) elements.subcategoriaPadre.value = elements.categoriaId.value;
+      elements.subcategoriaModal.classList.add('active');
+      elements.subcategoriaNombre.focus();
     },
-
-    closeDeleteModal() {
-      elements.deleteModal.classList.remove('active');
-      state.deletingId = null;
+    closeSubcategoriaModal() { elements.subcategoriaModal.classList.remove('active'); },
+    async submitSubcategoria(e) {
+      e.preventDefault();
+      const catId = elements.subcategoriaPadre.value;
+      if (!catId) { alert('Selecciona categoría padre'); return; }
+      try {
+        const data = await api.createSubcategoria(catId, { nombre: elements.subcategoriaNombre.value.trim() });
+        if (catId === elements.categoriaId.value) {
+          state.subcategorias.push(data.subcategoria || data);
+          render.subcategorias();
+          elements.subcategoriaId.value = data.subcategoria?.id || data.id;
+        }
+        this.closeSubcategoriaModal();
+      } catch (e) { alert(e.message); }
     },
-
+    openProveedorModal() { elements.proveedorForm.reset(); elements.proveedorModal.classList.add('active'); elements.proveedorNombre.focus(); },
+    closeProveedorModal() { elements.proveedorModal.classList.remove('active'); },
+    async submitProveedor(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createProveedor({
+          nombre: elements.proveedorNombre.value.trim(),
+          rfc: elements.proveedorRfc.value.trim().toUpperCase() || null,
+          telefono: elements.proveedorTelefono.value.trim() || null,
+          email: elements.proveedorEmail.value.trim() || null
+        });
+        state.proveedores.push(data.contacto || data);
+        render.proveedores();
+        elements.proveedorId.value = data.contacto?.id || data.id;
+        this.closeProveedorModal();
+      } catch (e) { alert(e.message); }
+    },
+    openTransaccionModal() {
+      elements.transaccionForm.reset();
+      elements.txFecha.value = elements.fecha.value || utils.today();
+      elements.txMonto.value = elements.total.value || '';
+      render.cuentas();
+      elements.transaccionModal.classList.add('active');
+    },
+    closeTransaccionModal() { elements.transaccionModal.classList.remove('active'); },
+    async submitTransaccion(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createTransaccion({
+          tipo: 'egreso',
+          cuenta_bancaria_id: elements.txCuentaId.value,
+          monto: parseFloat(elements.txMonto.value),
+          fecha: elements.txFecha.value,
+          referencia: elements.txReferencia.value.trim() || null,
+          descripcion: elements.concepto.value || 'Gasto'
+        });
+        state.transacciones.unshift(data.transaccion || data);
+        render.transacciones();
+        elements.transaccionId.value = data.transaccion?.id || data.id;
+        this.closeTransaccionModal();
+      } catch (e) { alert(e.message); }
+    },
+    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); elements.cuentaNombre.focus(); },
+    closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
+    async submitCuenta(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createCuenta({
+          nombre: elements.cuentaNombre.value.trim(),
+          banco: elements.cuentaBanco.value.trim() || null,
+          saldo_inicial: parseFloat(elements.cuentaSaldo.value) || 0
+        });
+        state.cuentas.push(data.cuenta || data);
+        render.cuentas();
+        elements.txCuentaId.value = data.cuenta?.id || data.id;
+        this.closeCuentaModal();
+      } catch (e) { alert(e.message); }
+    },
+    // Delete
+    openDeleteModal(g) { state.deletingId = g.id; elements.deleteGastoName.textContent = g.concepto || 'este gasto'; elements.deleteModal.classList.add('active'); },
+    closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
-      elements.confirmDelete.classList.add('loading');
-      elements.confirmDelete.disabled = true;
-
-      try {
-        await api.deleteGasto(state.deletingId);
-        this.closeDeleteModal();
-        await this.loadData();
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        elements.confirmDelete.classList.remove('loading');
-        elements.confirmDelete.disabled = false;
-      }
+      elements.confirmDelete.classList.add('loading'); elements.confirmDelete.disabled = true;
+      try { await api.deleteGasto(state.deletingId); this.closeDeleteModal(); await this.loadData(); }
+      catch (e) { alert(e.message); }
+      finally { elements.confirmDelete.classList.remove('loading'); elements.confirmDelete.disabled = false; }
     },
-
     // Filters
     applyFilters() {
       state.filters.buscar = elements.searchInput.value.trim();
       state.filters.estatus = elements.filterStatus.value;
-      state.filters.categoria = elements.filterCategory.value;
+      state.filters.categoria = elements.filterCategoria.value;
+      state.filters.es_fiscal = elements.filterFiscal.value;
       state.paginacion.pagina = 1;
       this.loadData();
     },
-
-    // Pagination
-    prevPage() {
-      if (state.paginacion.pagina > 1) {
-        state.paginacion.pagina--;
-        this.loadData();
+    prevPage() { if (state.paginacion.pagina > 1) { state.paginacion.pagina--; this.loadData(); } },
+    nextPage() { if (state.paginacion.pagina < state.paginacion.paginas) { state.paginacion.pagina++; this.loadData(); } },
+    calcTotal() { const s = parseFloat(elements.subtotal.value) || 0, i = parseFloat(elements.impuesto.value) || 0; if (s > 0) elements.total.value = (s + i).toFixed(2); },
+    handleFiscalToggle() { elements.fiscalFields.style.display = elements.esFiscal.checked ? 'block' : 'none'; },
+    handleFacturaRecibidaToggle() { elements.validadaRow.style.display = elements.facturaRecibida.checked ? 'flex' : 'none'; },
+    handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        // Por ahora solo guardamos el nombre, en producción subirías a Cloudinary
+        state.comprobanteData = file.name;
+        elements.comprobanteUpload.classList.add('has-file');
+        elements.comprobantePreview.style.display = 'flex';
+        elements.comprobanteFileName.textContent = file.name;
       }
     },
-
-    nextPage() {
-      if (state.paginacion.pagina < state.paginacion.paginas) {
-        state.paginacion.pagina++;
-        this.loadData();
-      }
+    removeComprobante() {
+      state.comprobanteData = null;
+      elements.comprobanteFile.value = '';
+      elements.comprobanteUpload.classList.remove('has-file');
+      elements.comprobantePreview.style.display = 'none';
     },
-
-    // Auto-calc
-    calcTotal() {
-      const subtotal = parseFloat(elements.subtotal.value) || 0;
-      const impuesto = parseFloat(elements.impuesto.value) || 0;
-      if (subtotal > 0) {
-        elements.total.value = (subtotal + impuesto).toFixed(2);
-      }
-    },
-
-    switchOrg() {
-      localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG);
-      utils.redirect(CONFIG.REDIRECT.SELECT_ORG);
-    }
+    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); }
   };
 
-  // ============================================
-  // INIT
-  // ============================================
   function init() {
-    if (!utils.getToken()) {
-      utils.redirect(CONFIG.REDIRECT.LOGIN);
-      return;
-    }
+    if (!utils.getToken()) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
+    state.org = utils.getOrg(); if (!state.org) { utils.redirect(CONFIG.REDIRECT.SELECT_ORG); return; }
+    state.user = utils.getUser(); render.user(); render.org();
 
-    state.org = utils.getOrg();
-    if (!state.org) {
-      utils.redirect(CONFIG.REDIRECT.SELECT_ORG);
-      return;
-    }
-
-    state.user = utils.getUser();
-
-    render.user();
-    render.org();
-
-    // Event listeners
-    elements.menuToggle.addEventListener('click', handlers.toggleSidebar.bind(handlers));
-    elements.sidebarOverlay.addEventListener('click', handlers.closeSidebar.bind(handlers));
-    elements.orgSwitcher.addEventListener('click', handlers.switchOrg.bind(handlers));
+    // Sidebar
+    elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
 
     // Add buttons
-    elements.addGastoBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
-    elements.addFirstGastoBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
-    elements.fabBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
+    elements.addGastoBtn.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstGastoBtn.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
 
     // Gasto modal
-    elements.closeModal.addEventListener('click', handlers.closeGastoModal.bind(handlers));
-    elements.cancelModal.addEventListener('click', handlers.closeGastoModal.bind(handlers));
-    elements.gastoForm.addEventListener('submit', handlers.submitGasto.bind(handlers));
-    elements.gastoModal.addEventListener('click', (e) => {
-      if (e.target === elements.gastoModal) handlers.closeGastoModal();
-    });
+    elements.closeModal.addEventListener('click', () => handlers.closeGastoModal());
+    elements.cancelModal.addEventListener('click', () => handlers.closeGastoModal());
+    elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
+    elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
 
-    // Auto calc
-    elements.subtotal.addEventListener('input', handlers.calcTotal.bind(handlers));
-    elements.impuesto.addEventListener('input', handlers.calcTotal.bind(handlers));
+    // Form interactions
+    elements.subtotal.addEventListener('input', () => handlers.calcTotal());
+    elements.impuesto.addEventListener('input', () => handlers.calcTotal());
+    elements.esFiscal.addEventListener('change', () => handlers.handleFiscalToggle());
+    elements.facturaRecibida.addEventListener('change', () => handlers.handleFacturaRecibidaToggle());
+    elements.categoriaId.addEventListener('change', () => handlers.loadSubcategorias(elements.categoriaId.value));
+    elements.comprobanteUpload.addEventListener('click', () => elements.comprobanteFile.click());
+    elements.comprobanteFile.addEventListener('change', e => handlers.handleFileSelect(e));
+    elements.removeComprobante.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
 
-    // Pago modal
-    elements.closePagoModal.addEventListener('click', handlers.closePagoModal.bind(handlers));
-    elements.cancelPagoModal.addEventListener('click', handlers.closePagoModal.bind(handlers));
-    elements.pagoForm.addEventListener('submit', handlers.submitPago.bind(handlers));
-    elements.pagoModal.addEventListener('click', (e) => {
-      if (e.target === elements.pagoModal) handlers.closePagoModal();
-    });
+    // Quick create buttons
+    elements.addProveedorBtn.addEventListener('click', () => handlers.openProveedorModal());
+    elements.addCategoriaBtn.addEventListener('click', () => handlers.openCategoriaModal());
+    elements.addSubcategoriaBtn.addEventListener('click', () => handlers.openSubcategoriaModal());
+    elements.addTransaccionBtn.addEventListener('click', () => handlers.openTransaccionModal());
+    elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
+
+    // Categoria modal
+    elements.closeCategoriaModal.addEventListener('click', () => handlers.closeCategoriaModal());
+    elements.cancelCategoriaModal.addEventListener('click', () => handlers.closeCategoriaModal());
+    elements.categoriaForm.addEventListener('submit', e => handlers.submitCategoria(e));
+    elements.categoriaModal.addEventListener('click', e => { if (e.target === elements.categoriaModal) handlers.closeCategoriaModal(); });
+
+    // Subcategoria modal
+    elements.closeSubcategoriaModal.addEventListener('click', () => handlers.closeSubcategoriaModal());
+    elements.cancelSubcategoriaModal.addEventListener('click', () => handlers.closeSubcategoriaModal());
+    elements.subcategoriaForm.addEventListener('submit', e => handlers.submitSubcategoria(e));
+    elements.subcategoriaModal.addEventListener('click', e => { if (e.target === elements.subcategoriaModal) handlers.closeSubcategoriaModal(); });
+
+    // Proveedor modal
+    elements.closeProveedorModal.addEventListener('click', () => handlers.closeProveedorModal());
+    elements.cancelProveedorModal.addEventListener('click', () => handlers.closeProveedorModal());
+    elements.proveedorForm.addEventListener('submit', e => handlers.submitProveedor(e));
+    elements.proveedorModal.addEventListener('click', e => { if (e.target === elements.proveedorModal) handlers.closeProveedorModal(); });
+
+    // Transaccion modal
+    elements.closeTransaccionModal.addEventListener('click', () => handlers.closeTransaccionModal());
+    elements.cancelTransaccionModal.addEventListener('click', () => handlers.closeTransaccionModal());
+    elements.transaccionForm.addEventListener('submit', e => handlers.submitTransaccion(e));
+    elements.transaccionModal.addEventListener('click', e => { if (e.target === elements.transaccionModal) handlers.closeTransaccionModal(); });
+
+    // Cuenta modal
+    elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cancelCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cuentaForm.addEventListener('submit', e => handlers.submitCuenta(e));
+    elements.cuentaModal.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
 
     // Delete modal
-    elements.closeDeleteModal.addEventListener('click', handlers.closeDeleteModal.bind(handlers));
-    elements.cancelDeleteModal.addEventListener('click', handlers.closeDeleteModal.bind(handlers));
-    elements.confirmDelete.addEventListener('click', handlers.confirmDelete.bind(handlers));
-    elements.deleteModal.addEventListener('click', (e) => {
-      if (e.target === elements.deleteModal) handlers.closeDeleteModal();
-    });
+    elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
     // Filters
-    const debouncedFilter = utils.debounce(() => handlers.applyFilters(), 300);
-    elements.searchInput.addEventListener('input', debouncedFilter);
+    const df = utils.debounce(() => handlers.applyFilters(), 300);
+    elements.searchInput.addEventListener('input', df);
     elements.filterStatus.addEventListener('change', () => handlers.applyFilters());
-    elements.filterCategory.addEventListener('change', () => handlers.applyFilters());
-
-    // Pagination
-    elements.prevPage.addEventListener('click', handlers.prevPage.bind(handlers));
-    elements.nextPage.addEventListener('click', handlers.nextPage.bind(handlers));
+    elements.filterCategoria.addEventListener('change', () => handlers.applyFilters());
+    elements.filterFiscal.addEventListener('change', () => handlers.applyFilters());
+    elements.prevPage.addEventListener('click', () => handlers.prevPage());
+    elements.nextPage.addEventListener('click', () => handlers.nextPage());
 
     // ESC key
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        handlers.closeGastoModal();
-        handlers.closePagoModal();
+        handlers.closeGastoModal(); handlers.closeCategoriaModal(); handlers.closeSubcategoriaModal();
+        handlers.closeProveedorModal(); handlers.closeTransaccionModal(); handlers.closeCuentaModal();
         handlers.closeDeleteModal();
       }
     });
 
-    // Load data
     handlers.loadData();
-
-    console.log('🚀 TRUNO Gastos initialized');
+    console.log('🚀 TRUNO Gastos v2 initialized');
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

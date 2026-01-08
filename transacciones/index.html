@@ -21,7 +21,7 @@
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Finanzas</div>
-          <a href="../bancos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Bancos</a>
+          <a href="../bancos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Bancos</a>
           <a href="index.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Transacciones</a>
         </div>
         <div class="nav-section">
@@ -48,7 +48,7 @@
       <header class="header">
         <div class="header-left">
           <button class="menu-toggle" id="menuToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-          <h1 class="header-title">Transacciones</h1>
+          <h1 class="header-title">Movimientos</h1>
         </div>
         <div class="header-right"><div class="user-avatar" id="userAvatar">DL</div></div>
       </header>
@@ -57,11 +57,11 @@
         <div class="page-header">
           <div class="page-header-info">
             <h2>Movimientos Bancarios</h2>
-            <p>Historial de ingresos, egresos y transferencias</p>
+            <p>Ingresos y egresos de tus cuentas</p>
           </div>
           <button class="btn btn-primary" id="addTxBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span class="btn-text">Nueva Transacción</span>
+            <span class="btn-text">Nuevo Movimiento</span>
           </button>
         </div>
 
@@ -70,16 +70,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="searchInput" placeholder="Buscar por descripción, referencia...">
           </div>
-          <select class="filter-select" id="filterType">
-            <option value="">Todos los tipos</option>
-            <option value="ingreso">Ingresos</option>
-            <option value="egreso">Egresos</option>
-            <option value="transferencia">Transferencias</option>
-            <option value="ajuste">Ajustes</option>
-          </select>
-          <select class="filter-select" id="filterCuenta">
-            <option value="">Todas las cuentas</option>
-          </select>
+          <select class="filter-select" id="filterType"><option value="">Tipo</option><option value="ingreso">Ingresos</option><option value="egreso">Egresos</option></select>
+          <select class="filter-select" id="filterCuenta"><option value="">Cuenta</option></select>
+          <select class="filter-select" id="filterConciliado"><option value="">Conciliación</option><option value="1">Conciliados</option><option value="0">Sin conciliar</option></select>
         </div>
 
         <div class="table-container" id="tableContainer">
@@ -89,13 +82,13 @@
                 <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Cuenta</th>
-                <th>Tipo</th>
+                <th>Estado</th>
                 <th style="text-align:right;">Monto</th>
                 <th style="width:80px;"></th>
               </tr>
             </thead>
             <tbody id="tableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 48px;"><div class="empty-state-icon" style="margin: 0 auto 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Cargando transacciones...</h3></td></tr>
+              <tr><td colspan="6" style="text-align:center; padding: 48px;"><div class="empty-state-icon" style="margin: 0 auto 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Cargando...</h3></td></tr>
             </tbody>
           </table>
           <div class="pagination" id="pagination" style="display:none;">
@@ -111,40 +104,39 @@
 
         <div class="empty-state" id="emptyState" style="display:none;">
           <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-          <h3>Sin transacciones</h3>
-          <p>Registra tu primera transacción para ver el historial de movimientos</p>
-          <button class="btn btn-primary" id="addFirstTxBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nueva Transacción</button>
+          <h3>Sin movimientos</h3>
+          <p>Registra tu primer ingreso o egreso</p>
+          <button class="btn btn-primary" id="addFirstTxBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Movimiento</button>
         </div>
       </div>
     </main>
-
     <button class="fab" id="fabBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
   </div>
 
-  <!-- Modal: Nueva Transacción -->
+  <!-- Modal: Nuevo/Editar Movimiento (Simple) -->
   <div class="modal-overlay" id="txModal">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title" id="modalTitle">Nueva Transacción</h2>
+        <h2 class="modal-title" id="modalTitle">Nuevo Movimiento</h2>
         <button class="modal-close" id="closeModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="txForm">
         <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label required">Tipo</label>
-            <select class="form-input" id="tipo" required>
-              <option value="ingreso">Ingreso</option>
-              <option value="egreso">Egreso</option>
-              <option value="transferencia">Transferencia</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label required">Cuenta</label>
-            <select class="form-input" id="cuentaId" required><option value="">Selecciona cuenta</option></select>
-          </div>
-          <div class="form-group" id="cuentaDestinoGroup" style="display:none;">
-            <label class="form-label required">Cuenta Destino</label>
-            <select class="form-input" id="cuentaDestinoId"><option value="">Selecciona cuenta destino</option></select>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Tipo</label>
+              <select class="form-select" id="tipo" required>
+                <option value="egreso">💸 Egreso (Salida)</option>
+                <option value="ingreso">💰 Ingreso (Entrada)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required">Cuenta</label>
+              <div class="select-with-add">
+                <select class="form-select" id="cuentaId" required></select>
+                <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+              </div>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -158,15 +150,50 @@
           </div>
           <div class="form-group">
             <label class="form-label">Descripción</label>
-            <input type="text" class="form-input" id="descripcion" placeholder="Descripción del movimiento">
+            <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
           </div>
           <div class="form-group">
-            <label class="form-label">Referencia</label>
-            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia bancaria">
+            <label class="form-label">Referencia bancaria</label>
+            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia del banco">
           </div>
+
+          <!-- Comprobante -->
           <div class="form-group">
-            <label class="form-label">Categoría</label>
-            <input type="text" class="form-input" id="categoria" placeholder="Ej. Nómina, Servicios, Ventas">
+            <label class="form-label">Comprobante</label>
+            <div class="file-upload" id="comprobanteUpload">
+              <div class="file-upload-content">
+                <div class="file-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div class="file-upload-text">
+                  <div class="file-upload-text-main"><strong>Subir</strong> comprobante</div>
+                  <div class="file-upload-text-hint">Foto o PDF del voucher</div>
+                </div>
+              </div>
+              <input type="file" id="comprobanteFile" accept="image/*,.pdf">
+            </div>
+            <div class="file-preview" id="comprobantePreview" style="display:none;">
+              <span class="file-preview-name" id="comprobanteFileName"></span>
+              <button type="button" class="btn btn-xs btn-danger" id="removeComprobante">Quitar</button>
+            </div>
+          </div>
+
+          <!-- Conciliación -->
+          <div class="form-group">
+            <label class="form-label">Conciliar con Gasto o Venta</label>
+            <select class="form-select" id="conciliarTipo">
+              <option value="">-- Sin conciliar --</option>
+              <option value="gasto">Vincular con un Gasto</option>
+              <option value="venta">Vincular con una Venta</option>
+            </select>
+          </div>
+          <div class="form-group" id="conciliarGastoGroup" style="display:none;">
+            <label class="form-label">Seleccionar Gasto</label>
+            <select class="form-select" id="gastoId"></select>
+            <span class="form-hint">Gastos pendientes de conciliar</span>
+          </div>
+          <div class="form-group" id="conciliarVentaGroup" style="display:none;">
+            <label class="form-label">Seleccionar Venta</label>
+            <select class="form-select" id="ventaId"></select>
+            <span class="form-hint">Ventas pendientes de cobro</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -177,16 +204,51 @@
     </div>
   </div>
 
+  <!-- Modal: Crear Cuenta Rápida -->
+  <div class="modal-overlay" id="cuentaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva Cuenta Bancaria</h2>
+        <button class="modal-close" id="closeCuentaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="cuentaForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre de la cuenta</label>
+            <input type="text" class="form-input" id="cuentaNombre" placeholder="Ej: BBVA Principal, Efectivo Caja" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Banco</label>
+              <input type="text" class="form-input" id="cuentaBanco" placeholder="BBVA, Banorte, Efectivo...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Saldo inicial</label>
+              <input type="number" class="form-input" id="cuentaSaldo" placeholder="0.00" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Últimos 4 dígitos</label>
+            <input type="text" class="form-input" id="cuentaDigitos" placeholder="1234" maxlength="4">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelCuentaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear Cuenta</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Confirmar Eliminar -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">Eliminar Transacción</h2>
+        <h2 class="modal-title">Eliminar Movimiento</h2>
         <button class="modal-close" id="closeDeleteModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="modal-body">
-        <p>¿Estás seguro de eliminar esta transacción?</p>
-        <p style="color: var(--text-muted); margin-top: var(--spacing-sm); font-size: var(--font-size-sm);">Esta acción no se puede deshacer y afectará el saldo de la cuenta.</p>
+        <p>¿Eliminar este movimiento? El saldo de la cuenta se actualizará.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
