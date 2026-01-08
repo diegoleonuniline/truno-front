@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e14">
+  <title>Seleccionar Empresa | TRUNO</title>
+  <link rel="stylesheet" href="seleccionar.css">
+</head>
+<body>
+  <div class="org-container">
+    <!-- Header -->
+    <header class="org-header">
+      <div class="org-header-left">
+        <div class="org-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
+            <path d="M4 10v11"/><path d="M20 10v11"/>
+            <path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/>
+          </svg>
+        </div>
+        <span class="org-brand">TRUNO</span>
+      </div>
+      
+      <div class="user-menu">
+        <button class="user-btn" id="userMenuBtn">
+          <div class="user-avatar" id="userAvatar">DL</div>
+          <span class="user-name" id="userName">Diego León</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+        
+        <div class="user-dropdown" id="userDropdown">
+          <button class="dropdown-item" id="profileBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Mi Perfil
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item danger" id="logoutBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="org-main">
+      <div class="org-content">
+        <h1 class="org-title">Selecciona una Empresa</h1>
+        <p class="org-subtitle">Elige la empresa con la que deseas trabajar</p>
+
+        <!-- Loading State -->
+        <div class="org-loading" id="loadingState">
+          <div class="spinner"></div>
+          <span class="org-loading-text">Cargando empresas...</span>
+        </div>
+
+        <!-- Organizations List -->
+        <div class="org-list" id="orgList" style="display: none;"></div>
+
+        <!-- Empty State -->
+        <div class="org-empty" id="emptyState" style="display: none;">
+          <div class="org-empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
+              <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
+              <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+            </svg>
+          </div>
+          <h3 class="org-empty-title">Sin empresas</h3>
+          <p class="org-empty-text">Crea tu primera empresa para comenzar a gestionar tus finanzas</p>
+        </div>
+
+        <!-- Create New Button -->
+        <button class="org-create" id="createOrgBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Crear Nueva Empresa
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Create Organization -->
+  <div class="modal-overlay" id="createModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva Empresa</h2>
+        <button class="modal-close" id="closeModalBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <form id="createOrgForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="orgName">Nombre de la Empresa *</label>
+            <input type="text" id="orgName" class="form-input" placeholder="Ej. Mi Empresa S.A." required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="orgType">Tipo de Persona</label>
+            <select id="orgType" class="form-input form-select">
+              <option value="pyme">Persona Moral (PyME)</option>
+              <option value="persona_fisica">Persona Física</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="orgRfc">RFC (Opcional)</label>
+            <input type="text" id="orgRfc" class="form-input" placeholder="Ej. XAXX010101000" maxlength="13">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="orgEmail">Correo Empresarial (Opcional)</label>
+            <input type="email" id="orgEmail" class="form-input" placeholder="Ej. contacto@empresa.com">
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelModalBtn">
+            <span class="btn-text">Cancelar</span>
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitOrgBtn">
+            <span class="btn-text">Crear Empresa</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="seleccionar.js"></script>
+</body>
+</html>
