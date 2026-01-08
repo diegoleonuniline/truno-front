@@ -29,6 +29,9 @@
     userAvatar: document.getElementById('userAvatar'),
     // Content
     accountsGrid: document.getElementById('accountsGrid'),
+    tableContainer: document.getElementById('tableContainer'),
+    tableBody: document.getElementById('tableBody'),
+    viewToggle: document.getElementById('viewToggle'),
     loadingState: document.getElementById('loadingState'),
     emptyState: document.getElementById('emptyState'),
     totalBalance: document.getElementById('totalBalance'),
@@ -73,7 +76,8 @@
     accounts: [],
     editingId: null,
     deletingId: null,
-    adjustingId: null
+    adjustingId: null,
+    currentView: 'cards' // 'cards' or 'table'
   };
 
   // ============================================
@@ -176,13 +180,14 @@
     },
 
     accounts() {
-      const { accounts } = state;
+      const { accounts, currentView } = state;
 
       // Hide loading
       elements.loadingState.style.display = 'none';
 
       if (!accounts.length) {
         elements.accountsGrid.style.display = 'none';
+        elements.tableContainer.style.display = 'none';
         elements.emptyState.style.display = 'block';
         elements.totalBalance.textContent = utils.formatMoney(0);
         elements.accountCount.textContent = '0';
@@ -190,14 +195,26 @@
       }
 
       elements.emptyState.style.display = 'none';
-      elements.accountsGrid.style.display = 'grid';
 
       // Calculate total
       const total = accounts.reduce((sum, acc) => sum + parseFloat(acc.saldo_actual || 0), 0);
       elements.totalBalance.textContent = utils.formatMoney(total);
       elements.accountCount.textContent = accounts.length;
 
-      // Render cards
+      // Show correct view
+      if (currentView === 'table') {
+        elements.accountsGrid.style.display = 'none';
+        elements.tableContainer.style.display = 'block';
+        this.accountsTable();
+      } else {
+        elements.accountsGrid.style.display = 'grid';
+        elements.tableContainer.style.display = 'none';
+        this.accountsCards();
+      }
+    },
+
+    accountsCards() {
+      const { accounts } = state;
       elements.accountsGrid.innerHTML = accounts.map(acc => {
         const balance = parseFloat(acc.saldo_actual || 0);
         const balanceClass = balance >= 0 ? 'positive' : 'negative';
@@ -282,6 +299,52 @@
           if (!e.target.closest('.account-menu')) {
             const id = card.dataset.id;
             utils.redirect(`../transacciones/index.html?cuenta_id=${id}`);
+          }
+        });
+      });
+    },
+
+    accountsTable() {
+      const { accounts } = state;
+      elements.tableBody.innerHTML = accounts.map(acc => {
+        const balance = parseFloat(acc.saldo_actual || 0);
+        const balanceClass = balance >= 0 ? 'positive' : 'negative';
+        
+        return `<tr data-id="${acc.id}">
+          <td><div class="cell-main">${acc.nombre}</div></td>
+          <td>${acc.nombre_banco || '-'}</td>
+          <td>${acc.tipo_cuenta || 'Corriente'}</td>
+          <td>${acc.numero_cuenta || '-'}</td>
+          <td style="text-align:right;"><span class="balance-value ${balanceClass}">${utils.formatMoney(balance, acc.moneda || 'MXN')}</span></td>
+          <td>
+            <div class="table-actions">
+              <button class="action-btn" title="Editar" data-action="edit" data-id="${acc.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="action-btn" title="Ajustar Saldo" data-action="adjust" data-id="${acc.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </button>
+              <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${acc.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      // Add event listeners
+      elements.tableBody.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handlers.handleAccountAction(btn.dataset.action, btn.dataset.id);
+        });
+      });
+
+      // Click on row goes to transactions
+      elements.tableBody.querySelectorAll('tr').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (!e.target.closest('.table-actions')) {
+            utils.redirect(`../transacciones/index.html?cuenta_id=${row.dataset.id}`);
           }
         });
       });
@@ -498,6 +561,14 @@
     switchOrg() {
       localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG);
       utils.redirect(CONFIG.REDIRECT.SELECT_ORG);
+    },
+
+    switchView(view) {
+      state.currentView = view;
+      elements.viewToggle.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      render.accounts();
     }
   };
 
@@ -531,6 +602,11 @@
     elements.addAccountBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
     elements.addFirstAccountBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
     elements.fabBtn.addEventListener('click', handlers.openCreateModal.bind(handlers));
+
+    // View toggle
+    elements.viewToggle?.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => handlers.switchView(btn.dataset.view));
+    });
 
     // Account modal
     elements.closeModal.addEventListener('click', handlers.closeAccountModal.bind(handlers));

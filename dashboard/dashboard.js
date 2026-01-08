@@ -135,6 +135,18 @@
 
     getDashboard(periodo = 'month') {
       return this.request(`/api/reportes/dashboard?periodo=${periodo}`);
+    },
+    getTransacciones() {
+      return this.request('/api/transacciones?limite=10');
+    },
+    getVentas() {
+      return this.request('/api/ventas?limite=100');
+    },
+    getGastos() {
+      return this.request('/api/gastos?limite=100');
+    },
+    getCuentas() {
+      return this.request('/api/cuentas-bancarias');
     }
   };
 
@@ -205,12 +217,8 @@
       `).join('');
     },
 
-    pending(porCobrar, porPagar) {
-      // Combinar y ordenar por fecha
-      const items = [];
-      
-      // Simular datos de pendientes (normalmente vendría de la API)
-      if (!items.length) {
+    pending(items) {
+      if (!items || !items.length) {
         elements.pendingList.innerHTML = `
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -225,13 +233,20 @@
 
       elements.pendingList.innerHTML = items.map(p => `
         <div class="pending-item">
+          <div class="pending-icon ${p.tipo}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              ${p.tipo === 'venta' 
+                ? '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
+                : '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'}
+            </svg>
+          </div>
           <div class="pending-info">
-            <div class="pending-name">${p.nombre}</div>
-            <div class="pending-date ${utils.isOverdue(p.fecha_vencimiento) ? 'vencido' : ''}">
-              Vence: ${utils.formatDate(p.fecha_vencimiento)}
+            <div class="pending-name">${p.descripcion || 'Sin descripción'}</div>
+            <div class="pending-date ${p.fecha_vencimiento && utils.isOverdue(p.fecha_vencimiento) ? 'vencido' : ''}">
+              ${p.fecha_vencimiento ? 'Vence: ' + utils.formatDate(p.fecha_vencimiento) : 'Sin vencimiento'}
             </div>
           </div>
-          <div class="pending-amount">${utils.formatMoney(p.monto)}</div>
+          <div class="pending-amount ${p.tipo === 'venta' ? 'ingreso' : 'egreso'}">${utils.formatMoney(p.monto)}</div>
         </div>
       `).join('');
     }
@@ -243,11 +258,92 @@
   const handlers = {
     async loadDashboard() {
       try {
+        // Intentar cargar del endpoint de dashboard primero
         const data = await api.getDashboard();
         render.stats(data);
         render.transactions(data.transacciones_recientes);
+        render.pending(data.pendientes_pago || []);
       } catch (error) {
-        console.error('Error loading dashboard:', error);
+        console.log('Dashboard endpoint failed, loading from individual sources...');
+        // Si falla, cargar de fuentes individuales
+        await this.loadFromSources();
+      }
+    },
+
+    async loadFromSources() {
+      try {
+        const [txRes, ventasRes, gastosRes, cuentasRes] = await Promise.all([
+          api.getTransacciones().catch(() => ({ transacciones: [] })),
+          api.getVentas().catch(() => ({ ventas: [] })),
+          api.getGastos().catch(() => ({ gastos: [] })),
+          api.getCuentas().catch(() => ({ cuentas: [] }))
+        ]);
+
+        const transacciones = txRes.transacciones || [];
+        const ventas = ventasRes.ventas || [];
+        const gastos = gastosRes.gastos || [];
+        const cuentas = cuentasRes.cuentas || [];
+
+        // Calcular estadísticas
+        const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+        let ingresos = 0, egresos = 0, porCobrar = 0, porPagar = 0;
+        let porCobrarCant = 0, porPagarCant = 0;
+
+        transacciones.forEach(t => {
+          const f = new Date(t.fecha);
+          if (f.getMonth() === m && f.getFullYear() === y) {
+            if (t.tipo === 'ingreso') ingresos += parseFloat(t.monto) || 0;
+            else egresos += parseFloat(t.monto) || 0;
+          }
+        });
+
+        ventas.forEach(v => {
+          if (v.estatus_pago !== 'pagado' && v.estatus !== 'cobrada') {
+            porCobrar += (parseFloat(v.total) || 0) - (parseFloat(v.monto_cobrado) || 0);
+            porCobrarCant++;
+          }
+        });
+
+        gastos.forEach(g => {
+          if (g.estatus_pago !== 'pagado') {
+            porPagar += parseFloat(g.total) || 0;
+            porPagarCant++;
+          }
+        });
+
+        const saldoTotal = cuentas.reduce((sum, c) => sum + (parseFloat(c.saldo_actual) || 0), 0);
+
+        // Render stats
+        elements.saldoTotal.textContent = utils.formatMoney(saldoTotal);
+        elements.ingresosMes.textContent = utils.formatMoney(ingresos);
+        elements.egresosMes.textContent = utils.formatMoney(egresos);
+        elements.porCobrar.textContent = utils.formatMoney(porCobrar);
+
+        if (porCobrarCant > 0) {
+          elements.ventasPendientes.textContent = porCobrarCant;
+          elements.ventasPendientes.style.display = 'block';
+        }
+        if (porPagarCant > 0) {
+          elements.gastosPendientes.textContent = porPagarCant;
+          elements.gastosPendientes.style.display = 'block';
+        }
+
+        // Render transacciones recientes
+        render.transactions(transacciones);
+
+        // Render pendientes
+        const pendientes = [
+          ...ventas.filter(v => v.estatus_pago !== 'pagado' && v.estatus !== 'cobrada').map(v => ({
+            tipo: 'venta', descripcion: v.folio || 'Venta', monto: v.total, fecha_vencimiento: v.fecha_vencimiento
+          })),
+          ...gastos.filter(g => g.estatus_pago !== 'pagado').map(g => ({
+            tipo: 'gasto', descripcion: g.concepto || 'Gasto', monto: g.total, fecha_vencimiento: g.fecha_vencimiento
+          }))
+        ].sort((a, b) => new Date(a.fecha_vencimiento || '2099-12-31') - new Date(b.fecha_vencimiento || '2099-12-31'));
+        
+        render.pending(pendientes.slice(0, 5));
+      } catch (e) {
+        console.error('Error loading from sources:', e);
       }
     },
 

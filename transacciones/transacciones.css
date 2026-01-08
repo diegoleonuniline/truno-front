@@ -161,6 +161,7 @@ a { color: inherit; text-decoration: none; }
 .action-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); color: var(--text-muted); transition: all var(--transition-fast); }
 .action-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .action-btn.danger:hover { background: var(--error-bg); color: var(--error); }
+.action-btn.success:hover { background: var(--success-bg); color: var(--success); }
 .action-btn svg { width: 16px; height: 16px; }
 
 .pagination { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) var(--spacing-lg); border-top: 1px solid var(--border-color); font-size: var(--font-size-sm); color: var(--text-secondary); }

@@ -680,7 +680,7 @@ a {
 .pending-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--spacing-md);
   padding: var(--spacing-md) 0;
   border-bottom: 1px solid var(--border-color);
 }
@@ -689,14 +689,31 @@ a {
   border-bottom: none;
 }
 
+.pending-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+.pending-icon svg { width: 18px; height: 18px; }
+.pending-icon.venta { background: rgba(52, 211, 153, 0.15); color: var(--success); }
+.pending-icon.gasto { background: rgba(248, 113, 113, 0.15); color: var(--error); }
+
 .pending-info {
   flex: 1;
+  min-width: 0;
 }
 
 .pending-name {
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pending-date {
@@ -711,8 +728,9 @@ a {
 .pending-amount {
   font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--warning);
 }
+.pending-amount.ingreso { color: var(--success); }
+.pending-amount.egreso { color: var(--error); }
 
 /* === EMPTY STATE === */
 .empty-state {

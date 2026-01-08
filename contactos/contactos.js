@@ -26,6 +26,9 @@
     searchInput: document.getElementById('searchInput'),
     filterType: document.getElementById('filterType'),
     contactsGrid: document.getElementById('contactsGrid'),
+    tableContainer: document.getElementById('tableContainer'),
+    tableBody: document.getElementById('tableBody'),
+    viewToggle: document.getElementById('viewToggle'),
     emptyState: document.getElementById('emptyState'),
     addContactBtn: document.getElementById('addContactBtn'),
     addFirstContactBtn: document.getElementById('addFirstContactBtn'),
@@ -54,7 +57,7 @@
 
   let state = {
     user: null, org: null, contactos: [], allContactos: [],
-    editingId: null, deletingId: null,
+    editingId: null, deletingId: null, currentView: 'cards',
     filters: { buscar: '', tipo: '' }
   };
 
@@ -98,14 +101,27 @@
       elements.totalAmbos.textContent = all.filter(c => c.tipo === 'ambos').length;
     },
     contactos() {
-      const { contactos } = state;
+      const { contactos, currentView } = state;
       if (!contactos.length) {
-        elements.contactsGrid.innerHTML = '';
+        elements.contactsGrid.style.display = 'none';
+        elements.tableContainer.style.display = 'none';
         elements.emptyState.style.display = 'block';
         return;
       }
       elements.emptyState.style.display = 'none';
 
+      if (currentView === 'table') {
+        elements.contactsGrid.style.display = 'none';
+        elements.tableContainer.style.display = 'block';
+        this.contactosTable();
+      } else {
+        elements.contactsGrid.style.display = 'grid';
+        elements.tableContainer.style.display = 'none';
+        this.contactosCards();
+      }
+    },
+    contactosCards() {
+      const { contactos } = state;
       const typeLabels = { cliente: 'Cliente', proveedor: 'Proveedor', ambos: 'Ambos' };
 
       elements.contactsGrid.innerHTML = contactos.map(c => `
@@ -130,7 +146,33 @@
         </div>
       `).join('');
 
-      document.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); handlers.handleAction(b.dataset.action, b.dataset.id); }));
+      elements.contactsGrid.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); handlers.handleAction(b.dataset.action, b.dataset.id); }));
+    },
+    contactosTable() {
+      const { contactos } = state;
+      const typeLabels = { cliente: 'Cliente', proveedor: 'Proveedor', ambos: 'Ambos' };
+
+      elements.tableBody.innerHTML = contactos.map(c => `
+        <tr data-id="${c.id}">
+          <td><div class="cell-main">${c.nombre}</div>${c.empresa ? `<div class="cell-sub">${c.empresa}</div>` : ''}</td>
+          <td><span class="contact-type ${c.tipo}">${typeLabels[c.tipo] || c.tipo}</span></td>
+          <td>${c.email || '-'}</td>
+          <td>${c.telefono || '-'}</td>
+          <td>${c.rfc || '-'}</td>
+          <td>
+            <div class="table-actions">
+              <button class="action-btn" title="Editar" data-action="edit" data-id="${c.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${c.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      elements.tableBody.querySelectorAll('[data-action]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); handlers.handleAction(b.dataset.action, b.dataset.id); }));
     }
   };
 
@@ -217,7 +259,14 @@
       state.filters.tipo = elements.filterType.value;
       this.applyLocalFilters();
     },
-    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); }
+    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); },
+    switchView(view) {
+      state.currentView = view;
+      elements.viewToggle.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+      render.contactos();
+    }
   };
 
   function init() {
@@ -231,6 +280,12 @@
     elements.addContactBtn.addEventListener('click', () => handlers.openCreateModal());
     elements.addFirstContactBtn.addEventListener('click', () => handlers.openCreateModal());
     elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
+
+    // View toggle
+    elements.viewToggle?.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', () => handlers.switchView(btn.dataset.view));
+    });
+
     elements.closeModal.addEventListener('click', () => handlers.closeContactModal());
     elements.cancelModal.addEventListener('click', () => handlers.closeContactModal());
     elements.contactForm.addEventListener('submit', e => handlers.submitContact(e));

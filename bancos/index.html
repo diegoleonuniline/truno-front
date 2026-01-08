@@ -136,13 +136,23 @@
             <h2>Cuentas Bancarias</h2>
             <p>Administra tus cuentas y controla tus saldos</p>
           </div>
-          <button class="btn btn-primary" id="addAccountBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            <span class="btn-text">Nueva Cuenta</span>
-          </button>
+          <div class="page-header-actions">
+            <div class="view-toggle" id="viewToggle">
+              <button class="view-btn active" data-view="cards" title="Vista tarjetas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </button>
+              <button class="view-btn" data-view="table" title="Vista tabla">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-primary" id="addAccountBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span class="btn-text">Nueva Cuenta</span>
+            </button>
+          </div>
         </div>
 
         <!-- Total Card -->
@@ -154,7 +164,7 @@
           </div>
         </div>
 
-        <!-- Accounts Grid -->
+        <!-- Vista Tarjetas -->
         <div class="accounts-grid" id="accountsGrid">
           <!-- Loading -->
           <div class="empty-state" id="loadingState">
@@ -166,6 +176,23 @@
             </div>
             <h3>Cargando cuentas...</h3>
           </div>
+        </div>
+
+        <!-- Vista Tabla -->
+        <div class="table-container" id="tableContainer" style="display:none;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Banco</th>
+                <th>Tipo</th>
+                <th>Número</th>
+                <th style="text-align:right;">Saldo</th>
+                <th style="width:100px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
         </div>
 
         <!-- Empty State -->
