@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v4
- * Con modales inline para crear gasto/venta desde transacción
+ * TRUNO - Transacciones v5
+ * Con modales completos de gasto/venta idénticos al original
  */
 (function() {
   'use strict';
@@ -31,26 +31,25 @@
     closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
     tipo: $('tipo'), cuentaId: $('cuentaId'), monto: $('monto'), fecha: $('fecha'),
     contactoId: $('contactoId'), descripcion: $('descripcion'), referencia: $('referencia'),
-    comprobanteUpload: $('comprobanteUpload'), comprobanteFile: $('comprobanteFile'),
-    comprobantePreview: $('comprobantePreview'), comprobanteFileName: $('comprobanteFileName'), removeComprobante: $('removeComprobante'),
     addCuentaBtn: $('addCuentaBtn'),
-    // Gasto Modal
+    // Gasto Modal (completo)
     gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
     cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
-    gastoFromTxInfo: $('gastoFromTxInfo'), gastoConcepto: $('gastoConcepto'),
-    gastoProveedor: $('gastoProveedor'), gastoCategoria: $('gastoCategoria'),
-    gastoFecha: $('gastoFecha'), gastoMetodoPago: $('gastoMetodoPago'),
-    gastoSubtotal: $('gastoSubtotal'), gastoTotal: $('gastoTotal'),
-    gastoImpuestosList: $('gastoImpuestosList'), addGastoImpuesto: $('addGastoImpuesto'),
+    gastoFromTxInfo: $('gastoFromTxInfo'), gastoFromTxBox: $('gastoFromTxBox'),
+    gastoConcepto: $('gastoConcepto'), gastoProveedor: $('gastoProveedor'),
+    gastoFecha: $('gastoFecha'), gastoFechaVencimiento: $('gastoFechaVencimiento'),
+    gastoCategoria: $('gastoCategoria'), gastoSubcategoria: $('gastoSubcategoria'),
+    gastoSubtotal: $('gastoSubtotal'), gastoImpuesto: $('gastoImpuesto'), gastoTotal: $('gastoTotal'),
+    gastoMoneda: $('gastoMoneda'), gastoMetodoPago: $('gastoMetodoPago'),
     gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
+    gastoFacturaRecibida: $('gastoFacturaRecibida'),
     gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
     // Venta Modal
     ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
     cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
-    ventaFromTxInfo: $('ventaFromTxInfo'), ventaFolio: $('ventaFolio'),
-    ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
-    ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'),
-    ventaImpuestosList: $('ventaImpuestosList'), addVentaImpuesto: $('addVentaImpuesto'),
+    ventaFromTxInfo: $('ventaFromTxInfo'), ventaFromTxBox: $('ventaFromTxBox'),
+    ventaFolio: $('ventaFolio'), ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
+    ventaSubtotal: $('ventaSubtotal'), ventaImpuesto: $('ventaImpuesto'), ventaTotal: $('ventaTotal'),
     ventaConcepto: $('ventaConcepto'),
     // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
@@ -61,11 +60,10 @@
 
   let state = {
     user: null, org: null, 
-    transacciones: [], cuentas: [], contactos: [], categorias: [], impuestos: [],
+    transacciones: [], cuentas: [], contactos: [], categorias: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
-    editingId: null, deletingId: null, viewingTx: null, comprobanteData: null,
-    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', contacto_id: '', conciliado: '' },
-    gastoImpuestosTemp: [], ventaImpuestosTemp: []
+    editingId: null, deletingId: null, viewingTx: null,
+    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', contacto_id: '', conciliado: '' }
   };
 
   const utils = {
@@ -109,7 +107,7 @@
     createCuenta: d => api.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }),
     getContactos: () => api.request('/api/contactos?limite=200'),
     getCategorias: () => api.request('/api/categorias?tipo=gasto'),
-    getImpuestos: () => api.request('/api/impuestos'),
+    getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
     createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
     getGasto: id => api.request(`/api/gastos/${id}`),
@@ -135,6 +133,9 @@
     },
     categorias() {
       elements.gastoCategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    },
+    subcategorias(subcats) {
+      elements.gastoSubcategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + (subcats || []).map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
     },
     transacciones() {
       const { transacciones, paginacion } = state;
@@ -212,62 +213,6 @@
       elements.mobileCards.querySelectorAll('.mobile-card').forEach(card => {
         card.addEventListener('click', () => handlers.openDetailModal(state.transacciones.find(t => t.id === card.dataset.id)));
       });
-    },
-    impuestosGasto() {
-      elements.gastoImpuestosList.innerHTML = state.gastoImpuestosTemp.map((imp, i) => `
-        <div class="impuesto-row" data-index="${i}">
-          <select class="form-select impuesto-select" data-index="${i}">
-            <option value="">Seleccionar</option>
-            ${state.impuestos.map(im => `<option value="${im.id}" data-tasa="${im.tasa}" data-tipo="${im.tipo}" ${im.id === imp.impuesto_id ? 'selected' : ''}>${im.nombre}</option>`).join('')}
-          </select>
-          <input type="number" class="form-input impuesto-importe" value="${imp.importe || ''}" step="0.01" placeholder="Importe" data-index="${i}">
-          <button type="button" class="btn btn-xs btn-danger remove-impuesto" data-index="${i}">×</button>
-        </div>
-      `).join('');
-      this.bindImpuestosEvents('gasto');
-    },
-    impuestosVenta() {
-      elements.ventaImpuestosList.innerHTML = state.ventaImpuestosTemp.map((imp, i) => `
-        <div class="impuesto-row" data-index="${i}">
-          <select class="form-select impuesto-select" data-index="${i}">
-            <option value="">Seleccionar</option>
-            ${state.impuestos.map(im => `<option value="${im.id}" data-tasa="${im.tasa}" data-tipo="${im.tipo}" ${im.id === imp.impuesto_id ? 'selected' : ''}>${im.nombre}</option>`).join('')}
-          </select>
-          <input type="number" class="form-input impuesto-importe" value="${imp.importe || ''}" step="0.01" placeholder="Importe" data-index="${i}">
-          <button type="button" class="btn btn-xs btn-danger remove-impuesto" data-index="${i}">×</button>
-        </div>
-      `).join('');
-      this.bindImpuestosEvents('venta');
-    },
-    bindImpuestosEvents(tipo) {
-      const list = tipo === 'gasto' ? elements.gastoImpuestosList : elements.ventaImpuestosList;
-      const tempArr = tipo === 'gasto' ? 'gastoImpuestosTemp' : 'ventaImpuestosTemp';
-      
-      list.querySelectorAll('.impuesto-select').forEach(sel => {
-        sel.addEventListener('change', e => {
-          const idx = parseInt(e.target.dataset.index);
-          const opt = e.target.selectedOptions[0];
-          state[tempArr][idx].impuesto_id = e.target.value;
-          state[tempArr][idx].tasa = parseFloat(opt?.dataset.tasa || 0);
-          state[tempArr][idx].tipo_imp = opt?.dataset.tipo || 'traslado';
-          handlers.calcTotalFromImpuestos(tipo);
-        });
-      });
-      list.querySelectorAll('.impuesto-importe').forEach(inp => {
-        inp.addEventListener('input', e => {
-          const idx = parseInt(e.target.dataset.index);
-          state[tempArr][idx].importe = parseFloat(e.target.value) || 0;
-          handlers.calcTotalFromImpuestos(tipo);
-        });
-      });
-      list.querySelectorAll('.remove-impuesto').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const idx = parseInt(e.target.dataset.index);
-          state[tempArr].splice(idx, 1);
-          tipo === 'gasto' ? render.impuestosGasto() : render.impuestosVenta();
-          handlers.calcTotalFromImpuestos(tipo);
-        });
-      });
     }
   };
 
@@ -276,19 +221,17 @@
     closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes, catRes, impRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
           api.getContactos(),
-          api.getCategorias().catch(() => ({ categorias: [] })),
-          api.getImpuestos().catch(() => ({ impuestos: [] }))
+          api.getCategorias().catch(() => ({ categorias: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
         state.cuentas = cuentasRes.cuentas || [];
         state.contactos = contactosRes.contactos || [];
         state.categorias = catRes.categorias || [];
-        state.impuestos = impRes.impuestos || [];
         render.cuentas();
         render.contactos();
         render.categorias();
@@ -314,7 +257,6 @@
         <div class="detail-item"><label>Contacto</label><span>${contacto?.nombre || tx.nombre_contacto || '-'}</span></div>
         <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
-        ${tx.comprobante_url ? `<div class="detail-item full"><label>Comprobante</label><a href="${tx.comprobante_url}" target="_blank" class="btn btn-xs btn-outline">Ver</a></div>` : ''}
       `;
 
       if (conciliado) {
@@ -341,7 +283,7 @@
         elements.detailConciliacion.innerHTML = `
           <div class="conciliacion-header"><span class="badge pendiente">⏳ Sin conciliar</span></div>
           <div class="conciliacion-actions">
-            <p>Este movimiento no está vinculado.</p>
+            <p>Este movimiento no está vinculado a ningún documento.</p>
             <button type="button" class="btn btn-primary" id="createFromTxBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               ${btnLabel}
@@ -365,8 +307,6 @@
       elements.modalTitle.textContent = 'Nuevo Movimiento';
       elements.txForm.reset();
       elements.fecha.value = utils.today();
-      elements.comprobantePreview.style.display = 'none';
-      state.comprobanteData = null;
       elements.txModal.classList.add('active');
     },
     openEditModal(tx) {
@@ -379,11 +319,6 @@
       elements.contactoId.value = tx.contacto_id || '';
       elements.descripcion.value = tx.descripcion || '';
       elements.referencia.value = tx.referencia || '';
-      if (tx.comprobante_url) {
-        elements.comprobantePreview.style.display = 'flex';
-        elements.comprobanteFileName.textContent = 'Comprobante';
-        state.comprobanteData = tx.comprobante_url;
-      }
       elements.txModal.classList.add('active');
     },
     closeTxModal() { elements.txModal.classList.remove('active'); state.editingId = null; },
@@ -396,8 +331,7 @@
         fecha: elements.fecha.value,
         contacto_id: elements.contactoId.value || null,
         descripcion: elements.descripcion.value.trim() || null,
-        referencia: elements.referencia.value.trim() || null,
-        comprobante_url: state.comprobanteData || null
+        referencia: elements.referencia.value.trim() || null
       };
       elements.submitModal.disabled = true;
       try {
@@ -408,19 +342,6 @@
       } catch (e) { alert(e.message); }
       finally { elements.submitModal.disabled = false; }
     },
-    handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        state.comprobanteData = file.name;
-        elements.comprobantePreview.style.display = 'flex';
-        elements.comprobanteFileName.textContent = file.name;
-      }
-    },
-    removeComprobante() {
-      state.comprobanteData = null;
-      elements.comprobanteFile.value = '';
-      elements.comprobantePreview.style.display = 'none';
-    },
     // Gasto from Tx
     openGastoFromTx() {
       const tx = state.viewingTx;
@@ -428,40 +349,33 @@
       this.closeDetailModal();
       
       elements.gastoForm.reset();
+      elements.gastoFromTxBox.style.display = 'block';
       elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
       elements.gastoConcepto.value = tx.descripcion || '';
       elements.gastoProveedor.value = tx.contacto_id || '';
       elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
-      elements.gastoSubtotal.value = tx.monto;
       elements.gastoTotal.value = tx.monto;
+      elements.gastoSubtotal.value = '';
+      elements.gastoImpuesto.value = '';
       elements.gastoFiscalFields.style.display = 'none';
       elements.gastoEsFiscal.checked = false;
-      
-      // IVA por defecto
-      state.gastoImpuestosTemp = [];
-      render.impuestosGasto();
+      render.subcategorias([]);
       
       elements.gastoModal.classList.add('active');
     },
     closeGastoModal() { elements.gastoModal.classList.remove('active'); },
-    addGastoImpuesto() {
-      state.gastoImpuestosTemp.push({ impuesto_id: '', importe: 0, tasa: 0, tipo_imp: 'traslado' });
-      render.impuestosGasto();
+    async loadSubcategorias() {
+      const catId = elements.gastoCategoria.value;
+      if (!catId) { render.subcategorias([]); return; }
+      try {
+        const res = await api.getSubcategorias(catId);
+        render.subcategorias(res.subcategorias || []);
+      } catch (e) { render.subcategorias([]); }
     },
-    calcTotalFromImpuestos(tipo) {
-      const subtotalEl = tipo === 'gasto' ? elements.gastoSubtotal : elements.ventaSubtotal;
-      const totalEl = tipo === 'gasto' ? elements.gastoTotal : elements.ventaTotal;
-      const tempArr = tipo === 'gasto' ? state.gastoImpuestosTemp : state.ventaImpuestosTemp;
-      
-      const subtotal = parseFloat(subtotalEl.value) || 0;
-      let impTraslados = 0, impRetenciones = 0;
-      
-      tempArr.forEach(imp => {
-        if (imp.tipo_imp === 'traslado') impTraslados += parseFloat(imp.importe) || 0;
-        else impRetenciones += parseFloat(imp.importe) || 0;
-      });
-      
-      totalEl.value = (subtotal + impTraslados - impRetenciones).toFixed(2);
+    calcGastoTotal() {
+      const sub = parseFloat(elements.gastoSubtotal.value) || 0;
+      const iva = parseFloat(elements.gastoImpuesto.value) || 0;
+      if (sub > 0) elements.gastoTotal.value = (sub + iva).toFixed(2);
     },
     async submitGasto(e) {
       e.preventDefault();
@@ -471,20 +385,20 @@
         concepto: elements.gastoConcepto.value.trim(),
         proveedor_id: elements.gastoProveedor.value || null,
         categoria_id: elements.gastoCategoria.value || null,
+        subcategoria_id: elements.gastoSubcategoria.value || null,
         fecha: elements.gastoFecha.value,
-        metodo_pago: elements.gastoMetodoPago.value,
-        subtotal: parseFloat(elements.gastoSubtotal.value),
+        fecha_vencimiento: elements.gastoFechaVencimiento.value || null,
+        metodo_pago: elements.gastoMetodoPago.value || null,
+        moneda: elements.gastoMoneda.value,
+        subtotal: parseFloat(elements.gastoSubtotal.value) || parseFloat(elements.gastoTotal.value),
+        impuesto: parseFloat(elements.gastoImpuesto.value) || 0,
         total: parseFloat(elements.gastoTotal.value),
         es_fiscal: elements.gastoEsFiscal.checked ? 1 : 0,
+        factura_recibida: elements.gastoFacturaRecibida?.checked ? 1 : 0,
         uuid_cfdi: elements.gastoUuid.value.trim() || null,
         folio_cfdi: elements.gastoFolio.value.trim() || null,
         notas: elements.gastoNotas.value.trim() || null,
-        transaccion_id: tx?.id || null,
-        impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
-          impuesto_id: i.impuesto_id,
-          base: parseFloat(elements.gastoSubtotal.value),
-          importe: i.importe
-        }))
+        transaccion_id: tx?.id || null
       };
       
       elements.submitGastoModal.disabled = true;
@@ -495,8 +409,9 @@
           await api.updateTransaccion(tx.id, { gasto_id: result.id });
         }
         this.closeGastoModal();
+        state.viewingTx = null;
         await this.loadData();
-        alert('Gasto registrado y conciliado');
+        alert('✅ Gasto registrado y conciliado');
       } catch (e) { alert(e.message); }
       finally { elements.submitGastoModal.disabled = false; }
     },
@@ -507,22 +422,22 @@
       this.closeDetailModal();
       
       elements.ventaForm.reset();
+      elements.ventaFromTxBox.style.display = 'block';
       elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
       elements.ventaCliente.value = tx.contacto_id || '';
       elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
-      elements.ventaSubtotal.value = tx.monto;
       elements.ventaTotal.value = tx.monto;
+      elements.ventaSubtotal.value = '';
+      elements.ventaImpuesto.value = '';
       elements.ventaConcepto.value = tx.descripcion || '';
-      
-      state.ventaImpuestosTemp = [];
-      render.impuestosVenta();
       
       elements.ventaModal.classList.add('active');
     },
     closeVentaModal() { elements.ventaModal.classList.remove('active'); },
-    addVentaImpuesto() {
-      state.ventaImpuestosTemp.push({ impuesto_id: '', importe: 0, tasa: 0, tipo_imp: 'traslado' });
-      render.impuestosVenta();
+    calcVentaTotal() {
+      const sub = parseFloat(elements.ventaSubtotal.value) || 0;
+      const iva = parseFloat(elements.ventaImpuesto.value) || 0;
+      if (sub > 0) elements.ventaTotal.value = (sub + iva).toFixed(2);
     },
     async submitVenta(e) {
       e.preventDefault();
@@ -532,15 +447,10 @@
         folio: elements.ventaFolio.value.trim() || null,
         contacto_id: elements.ventaCliente.value || null,
         fecha: elements.ventaFecha.value,
-        subtotal: parseFloat(elements.ventaSubtotal.value),
+        subtotal: parseFloat(elements.ventaSubtotal.value) || parseFloat(elements.ventaTotal.value),
         total: parseFloat(elements.ventaTotal.value),
         concepto: elements.ventaConcepto.value.trim() || null,
-        estatus: 'cobrada',
-        impuestos: state.ventaImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
-          impuesto_id: i.impuesto_id,
-          base: parseFloat(elements.ventaSubtotal.value),
-          importe: i.importe
-        }))
+        estatus: 'cobrada'
       };
       
       elements.submitVentaModal.disabled = true;
@@ -550,8 +460,9 @@
           await api.updateTransaccion(tx.id, { venta_id: result.id });
         }
         this.closeVentaModal();
+        state.viewingTx = null;
         await this.loadData();
-        alert('Venta registrada y conciliada');
+        alert('✅ Venta registrada y conciliada');
       } catch (e) { alert(e.message); }
       finally { elements.submitVentaModal.disabled = false; }
     },
@@ -625,9 +536,6 @@
     elements.cancelModal.addEventListener('click', () => handlers.closeTxModal());
     elements.txForm.addEventListener('submit', e => handlers.submitTx(e));
     elements.txModal.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
-    elements.comprobanteUpload.addEventListener('click', () => elements.comprobanteFile.click());
-    elements.comprobanteFile.addEventListener('change', e => handlers.handleFileSelect(e));
-    elements.removeComprobante.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
     elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
 
     // Gasto modal
@@ -635,8 +543,9 @@
     elements.cancelGastoModal.addEventListener('click', () => handlers.closeGastoModal());
     elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
     elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
-    elements.addGastoImpuesto.addEventListener('click', () => handlers.addGastoImpuesto());
-    elements.gastoSubtotal.addEventListener('input', () => handlers.calcTotalFromImpuestos('gasto'));
+    elements.gastoCategoria.addEventListener('change', () => handlers.loadSubcategorias());
+    elements.gastoSubtotal.addEventListener('input', () => handlers.calcGastoTotal());
+    elements.gastoImpuesto.addEventListener('input', () => handlers.calcGastoTotal());
     elements.gastoEsFiscal.addEventListener('change', () => {
       elements.gastoFiscalFields.style.display = elements.gastoEsFiscal.checked ? 'block' : 'none';
     });
@@ -646,8 +555,8 @@
     elements.cancelVentaModal.addEventListener('click', () => handlers.closeVentaModal());
     elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
     elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
-    elements.addVentaImpuesto.addEventListener('click', () => handlers.addVentaImpuesto());
-    elements.ventaSubtotal.addEventListener('input', () => handlers.calcTotalFromImpuestos('venta'));
+    elements.ventaSubtotal.addEventListener('input', () => handlers.calcVentaTotal());
+    elements.ventaImpuesto.addEventListener('input', () => handlers.calcVentaTotal());
 
     // Cuenta modal
     elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
@@ -680,7 +589,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v4');
+    console.log('🚀 TRUNO Transacciones v5');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

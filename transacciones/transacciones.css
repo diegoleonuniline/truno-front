@@ -1,4 +1,4 @@
-/* TRUNO - Transacciones v4 CSS */
+/* TRUNO - Transacciones v5 CSS */
 :root {
   --bg-primary: #0a0e14;
   --bg-secondary: #0f1419;
@@ -27,6 +27,10 @@
   --transition: all 0.2s ease;
   --sidebar-width: 260px;
   --header-height: 64px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -156,7 +160,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; padding: 20px; }
 .modal-overlay.active { opacity: 1; visibility: visible; }
-.modal { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); width: 100%; max-width: 520px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.2s ease; }
+.modal { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); width: 100%; max-width: 560px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.2s ease; }
 .modal-overlay.active .modal { transform: translateY(0); }
 .modal.modal-lg { max-width: 640px; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border-primary); }
@@ -187,41 +191,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
 /* Forms */
 .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .form-group { margin-bottom: 16px; }
 .form-label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
 .form-label.required::after { content: ' *'; color: var(--danger); }
 .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.9rem; transition: var(--transition); }
 .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent-primary); }
 .form-input[readonly] { background: var(--bg-elevated); color: var(--text-secondary); }
-.form-textarea { resize: vertical; min-height: 60px; }
+.form-textarea { resize: vertical; min-height: 60px; font-family: inherit; }
 .select-with-add { display: flex; gap: 8px; }
 .select-with-add select { flex: 1; }
 .btn-add { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); cursor: pointer; }
 .btn-add:hover { border-color: var(--accent-primary); }
 .btn-add svg { width: 18px; height: 18px; stroke: var(--text-secondary); }
 
-/* File Upload */
-.file-upload { border: 2px dashed var(--border-primary); border-radius: var(--radius-md); padding: 20px; text-align: center; cursor: pointer; }
-.file-upload:hover { border-color: var(--accent-primary); }
-.file-upload-content { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.file-upload-icon svg { width: 32px; height: 32px; stroke: var(--text-muted); }
-.file-upload-text { color: var(--text-secondary); font-size: 0.9rem; }
-.file-upload input { display: none; }
-.file-preview { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius-md); }
-.file-preview-name { font-size: 0.85rem; }
+/* Form Sections */
+.form-section { background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: var(--spacing-md); margin-bottom: var(--spacing-md); }
+.form-section-title { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--border-secondary); }
+.form-section-title svg { width: 18px; height: 18px; stroke: var(--accent-primary); }
 
 /* Info Box */
 .form-info-box { background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.3); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; font-size: 0.9rem; }
 
-/* Impuestos */
-.impuestos-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-.impuesto-row { display: flex; gap: 10px; align-items: center; }
-.impuesto-row .form-select { flex: 2; }
-.impuesto-row .form-input { flex: 1; }
-.impuesto-row .btn { flex-shrink: 0; }
-
-/* Checkbox */
-.form-label input[type="checkbox"] { margin-right: 8px; width: 16px; height: 16px; }
+/* Toggle */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) 0; }
+.toggle-info { flex: 1; }
+.toggle-info-label { font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+.toggle-info-hint { font-size: 0.8rem; color: var(--text-muted); }
+.toggle { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--bg-elevated); border: 1px solid var(--border-primary); border-radius: 26px; transition: 0.3s; }
+.toggle-slider::before { content: ''; position: absolute; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: var(--text-muted); border-radius: 50%; transition: 0.3s; }
+.toggle input:checked + .toggle-slider { background-color: var(--accent-primary); border-color: var(--accent-primary); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(22px); background-color: white; }
 
 /* Responsive */
 @media (max-width: 1024px) {
@@ -242,10 +244,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   .table-container { display: none; }
   .mobile-cards { display: block; }
   .fab { display: flex; align-items: center; justify-content: center; }
-  .form-row { grid-template-columns: 1fr; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
   .detail-grid { grid-template-columns: 1fr; }
   .modal { max-height: 95vh; }
-  .impuesto-row { flex-wrap: wrap; }
-  .impuesto-row .form-select { flex: 1 1 100%; }
-  .impuesto-row .form-input { flex: 1; }
 }

@@ -175,20 +175,6 @@
             <label class="form-label">Referencia</label>
             <input type="text" class="form-input" id="referencia" placeholder="Número de referencia">
           </div>
-          <div class="form-group">
-            <label class="form-label">Comprobante</label>
-            <div class="file-upload" id="comprobanteUpload">
-              <div class="file-upload-content">
-                <div class="file-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-                <div class="file-upload-text">Subir comprobante</div>
-              </div>
-              <input type="file" id="comprobanteFile" accept="image/*,.pdf">
-            </div>
-            <div class="file-preview" id="comprobantePreview" style="display:none;">
-              <span class="file-preview-name" id="comprobanteFileName"></span>
-              <button type="button" class="btn btn-xs btn-danger" id="removeComprobante">Quitar</button>
-            </div>
-          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
@@ -198,83 +184,130 @@
     </div>
   </div>
 
-  <!-- Modal: Crear Gasto desde Transacción -->
+  <!-- Modal: Crear Gasto desde Transacción (IDÉNTICO AL ORIGINAL) -->
   <div class="modal-overlay" id="gastoModal">
-    <div class="modal modal-lg">
+    <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Registrar Gasto</h2>
         <button class="modal-close" id="closeGastoModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="gastoForm">
         <div class="modal-body">
-          <div class="form-info-box">
+          <!-- Info de transacción origen -->
+          <div class="form-info-box" id="gastoFromTxBox">
             <strong>💡 Desde transacción:</strong> <span id="gastoFromTxInfo"></span>
           </div>
-          <div class="form-group">
-            <label class="form-label required">Concepto</label>
-            <input type="text" class="form-input" id="gastoConcepto" placeholder="¿Qué compraste?" required>
-          </div>
-          <div class="form-row">
+
+          <!-- Información básica -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Información del Gasto</div>
             <div class="form-group">
-              <label class="form-label">Proveedor</label>
+              <label class="form-label required">Concepto</label>
+              <input type="text" class="form-input" id="gastoConcepto" placeholder="¿Qué compraste o pagaste?" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Proveedor / A quién le pagaste</label>
               <select class="form-select" id="gastoProveedor"><option value="">-- Seleccionar --</option></select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Categoría</label>
-              <select class="form-select" id="gastoCategoria"><option value="">-- Seleccionar --</option></select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Fecha</label>
-              <input type="date" class="form-input" id="gastoFecha" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Método pago</label>
-              <select class="form-select" id="gastoMetodoPago">
-                <option value="transferencia">Transferencia</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta_debito">Tarjeta Débito</option>
-                <option value="tarjeta_credito">Tarjeta Crédito</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Subtotal</label>
-              <input type="number" class="form-input" id="gastoSubtotal" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label required">Total</label>
-              <input type="number" class="form-input" id="gastoTotal" step="0.01" min="0" required readonly>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Impuestos</label>
-            <div class="impuestos-list" id="gastoImpuestosList"></div>
-            <button type="button" class="btn btn-xs btn-outline" id="addGastoImpuesto">+ Agregar impuesto</button>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <input type="checkbox" id="gastoEsFiscal"> Es gasto fiscal (deducible)
-            </label>
-          </div>
-          <div id="gastoFiscalFields" style="display:none;">
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">UUID CFDI</label>
-                <input type="text" class="form-input" id="gastoUuid" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX">
+                <label class="form-label required">Fecha del gasto</label>
+                <input type="date" class="form-input" id="gastoFecha" required>
               </div>
               <div class="form-group">
-                <label class="form-label">Folio</label>
-                <input type="text" class="form-input" id="gastoFolio" placeholder="A-12345">
+                <label class="form-label">Fecha de vencimiento</label>
+                <input type="date" class="form-input" id="gastoFechaVencimiento">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" id="gastoCategoria"><option value="">-- Seleccionar --</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Subcategoría</label>
+                <select class="form-select" id="gastoSubcategoria"><option value="">-- Seleccionar --</option></select>
               </div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Notas</label>
-            <textarea class="form-textarea" id="gastoNotas" rows="2" placeholder="Notas adicionales..."></textarea>
+
+          <!-- Montos -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Subtotal</label>
+                <input type="number" class="form-input" id="gastoSubtotal" placeholder="0.00" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">IVA</label>
+                <input type="number" class="form-input" id="gastoImpuesto" placeholder="0.00" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Total</label>
+                <input type="number" class="form-input" id="gastoTotal" placeholder="0.00" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Moneda</label>
+                <select class="form-select" id="gastoMoneda">
+                  <option value="MXN">MXN - Peso Mexicano</option>
+                  <option value="USD">USD - Dólar</option>
+                  <option value="EUR">EUR - Euro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Método de pago</label>
+                <select class="form-select" id="gastoMetodoPago">
+                  <option value="">-- Seleccionar --</option>
+                  <option value="transferencia">Transferencia</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="tarjeta_debito">Tarjeta Débito</option>
+                  <option value="tarjeta_credito">Tarjeta Crédito</option>
+                  <option value="cheque">Cheque</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fiscal -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Información Fiscal</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-info-label">¿Es gasto fiscal?</div>
+                <div class="toggle-info-hint">Marca si este gasto es deducible de impuestos</div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="gastoEsFiscal"><span class="toggle-slider"></span></label>
+            </div>
+            <div id="gastoFiscalFields" style="display:none; margin-top: 16px;">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-info-label">¿Ya recibiste la factura?</div>
+                  <div class="toggle-info-hint">El proveedor ya te envió el CFDI</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="gastoFacturaRecibida"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="form-row" style="margin-top: 16px;">
+                <div class="form-group">
+                  <label class="form-label">UUID CFDI</label>
+                  <input type="text" class="form-input" id="gastoUuid" placeholder="Ej: 6ba7b810-9dad-11d1-80b4-00c04fd430c8">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Folio Fiscal</label>
+                  <input type="text" class="form-input" id="gastoFolio" placeholder="Ej: A-1234">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Notas</div>
+            <div class="form-group" style="margin-bottom:0;">
+              <textarea class="form-textarea" id="gastoNotas" rows="2" placeholder="Notas adicionales sobre este gasto..."></textarea>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -287,48 +320,57 @@
 
   <!-- Modal: Crear Venta desde Transacción -->
   <div class="modal-overlay" id="ventaModal">
-    <div class="modal modal-lg">
+    <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Registrar Venta</h2>
         <button class="modal-close" id="closeVentaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="ventaForm">
         <div class="modal-body">
-          <div class="form-info-box">
+          <div class="form-info-box" id="ventaFromTxBox">
             <strong>💡 Desde transacción:</strong> <span id="ventaFromTxInfo"></span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Folio</label>
-            <input type="text" class="form-input" id="ventaFolio" placeholder="Automático si vacío">
-          </div>
-          <div class="form-row">
+
+          <!-- Info básica -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Información de la Venta</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Folio</label>
+                <input type="text" class="form-input" id="ventaFolio" placeholder="Automático si vacío">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Fecha</label>
+                <input type="date" class="form-input" id="ventaFecha" required>
+              </div>
+            </div>
             <div class="form-group">
               <label class="form-label">Cliente</label>
               <select class="form-select" id="ventaCliente"><option value="">-- Seleccionar --</option></select>
             </div>
             <div class="form-group">
-              <label class="form-label required">Fecha</label>
-              <input type="date" class="form-input" id="ventaFecha" required>
+              <label class="form-label">Concepto</label>
+              <textarea class="form-textarea" id="ventaConcepto" rows="2" placeholder="Descripción de la venta..."></textarea>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Subtotal</label>
-              <input type="number" class="form-input" id="ventaSubtotal" step="0.01" min="0" required>
+
+          <!-- Montos -->
+          <div class="form-section">
+            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Subtotal</label>
+                <input type="number" class="form-input" id="ventaSubtotal" placeholder="0.00" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">IVA</label>
+                <input type="number" class="form-input" id="ventaImpuesto" placeholder="0.00" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Total</label>
+                <input type="number" class="form-input" id="ventaTotal" placeholder="0.00" step="0.01" min="0" required>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label required">Total</label>
-              <input type="number" class="form-input" id="ventaTotal" step="0.01" min="0" required readonly>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Impuestos</label>
-            <div class="impuestos-list" id="ventaImpuestosList"></div>
-            <button type="button" class="btn btn-xs btn-outline" id="addVentaImpuesto">+ Agregar impuesto</button>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Concepto</label>
-            <textarea class="form-textarea" id="ventaConcepto" rows="2" placeholder="Descripción de la venta..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
