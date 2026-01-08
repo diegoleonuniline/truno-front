@@ -30,10 +30,6 @@
           <a href="../gastos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Gastos</a>
           <a href="../contactos/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contactos</a>
         </div>
-        <div class="nav-section">
-          <div class="nav-section-title">Análisis</div>
-          <a href="../reportes/index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>Reportes</a>
-        </div>
       </nav>
       <div class="sidebar-org">
         <button class="org-switcher" id="orgSwitcher">
@@ -145,8 +141,8 @@
             <div class="form-group">
               <label class="form-label required">Tipo</label>
               <select class="form-select" id="tipo" required>
-                <option value="egreso">💸 Egreso (Salida)</option>
-                <option value="ingreso">💰 Ingreso (Entrada)</option>
+                <option value="egreso">💸 Egreso</option>
+                <option value="ingreso">💰 Ingreso</option>
               </select>
             </div>
             <div class="form-group">
@@ -176,7 +172,7 @@
             <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
           </div>
           <div class="form-group">
-            <label class="form-label">Referencia bancaria</label>
+            <label class="form-label">Referencia</label>
             <input type="text" class="form-input" id="referencia" placeholder="Número de referencia">
           </div>
           <div class="form-group">
@@ -193,26 +189,151 @@
               <button type="button" class="btn btn-xs btn-danger" id="removeComprobante">Quitar</button>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Conciliar</label>
-            <select class="form-select" id="conciliarTipo">
-              <option value="">-- Sin conciliar --</option>
-              <option value="gasto">Vincular con Gasto</option>
-              <option value="venta">Vincular con Venta</option>
-            </select>
-          </div>
-          <div class="form-group" id="conciliarGastoGroup" style="display:none;">
-            <label class="form-label">Gasto</label>
-            <select class="form-select" id="gastoId"></select>
-          </div>
-          <div class="form-group" id="conciliarVentaGroup" style="display:none;">
-            <label class="form-label">Venta</label>
-            <select class="form-select" id="ventaId"></select>
-          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="submitModal"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Gasto desde Transacción -->
+  <div class="modal-overlay" id="gastoModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">Registrar Gasto</h2>
+        <button class="modal-close" id="closeGastoModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="gastoForm">
+        <div class="modal-body">
+          <div class="form-info-box">
+            <strong>💡 Desde transacción:</strong> <span id="gastoFromTxInfo"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Concepto</label>
+            <input type="text" class="form-input" id="gastoConcepto" placeholder="¿Qué compraste?" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Proveedor</label>
+              <select class="form-select" id="gastoProveedor"><option value="">-- Seleccionar --</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Categoría</label>
+              <select class="form-select" id="gastoCategoria"><option value="">-- Seleccionar --</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Fecha</label>
+              <input type="date" class="form-input" id="gastoFecha" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Método pago</label>
+              <select class="form-select" id="gastoMetodoPago">
+                <option value="transferencia">Transferencia</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta_debito">Tarjeta Débito</option>
+                <option value="tarjeta_credito">Tarjeta Crédito</option>
+                <option value="cheque">Cheque</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Subtotal</label>
+              <input type="number" class="form-input" id="gastoSubtotal" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label required">Total</label>
+              <input type="number" class="form-input" id="gastoTotal" step="0.01" min="0" required readonly>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Impuestos</label>
+            <div class="impuestos-list" id="gastoImpuestosList"></div>
+            <button type="button" class="btn btn-xs btn-outline" id="addGastoImpuesto">+ Agregar impuesto</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="gastoEsFiscal"> Es gasto fiscal (deducible)
+            </label>
+          </div>
+          <div id="gastoFiscalFields" style="display:none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">UUID CFDI</label>
+                <input type="text" class="form-input" id="gastoUuid" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Folio</label>
+                <input type="text" class="form-input" id="gastoFolio" placeholder="A-12345">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <textarea class="form-textarea" id="gastoNotas" rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelGastoModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitGastoModal">Guardar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Venta desde Transacción -->
+  <div class="modal-overlay" id="ventaModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title">Registrar Venta</h2>
+        <button class="modal-close" id="closeVentaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="ventaForm">
+        <div class="modal-body">
+          <div class="form-info-box">
+            <strong>💡 Desde transacción:</strong> <span id="ventaFromTxInfo"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Folio</label>
+            <input type="text" class="form-input" id="ventaFolio" placeholder="Automático si vacío">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cliente</label>
+              <select class="form-select" id="ventaCliente"><option value="">-- Seleccionar --</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required">Fecha</label>
+              <input type="date" class="form-input" id="ventaFecha" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Subtotal</label>
+              <input type="number" class="form-input" id="ventaSubtotal" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label required">Total</label>
+              <input type="number" class="form-input" id="ventaTotal" step="0.01" min="0" required readonly>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Impuestos</label>
+            <div class="impuestos-list" id="ventaImpuestosList"></div>
+            <button type="button" class="btn btn-xs btn-outline" id="addVentaImpuesto">+ Agregar impuesto</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Concepto</label>
+            <textarea class="form-textarea" id="ventaConcepto" rows="2" placeholder="Descripción de la venta..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelVentaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitVentaModal">Guardar Venta</button>
         </div>
       </form>
     </div>
@@ -238,12 +359,8 @@
             </div>
             <div class="form-group">
               <label class="form-label">Saldo inicial</label>
-              <input type="number" class="form-input" id="cuentaSaldo" placeholder="0.00" step="0.01" value="0">
+              <input type="number" class="form-input" id="cuentaSaldo" step="0.01" value="0">
             </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Últimos 4 dígitos</label>
-            <input type="text" class="form-input" id="cuentaDigitos" placeholder="1234" maxlength="4">
           </div>
         </div>
         <div class="modal-footer">

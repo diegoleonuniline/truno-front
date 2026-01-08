@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v3
- * Con detalle, filtro contacto y acción rápida crear gasto/venta
+ * TRUNO - Transacciones v4
+ * Con modales inline para crear gasto/venta desde transacción
  */
 (function() {
   'use strict';
@@ -33,35 +33,52 @@
     contactoId: $('contactoId'), descripcion: $('descripcion'), referencia: $('referencia'),
     comprobanteUpload: $('comprobanteUpload'), comprobanteFile: $('comprobanteFile'),
     comprobantePreview: $('comprobantePreview'), comprobanteFileName: $('comprobanteFileName'), removeComprobante: $('removeComprobante'),
-    conciliarTipo: $('conciliarTipo'), conciliarGastoGroup: $('conciliarGastoGroup'), gastoId: $('gastoId'),
-    conciliarVentaGroup: $('conciliarVentaGroup'), ventaId: $('ventaId'),
     addCuentaBtn: $('addCuentaBtn'),
+    // Gasto Modal
+    gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
+    cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
+    gastoFromTxInfo: $('gastoFromTxInfo'), gastoConcepto: $('gastoConcepto'),
+    gastoProveedor: $('gastoProveedor'), gastoCategoria: $('gastoCategoria'),
+    gastoFecha: $('gastoFecha'), gastoMetodoPago: $('gastoMetodoPago'),
+    gastoSubtotal: $('gastoSubtotal'), gastoTotal: $('gastoTotal'),
+    gastoImpuestosList: $('gastoImpuestosList'), addGastoImpuesto: $('addGastoImpuesto'),
+    gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
+    gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
+    // Venta Modal
+    ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
+    cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
+    ventaFromTxInfo: $('ventaFromTxInfo'), ventaFolio: $('ventaFolio'),
+    ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
+    ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'),
+    ventaImpuestosList: $('ventaImpuestosList'), addVentaImpuesto: $('addVentaImpuesto'),
+    ventaConcepto: $('ventaConcepto'),
     // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
-    cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'),
-    cuentaSaldo: $('cuentaSaldo'), cuentaDigitos: $('cuentaDigitos'),
+    cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
     // Delete Modal
     deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'), confirmDelete: $('confirmDelete')
   };
 
   let state = {
-    user: null, org: null, transacciones: [], cuentas: [], contactos: [], gastos: [], ventas: [],
+    user: null, org: null, 
+    transacciones: [], cuentas: [], contactos: [], categorias: [], impuestos: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, deletingId: null, viewingTx: null, comprobanteData: null,
-    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', contacto_id: '', conciliado: '' }
+    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', contacto_id: '', conciliado: '' },
+    gastoImpuestosTemp: [], ventaImpuestosTemp: []
   };
 
   const utils = {
     getToken: () => localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN),
     getUser: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.USER) || 'null'),
     getOrg: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.ORG) || 'null'),
-    redirect: (url) => window.location.href = url,
-    getInitials(n) { return (n?.charAt(0).toUpperCase() || '') + (n?.split(' ')[1]?.charAt(0).toUpperCase() || ''); },
-    formatMoney(a, c = 'MXN') { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0); },
-    formatDate(d) { if (!d) return '-'; return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }); },
-    formatDateInput(d) { return d ? d.split('T')[0] : ''; },
-    today() { return new Date().toISOString().split('T')[0]; },
-    debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+    redirect: url => window.location.href = url,
+    getInitials: n => (n?.charAt(0) || '') + (n?.split(' ')[1]?.charAt(0) || ''),
+    formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
+    formatDate: d => d ? new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+    formatDateInput: d => d ? d.split('T')[0] : '',
+    today: () => new Date().toISOString().split('T')[0],
+    debounce: (fn, delay) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
   };
 
   const api = {
@@ -85,24 +102,18 @@
       if (p.conciliado === '0') params.sin_conciliar = '1';
       return this.request(`/api/transacciones?${new URLSearchParams(params)}`);
     },
-    createTransaccion(d) { return this.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }); },
-    updateTransaccion(id, d) { return this.request(`/api/transacciones/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
-    deleteTransaccion(id) { return this.request(`/api/transacciones/${id}`, { method: 'DELETE' }); },
-    getCuentas() { return this.request('/api/cuentas-bancarias'); },
-    createCuenta(d) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }); },
-    getContactos() { return this.request('/api/contactos?limite=200'); },
-    getGastosSinConciliar(contactoId) { 
-      let url = '/api/gastos?sin_conciliar=1&limite=50';
-      if (contactoId) url += `&proveedor_id=${contactoId}`;
-      return this.request(url); 
-    },
-    getVentasSinConciliar(contactoId) { 
-      let url = '/api/ventas?estatus=pendiente&limite=50';
-      if (contactoId) url += `&cliente_id=${contactoId}`;
-      return this.request(url); 
-    },
-    getGasto(id) { return this.request(`/api/gastos/${id}`); },
-    getVenta(id) { return this.request(`/api/ventas/${id}`); }
+    createTransaccion: d => api.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }),
+    updateTransaccion: (id, d) => api.request(`/api/transacciones/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    deleteTransaccion: id => api.request(`/api/transacciones/${id}`, { method: 'DELETE' }),
+    getCuentas: () => api.request('/api/cuentas-bancarias'),
+    createCuenta: d => api.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }),
+    getContactos: () => api.request('/api/contactos?limite=200'),
+    getCategorias: () => api.request('/api/categorias?tipo=gasto'),
+    getImpuestos: () => api.request('/api/impuestos'),
+    createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
+    createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
+    getGasto: id => api.request(`/api/gastos/${id}`),
+    getVenta: id => api.request(`/api/ventas/${id}`)
   };
 
   const render = {
@@ -114,19 +125,16 @@
       elements.filterCuenta.innerHTML = '<option value="">Cuenta</option>' + opts;
     },
     contactos() {
-      const opts = state.contactos.map(c => `<option value="${c.id}">${c.nombre}${c.empresa ? ` - ${c.empresa}` : ''}</option>`).join('');
-      elements.contactoId.innerHTML = '<option value="">-- Sin contacto --</option>' + opts;
-      elements.filterContacto.innerHTML = '<option value="">Contacto</option>' + opts;
+      const provOpts = state.contactos.filter(c => c.tipo === 'proveedor' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      const cliOpts = state.contactos.filter(c => c.tipo === 'cliente' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      const allOpts = state.contactos.map(c => `<option value="${c.id}">${c.nombre}${c.tipo !== 'ambos' ? ` (${c.tipo})` : ''}</option>`).join('');
+      elements.contactoId.innerHTML = '<option value="">-- Sin contacto --</option>' + allOpts;
+      elements.filterContacto.innerHTML = '<option value="">Contacto</option>' + allOpts;
+      elements.gastoProveedor.innerHTML = '<option value="">-- Seleccionar --</option>' + provOpts;
+      elements.ventaCliente.innerHTML = '<option value="">-- Seleccionar --</option>' + cliOpts;
     },
-    gastos() {
-      elements.gastoId.innerHTML = '<option value="">-- Seleccionar --</option>' + state.gastos.map(g => 
-        `<option value="${g.id}">${utils.formatDate(g.fecha)} - ${utils.formatMoney(g.total)} - ${g.concepto || g.nombre_proveedor || 'Sin descripción'}</option>`
-      ).join('');
-    },
-    ventas() {
-      elements.ventaId.innerHTML = '<option value="">-- Seleccionar --</option>' + state.ventas.map(v => 
-        `<option value="${v.id}">${utils.formatDate(v.fecha)} - ${utils.formatMoney(v.total)} - ${v.nombre_contacto || v.folio || 'Sin descripción'}</option>`
-      ).join('');
+    categorias() {
+      elements.gastoCategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
     },
     transacciones() {
       const { transacciones, paginacion } = state;
@@ -149,7 +157,6 @@
       elements.prevPage.disabled = paginacion.pagina <= 1; 
       elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
-      // Table
       elements.tableBody.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
@@ -161,7 +168,6 @@
           <td><div class="badges-group">
             <span class="badge ${t.tipo}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
             ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Pendiente</span>'}
-            ${t.comprobante_url ? '<span class="badge comprobante">📎</span>' : ''}
           </div></td>
           <td style="text-align:right;"><div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div></td>
           <td><div class="table-actions">
@@ -171,7 +177,6 @@
         </tr>`;
       }).join('');
 
-      // Mobile cards
       elements.mobileCards.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
@@ -183,7 +188,6 @@
           <div class="mobile-card-meta">
             <span>${utils.formatDate(t.fecha)}</span>
             <span>${t.nombre_cuenta || '-'}</span>
-            ${t.nombre_contacto ? `<span>${t.nombre_contacto}</span>` : ''}
           </div>
           <div class="mobile-card-badges">
             <span class="badge ${t.tipo}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
@@ -208,6 +212,62 @@
       elements.mobileCards.querySelectorAll('.mobile-card').forEach(card => {
         card.addEventListener('click', () => handlers.openDetailModal(state.transacciones.find(t => t.id === card.dataset.id)));
       });
+    },
+    impuestosGasto() {
+      elements.gastoImpuestosList.innerHTML = state.gastoImpuestosTemp.map((imp, i) => `
+        <div class="impuesto-row" data-index="${i}">
+          <select class="form-select impuesto-select" data-index="${i}">
+            <option value="">Seleccionar</option>
+            ${state.impuestos.map(im => `<option value="${im.id}" data-tasa="${im.tasa}" data-tipo="${im.tipo}" ${im.id === imp.impuesto_id ? 'selected' : ''}>${im.nombre}</option>`).join('')}
+          </select>
+          <input type="number" class="form-input impuesto-importe" value="${imp.importe || ''}" step="0.01" placeholder="Importe" data-index="${i}">
+          <button type="button" class="btn btn-xs btn-danger remove-impuesto" data-index="${i}">×</button>
+        </div>
+      `).join('');
+      this.bindImpuestosEvents('gasto');
+    },
+    impuestosVenta() {
+      elements.ventaImpuestosList.innerHTML = state.ventaImpuestosTemp.map((imp, i) => `
+        <div class="impuesto-row" data-index="${i}">
+          <select class="form-select impuesto-select" data-index="${i}">
+            <option value="">Seleccionar</option>
+            ${state.impuestos.map(im => `<option value="${im.id}" data-tasa="${im.tasa}" data-tipo="${im.tipo}" ${im.id === imp.impuesto_id ? 'selected' : ''}>${im.nombre}</option>`).join('')}
+          </select>
+          <input type="number" class="form-input impuesto-importe" value="${imp.importe || ''}" step="0.01" placeholder="Importe" data-index="${i}">
+          <button type="button" class="btn btn-xs btn-danger remove-impuesto" data-index="${i}">×</button>
+        </div>
+      `).join('');
+      this.bindImpuestosEvents('venta');
+    },
+    bindImpuestosEvents(tipo) {
+      const list = tipo === 'gasto' ? elements.gastoImpuestosList : elements.ventaImpuestosList;
+      const tempArr = tipo === 'gasto' ? 'gastoImpuestosTemp' : 'ventaImpuestosTemp';
+      
+      list.querySelectorAll('.impuesto-select').forEach(sel => {
+        sel.addEventListener('change', e => {
+          const idx = parseInt(e.target.dataset.index);
+          const opt = e.target.selectedOptions[0];
+          state[tempArr][idx].impuesto_id = e.target.value;
+          state[tempArr][idx].tasa = parseFloat(opt?.dataset.tasa || 0);
+          state[tempArr][idx].tipo_imp = opt?.dataset.tipo || 'traslado';
+          handlers.calcTotalFromImpuestos(tipo);
+        });
+      });
+      list.querySelectorAll('.impuesto-importe').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const idx = parseInt(e.target.dataset.index);
+          state[tempArr][idx].importe = parseFloat(e.target.value) || 0;
+          handlers.calcTotalFromImpuestos(tipo);
+        });
+      });
+      list.querySelectorAll('.remove-impuesto').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const idx = parseInt(e.target.dataset.index);
+          state[tempArr].splice(idx, 1);
+          tipo === 'gasto' ? render.impuestosGasto() : render.impuestosVenta();
+          handlers.calcTotalFromImpuestos(tipo);
+        });
+      });
     }
   };
 
@@ -216,17 +276,22 @@
     closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes, impRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
-          api.getContactos()
+          api.getContactos(),
+          api.getCategorias().catch(() => ({ categorias: [] })),
+          api.getImpuestos().catch(() => ({ impuestos: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
         state.cuentas = cuentasRes.cuentas || [];
         state.contactos = contactosRes.contactos || [];
+        state.categorias = catRes.categorias || [];
+        state.impuestos = impRes.impuestos || [];
         render.cuentas();
         render.contactos();
+        render.categorias();
         render.transacciones();
       } catch (e) { console.error(e); }
     },
@@ -237,102 +302,74 @@
       const isIncome = tx.tipo === 'ingreso';
       const conciliado = tx.gasto_id || tx.venta_id;
 
-      // Amount header
       elements.detailAmount.innerHTML = `
         <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto))}</div>
         <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'}</div>
       `;
 
-      // Info grid
-      const cuenta = state.cuentas.find(c => c.id === tx.cuenta_bancaria_id);
       const contacto = state.contactos.find(c => c.id === tx.contacto_id);
       elements.detailGrid.innerHTML = `
         <div class="detail-item"><label>Fecha</label><span>${utils.formatDate(tx.fecha)}</span></div>
-        <div class="detail-item"><label>Cuenta</label><span>${cuenta?.nombre || tx.nombre_cuenta || '-'}</span></div>
+        <div class="detail-item"><label>Cuenta</label><span>${tx.nombre_cuenta || '-'}</span></div>
         <div class="detail-item"><label>Contacto</label><span>${contacto?.nombre || tx.nombre_contacto || '-'}</span></div>
         <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
-        ${tx.comprobante_url ? `<div class="detail-item full"><label>Comprobante</label><a href="${tx.comprobante_url}" target="_blank" class="btn btn-xs btn-outline">Ver comprobante</a></div>` : ''}
+        ${tx.comprobante_url ? `<div class="detail-item full"><label>Comprobante</label><a href="${tx.comprobante_url}" target="_blank" class="btn btn-xs btn-outline">Ver</a></div>` : ''}
       `;
 
-      // Conciliación section
       if (conciliado) {
         let infoHtml = '<div class="conciliacion-header"><span class="badge conciliado">✓ Conciliado</span></div>';
         try {
           if (tx.gasto_id) {
-            const gasto = await api.getGasto(tx.gasto_id);
+            const g = await api.getGasto(tx.gasto_id);
             infoHtml += `<div class="conciliacion-info">
               <div class="conciliacion-tipo">Gasto vinculado</div>
-              <div class="conciliacion-detalle">
-                <strong>${gasto.concepto || 'Sin concepto'}</strong><br>
-                ${gasto.nombre_proveedor || 'Sin proveedor'} • ${utils.formatDate(gasto.fecha)} • ${utils.formatMoney(gasto.total)}
-              </div>
-              <a href="../gastos/index.html?id=${tx.gasto_id}" class="btn btn-xs btn-outline">Ver gasto</a>
+              <div class="conciliacion-detalle"><strong>${g.concepto || 'Sin concepto'}</strong><br>${g.nombre_proveedor || ''} • ${utils.formatMoney(g.total)}</div>
             </div>`;
           } else if (tx.venta_id) {
-            const venta = await api.getVenta(tx.venta_id);
+            const v = await api.getVenta(tx.venta_id);
             infoHtml += `<div class="conciliacion-info">
               <div class="conciliacion-tipo">Venta vinculada</div>
-              <div class="conciliacion-detalle">
-                <strong>${venta.folio || 'Sin folio'}</strong><br>
-                ${venta.nombre_contacto || 'Sin cliente'} • ${utils.formatDate(venta.fecha)} • ${utils.formatMoney(venta.total)}
-              </div>
-              <a href="../ventas/index.html?id=${tx.venta_id}" class="btn btn-xs btn-outline">Ver venta</a>
+              <div class="conciliacion-detalle"><strong>${v.folio || 'Sin folio'}</strong><br>${v.nombre_contacto || ''} • ${utils.formatMoney(v.total)}</div>
             </div>`;
           }
         } catch (e) { console.error(e); }
         elements.detailConciliacion.innerHTML = infoHtml;
       } else {
-        // Sin conciliar - mostrar botón para crear gasto/venta
-        const tipoDoc = isIncome ? 'venta' : 'gasto';
-        const tipoLabel = isIncome ? 'Venta' : 'Gasto';
-        const params = new URLSearchParams({
-          from_tx: tx.id,
-          monto: tx.monto,
-          fecha: tx.fecha,
-          contacto_id: tx.contacto_id || '',
-          descripcion: tx.descripcion || ''
-        });
+        const btnLabel = isIncome ? 'Registrar Venta' : 'Registrar Gasto';
+        const btnAction = isIncome ? 'openVentaFromTx' : 'openGastoFromTx';
         elements.detailConciliacion.innerHTML = `
           <div class="conciliacion-header"><span class="badge pendiente">⏳ Sin conciliar</span></div>
           <div class="conciliacion-actions">
-            <p>Este movimiento no está vinculado a ningún ${tipoDoc}.</p>
-            <a href="../${tipoDoc}s/index.html?crear=1&${params.toString()}" class="btn btn-primary">
+            <p>Este movimiento no está vinculado.</p>
+            <button type="button" class="btn btn-primary" id="createFromTxBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Crear ${tipoLabel}
-            </a>
+              ${btnLabel}
+            </button>
           </div>
         `;
+        setTimeout(() => {
+          $('createFromTxBtn')?.addEventListener('click', () => handlers[btnAction]());
+        }, 10);
       }
 
       elements.detailModal.classList.add('active');
     },
-    closeDetailModal() { 
-      elements.detailModal.classList.remove('active'); 
-      state.viewingTx = null; 
-    },
+    closeDetailModal() { elements.detailModal.classList.remove('active'); state.viewingTx = null; },
     editFromDetail() {
-      if (state.viewingTx) {
-        this.closeDetailModal();
-        this.openEditModal(state.viewingTx);
-      }
+      if (state.viewingTx) { this.closeDetailModal(); this.openEditModal(state.viewingTx); }
     },
-    // Create/Edit Modal
+    // Tx Modal
     openCreateModal() {
       state.editingId = null;
       elements.modalTitle.textContent = 'Nuevo Movimiento';
       elements.txForm.reset();
       elements.fecha.value = utils.today();
-      elements.conciliarTipo.value = '';
-      elements.conciliarGastoGroup.style.display = 'none';
-      elements.conciliarVentaGroup.style.display = 'none';
       elements.comprobantePreview.style.display = 'none';
-      elements.comprobanteUpload.classList.remove('has-file');
       state.comprobanteData = null;
       elements.txModal.classList.add('active');
-      elements.tipo.focus();
     },
-    async openEditModal(tx) {
+    openEditModal(tx) {
       state.editingId = tx.id;
       elements.modalTitle.textContent = 'Editar Movimiento';
       elements.tipo.value = tx.tipo;
@@ -342,51 +379,11 @@
       elements.contactoId.value = tx.contacto_id || '';
       elements.descripcion.value = tx.descripcion || '';
       elements.referencia.value = tx.referencia || '';
-      
-      // Cargar gastos/ventas sin conciliar según contacto
-      if (tx.contacto_id) {
-        const [gastosRes, ventasRes] = await Promise.all([
-          api.getGastosSinConciliar(tx.contacto_id),
-          api.getVentasSinConciliar(tx.contacto_id)
-        ]);
-        state.gastos = gastosRes.gastos || [];
-        state.ventas = ventasRes.ventas || [];
-      } else {
-        const [gastosRes, ventasRes] = await Promise.all([
-          api.getGastosSinConciliar(),
-          api.getVentasSinConciliar()
-        ]);
-        state.gastos = gastosRes.gastos || [];
-        state.ventas = ventasRes.ventas || [];
-      }
-      render.gastos();
-      render.ventas();
-
-      if (tx.gasto_id) {
-        elements.conciliarTipo.value = 'gasto';
-        elements.conciliarGastoGroup.style.display = 'block';
-        elements.gastoId.value = tx.gasto_id;
-      } else if (tx.venta_id) {
-        elements.conciliarTipo.value = 'venta';
-        elements.conciliarVentaGroup.style.display = 'block';
-        elements.ventaId.value = tx.venta_id;
-      } else {
-        elements.conciliarTipo.value = '';
-        elements.conciliarGastoGroup.style.display = 'none';
-        elements.conciliarVentaGroup.style.display = 'none';
-      }
-
       if (tx.comprobante_url) {
         elements.comprobantePreview.style.display = 'flex';
-        elements.comprobanteFileName.textContent = 'Comprobante actual';
-        elements.comprobanteUpload.classList.add('has-file');
+        elements.comprobanteFileName.textContent = 'Comprobante';
         state.comprobanteData = tx.comprobante_url;
-      } else {
-        elements.comprobantePreview.style.display = 'none';
-        elements.comprobanteUpload.classList.remove('has-file');
-        state.comprobanteData = null;
       }
-
       elements.txModal.classList.add('active');
     },
     closeTxModal() { elements.txModal.classList.remove('active'); state.editingId = null; },
@@ -400,42 +397,21 @@
         contacto_id: elements.contactoId.value || null,
         descripcion: elements.descripcion.value.trim() || null,
         referencia: elements.referencia.value.trim() || null,
-        comprobante_url: state.comprobanteData || null,
-        gasto_id: elements.conciliarTipo.value === 'gasto' ? elements.gastoId.value || null : null,
-        venta_id: elements.conciliarTipo.value === 'venta' ? elements.ventaId.value || null : null
+        comprobante_url: state.comprobanteData || null
       };
-      elements.submitModal.classList.add('loading'); 
       elements.submitModal.disabled = true;
       try {
-        if (state.editingId) await api.updateTransaccion(state.editingId, d); 
+        if (state.editingId) await api.updateTransaccion(state.editingId, d);
         else await api.createTransaccion(d);
-        this.closeTxModal(); 
+        this.closeTxModal();
         await this.loadData();
       } catch (e) { alert(e.message); }
-      finally { elements.submitModal.classList.remove('loading'); elements.submitModal.disabled = false; }
-    },
-    async handleConciliarChange() {
-      const tipo = elements.conciliarTipo.value;
-      const contactoId = elements.contactoId.value;
-      elements.conciliarGastoGroup.style.display = tipo === 'gasto' ? 'block' : 'none';
-      elements.conciliarVentaGroup.style.display = tipo === 'venta' ? 'block' : 'none';
-      
-      // Cargar gastos/ventas filtrados por contacto
-      if (tipo === 'gasto') {
-        const res = await api.getGastosSinConciliar(contactoId);
-        state.gastos = res.gastos || [];
-        render.gastos();
-      } else if (tipo === 'venta') {
-        const res = await api.getVentasSinConciliar(contactoId);
-        state.ventas = res.ventas || [];
-        render.ventas();
-      }
+      finally { elements.submitModal.disabled = false; }
     },
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
         state.comprobanteData = file.name;
-        elements.comprobanteUpload.classList.add('has-file');
         elements.comprobantePreview.style.display = 'flex';
         elements.comprobanteFileName.textContent = file.name;
       }
@@ -443,11 +419,144 @@
     removeComprobante() {
       state.comprobanteData = null;
       elements.comprobanteFile.value = '';
-      elements.comprobanteUpload.classList.remove('has-file');
       elements.comprobantePreview.style.display = 'none';
     },
+    // Gasto from Tx
+    openGastoFromTx() {
+      const tx = state.viewingTx;
+      if (!tx) return;
+      this.closeDetailModal();
+      
+      elements.gastoForm.reset();
+      elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.gastoConcepto.value = tx.descripcion || '';
+      elements.gastoProveedor.value = tx.contacto_id || '';
+      elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
+      elements.gastoSubtotal.value = tx.monto;
+      elements.gastoTotal.value = tx.monto;
+      elements.gastoFiscalFields.style.display = 'none';
+      elements.gastoEsFiscal.checked = false;
+      
+      // IVA por defecto
+      state.gastoImpuestosTemp = [];
+      render.impuestosGasto();
+      
+      elements.gastoModal.classList.add('active');
+    },
+    closeGastoModal() { elements.gastoModal.classList.remove('active'); },
+    addGastoImpuesto() {
+      state.gastoImpuestosTemp.push({ impuesto_id: '', importe: 0, tasa: 0, tipo_imp: 'traslado' });
+      render.impuestosGasto();
+    },
+    calcTotalFromImpuestos(tipo) {
+      const subtotalEl = tipo === 'gasto' ? elements.gastoSubtotal : elements.ventaSubtotal;
+      const totalEl = tipo === 'gasto' ? elements.gastoTotal : elements.ventaTotal;
+      const tempArr = tipo === 'gasto' ? state.gastoImpuestosTemp : state.ventaImpuestosTemp;
+      
+      const subtotal = parseFloat(subtotalEl.value) || 0;
+      let impTraslados = 0, impRetenciones = 0;
+      
+      tempArr.forEach(imp => {
+        if (imp.tipo_imp === 'traslado') impTraslados += parseFloat(imp.importe) || 0;
+        else impRetenciones += parseFloat(imp.importe) || 0;
+      });
+      
+      totalEl.value = (subtotal + impTraslados - impRetenciones).toFixed(2);
+    },
+    async submitGasto(e) {
+      e.preventDefault();
+      const tx = state.viewingTx;
+      
+      const gastoData = {
+        concepto: elements.gastoConcepto.value.trim(),
+        proveedor_id: elements.gastoProveedor.value || null,
+        categoria_id: elements.gastoCategoria.value || null,
+        fecha: elements.gastoFecha.value,
+        metodo_pago: elements.gastoMetodoPago.value,
+        subtotal: parseFloat(elements.gastoSubtotal.value),
+        total: parseFloat(elements.gastoTotal.value),
+        es_fiscal: elements.gastoEsFiscal.checked ? 1 : 0,
+        uuid_cfdi: elements.gastoUuid.value.trim() || null,
+        folio_cfdi: elements.gastoFolio.value.trim() || null,
+        notas: elements.gastoNotas.value.trim() || null,
+        transaccion_id: tx?.id || null,
+        impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
+          impuesto_id: i.impuesto_id,
+          base: parseFloat(elements.gastoSubtotal.value),
+          importe: i.importe
+        }))
+      };
+      
+      elements.submitGastoModal.disabled = true;
+      try {
+        const result = await api.createGasto(gastoData);
+        // Vincular transacción al gasto
+        if (tx?.id && result.id) {
+          await api.updateTransaccion(tx.id, { gasto_id: result.id });
+        }
+        this.closeGastoModal();
+        await this.loadData();
+        alert('Gasto registrado y conciliado');
+      } catch (e) { alert(e.message); }
+      finally { elements.submitGastoModal.disabled = false; }
+    },
+    // Venta from Tx
+    openVentaFromTx() {
+      const tx = state.viewingTx;
+      if (!tx) return;
+      this.closeDetailModal();
+      
+      elements.ventaForm.reset();
+      elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.ventaCliente.value = tx.contacto_id || '';
+      elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
+      elements.ventaSubtotal.value = tx.monto;
+      elements.ventaTotal.value = tx.monto;
+      elements.ventaConcepto.value = tx.descripcion || '';
+      
+      state.ventaImpuestosTemp = [];
+      render.impuestosVenta();
+      
+      elements.ventaModal.classList.add('active');
+    },
+    closeVentaModal() { elements.ventaModal.classList.remove('active'); },
+    addVentaImpuesto() {
+      state.ventaImpuestosTemp.push({ impuesto_id: '', importe: 0, tasa: 0, tipo_imp: 'traslado' });
+      render.impuestosVenta();
+    },
+    async submitVenta(e) {
+      e.preventDefault();
+      const tx = state.viewingTx;
+      
+      const ventaData = {
+        folio: elements.ventaFolio.value.trim() || null,
+        contacto_id: elements.ventaCliente.value || null,
+        fecha: elements.ventaFecha.value,
+        subtotal: parseFloat(elements.ventaSubtotal.value),
+        total: parseFloat(elements.ventaTotal.value),
+        concepto: elements.ventaConcepto.value.trim() || null,
+        estatus: 'cobrada',
+        impuestos: state.ventaImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
+          impuesto_id: i.impuesto_id,
+          base: parseFloat(elements.ventaSubtotal.value),
+          importe: i.importe
+        }))
+      };
+      
+      elements.submitVentaModal.disabled = true;
+      try {
+        const result = await api.createVenta(ventaData);
+        if (tx?.id && result.id) {
+          await api.updateTransaccion(tx.id, { venta_id: result.id });
+        }
+        this.closeVentaModal();
+        await this.loadData();
+        alert('Venta registrada y conciliada');
+      } catch (e) { alert(e.message); }
+      finally { elements.submitVentaModal.disabled = false; }
+    },
     // Cuenta Modal
-    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); elements.cuentaNombre.focus(); },
+    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); },
     closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
     async submitCuenta(e) {
       e.preventDefault();
@@ -455,8 +564,7 @@
         const data = await api.createCuenta({
           nombre: elements.cuentaNombre.value.trim(),
           banco: elements.cuentaBanco.value.trim() || null,
-          saldo_inicial: parseFloat(elements.cuentaSaldo.value) || 0,
-          ultimos_digitos: elements.cuentaDigitos.value.trim() || null
+          saldo_inicial: parseFloat(elements.cuentaSaldo.value) || 0
         });
         state.cuentas.push(data.cuenta || data);
         render.cuentas();
@@ -468,15 +576,10 @@
     openDeleteModal(t) { state.deletingId = t.id; elements.deleteModal.classList.add('active'); },
     closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
-      elements.confirmDelete.classList.add('loading'); 
       elements.confirmDelete.disabled = true;
-      try { 
-        await api.deleteTransaccion(state.deletingId); 
-        this.closeDeleteModal(); 
-        await this.loadData(); 
-      }
+      try { await api.deleteTransaccion(state.deletingId); this.closeDeleteModal(); await this.loadData(); }
       catch (e) { alert(e.message); }
-      finally { elements.confirmDelete.classList.remove('loading'); elements.confirmDelete.disabled = false; }
+      finally { elements.confirmDelete.disabled = false; }
     },
     // Filters
     applyFilters() {
@@ -495,10 +598,10 @@
 
   function init() {
     if (!utils.getToken()) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
-    state.org = utils.getOrg(); 
+    state.org = utils.getOrg();
     if (!state.org) { utils.redirect(CONFIG.REDIRECT.SELECT_ORG); return; }
-    state.user = utils.getUser(); 
-    render.user(); 
+    state.user = utils.getUser();
+    render.user();
     render.org();
 
     // Sidebar
@@ -522,14 +625,29 @@
     elements.cancelModal.addEventListener('click', () => handlers.closeTxModal());
     elements.txForm.addEventListener('submit', e => handlers.submitTx(e));
     elements.txModal.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
-
-    // Form interactions
-    elements.conciliarTipo.addEventListener('change', () => handlers.handleConciliarChange());
-    elements.contactoId.addEventListener('change', () => handlers.handleConciliarChange());
     elements.comprobanteUpload.addEventListener('click', () => elements.comprobanteFile.click());
     elements.comprobanteFile.addEventListener('change', e => handlers.handleFileSelect(e));
     elements.removeComprobante.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
     elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
+
+    // Gasto modal
+    elements.closeGastoModal.addEventListener('click', () => handlers.closeGastoModal());
+    elements.cancelGastoModal.addEventListener('click', () => handlers.closeGastoModal());
+    elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
+    elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
+    elements.addGastoImpuesto.addEventListener('click', () => handlers.addGastoImpuesto());
+    elements.gastoSubtotal.addEventListener('input', () => handlers.calcTotalFromImpuestos('gasto'));
+    elements.gastoEsFiscal.addEventListener('change', () => {
+      elements.gastoFiscalFields.style.display = elements.gastoEsFiscal.checked ? 'block' : 'none';
+    });
+
+    // Venta modal
+    elements.closeVentaModal.addEventListener('click', () => handlers.closeVentaModal());
+    elements.cancelVentaModal.addEventListener('click', () => handlers.closeVentaModal());
+    elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
+    elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
+    elements.addVentaImpuesto.addEventListener('click', () => handlers.addVentaImpuesto());
+    elements.ventaSubtotal.addEventListener('input', () => handlers.calcTotalFromImpuestos('venta'));
 
     // Cuenta modal
     elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
@@ -553,18 +671,16 @@
     elements.prevPage.addEventListener('click', () => handlers.prevPage());
     elements.nextPage.addEventListener('click', () => handlers.nextPage());
 
-    // ESC key
+    // ESC
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { 
-        handlers.closeDetailModal();
-        handlers.closeTxModal(); 
-        handlers.closeCuentaModal(); 
-        handlers.closeDeleteModal(); 
+      if (e.key === 'Escape') {
+        handlers.closeDetailModal(); handlers.closeTxModal(); handlers.closeGastoModal();
+        handlers.closeVentaModal(); handlers.closeCuentaModal(); handlers.closeDeleteModal();
       }
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v3');
+    console.log('🚀 TRUNO Transacciones v4');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
