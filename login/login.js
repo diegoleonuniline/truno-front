@@ -1,6 +1,5 @@
 /**
- * TRUNO - Login Module v2
- * Con soporte para Face ID / Touch ID
+ * TRUNO - Login Module v2 DEBUG
  */
 
 (function() {
@@ -56,11 +55,27 @@
       elements.password.disabled = loading;
     },
     saveSession(token, usuario) {
-      localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
-      localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(usuario));
+      console.log('💾 Intentando guardar sesión...');
+      console.log('   Token recibido:', token ? `${token.substring(0, 20)}...` : 'NULL/UNDEFINED');
+      console.log('   Usuario recibido:', usuario);
+      
+      try {
+        localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
+        localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(usuario));
+        
+        // Verificar que se guardó
+        const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+        const savedUser = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
+        console.log('✅ Verificación después de guardar:');
+        console.log('   Token en localStorage:', savedToken ? 'OK' : 'FALLÓ');
+        console.log('   User en localStorage:', savedUser ? 'OK' : 'FALLÓ');
+      } catch (e) {
+        console.error('❌ Error guardando en localStorage:', e);
+      }
     },
     checkExistingSession() {
       const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+      console.log('🔍 Verificando sesión existente:', token ? 'HAY TOKEN' : 'NO HAY TOKEN');
       if (token) {
         window.location.href = CONFIG.REDIRECT.ALREADY_LOGGED;
         return true;
@@ -68,16 +83,14 @@
       return false;
     },
     redirect(url) {
+      console.log('🚀 Redirigiendo a:', url);
       window.location.href = url;
     },
     
-    // WebAuthn helpers
     bufferToBase64url(buffer) {
       const bytes = new Uint8Array(buffer);
       let str = '';
-      for (const byte of bytes) {
-        str += String.fromCharCode(byte);
-      }
+      for (const byte of bytes) str += String.fromCharCode(byte);
       return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     },
     base64urlToBuffer(base64url) {
@@ -85,32 +98,33 @@
       const padding = '='.repeat((4 - base64.length % 4) % 4);
       const binary = atob(base64 + padding);
       const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       return bytes.buffer;
     },
-
-    // Verificar soporte de biometría
     async isBiometricAvailable() {
       if (!window.PublicKeyCredential) return false;
       try {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        return available;
-      } catch {
-        return false;
-      }
+        return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      } catch { return false; }
     }
   };
 
   const api = {
     async login(correo, contrasena) {
+      console.log('📡 Llamando API login...');
+      console.log('   URL:', `${CONFIG.API_URL}${CONFIG.ENDPOINTS.LOGIN}`);
+      
       const response = await fetch(`${CONFIG.API_URL}${CONFIG.ENDPOINTS.LOGIN}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, contrasena })
       });
+      
+      console.log('📥 Response status:', response.status);
+      
       const data = await response.json();
+      console.log('📥 Response data:', data);
+      
       if (!response.ok) throw new Error(data.error || 'Error al iniciar sesión');
       return data;
     },
@@ -151,10 +165,19 @@
 
     async onSubmit(e) {
       e.preventDefault();
-      if (isSubmitting) return;
+      console.log('========== SUBMIT LOGIN ==========');
+      
+      if (isSubmitting) {
+        console.log('⏳ Ya hay un submit en proceso');
+        return;
+      }
 
       const correo = elements.email.value.trim();
       const contrasena = elements.password.value;
+
+      console.log('📝 Datos del form:');
+      console.log('   Correo:', correo);
+      console.log('   Password length:', contrasena.length);
 
       if (!correo || !utils.isValidEmail(correo)) {
         utils.showError('Ingresa un correo electrónico válido');
@@ -175,13 +198,27 @@
 
       try {
         const data = await api.login(correo, contrasena);
-        utils.saveSession(data.token, data.usuario);
         
-        // Guardar email para biometría futura
+        console.log('✅ Login API exitoso');
+        console.log('   data.token existe:', !!data.token);
+        console.log('   data.usuario existe:', !!data.usuario);
+        
+        utils.saveSession(data.token, data.usuario);
         localStorage.setItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL, correo);
         
+        // Esperar un momento antes de redirigir
+        console.log('⏳ Esperando 500ms antes de redirigir...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verificar una última vez
+        console.log('🔍 Verificación final antes de redirect:');
+        console.log('   Token:', localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN) ? 'OK' : 'VACÍO');
+        console.log('   User:', localStorage.getItem(CONFIG.STORAGE_KEYS.USER) ? 'OK' : 'VACÍO');
+        
         utils.redirect(CONFIG.REDIRECT.SUCCESS);
+        
       } catch (error) {
+        console.error('❌ Error en login:', error);
         utils.showError(error.message || 'Error de conexión');
         elements.password.value = '';
         elements.password.focus();
@@ -198,7 +235,6 @@
         return;
       }
 
-      // Verificar soporte
       const available = await utils.isBiometricAvailable();
       if (!available) {
         utils.showError('Tu dispositivo no soporta autenticación biométrica');
@@ -210,10 +246,7 @@
       utils.hideError();
 
       try {
-        // 1. Obtener opciones del servidor
         const options = await api.getWebAuthnLoginOptions(savedEmail);
-
-        // 2. Convertir challenge y allowCredentials
         options.challenge = utils.base64urlToBuffer(options.challenge);
         if (options.allowCredentials) {
           options.allowCredentials = options.allowCredentials.map(cred => ({
@@ -222,10 +255,8 @@
           }));
         }
 
-        // 3. Solicitar autenticación biométrica
         const credential = await navigator.credentials.get({ publicKey: options });
 
-        // 4. Preparar respuesta
         const credentialData = {
           id: credential.id,
           rawId: utils.bufferToBase64url(credential.rawId),
@@ -237,14 +268,12 @@
           }
         };
 
-        // 5. Enviar al servidor
         const data = await api.webAuthnLogin(savedEmail, credentialData);
         utils.saveSession(data.token, data.usuario);
         utils.redirect(CONFIG.REDIRECT.SUCCESS);
 
       } catch (error) {
         console.error('Face ID error:', error);
-        
         if (error.name === 'NotAllowedError') {
           utils.showError('Autenticación cancelada');
         } else if (error.message.includes('No hay biometría')) {
@@ -261,16 +290,16 @@
   };
 
   async function init() {
+    console.log('========== INIT LOGIN ==========');
+    
     if (utils.checkExistingSession()) return;
 
-    // Event listeners
     elements.form.addEventListener('submit', handlers.onSubmit);
     elements.passwordToggle.addEventListener('click', handlers.togglePassword);
     elements.faceIdBtn.addEventListener('click', handlers.onFaceId);
     elements.email.addEventListener('focus', handlers.onInputFocus);
     elements.password.addEventListener('focus', handlers.onInputFocus);
 
-    // Verificar soporte biométrico
     const biometricAvailable = await utils.isBiometricAvailable();
     const savedEmail = localStorage.getItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
     
@@ -283,15 +312,13 @@
 
     elements.email.focus();
 
-    // Verificar errores en URL
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
     if (errorParam === 'session_expired') {
       utils.showError('Tu sesión ha expirado');
     }
 
-    console.log('🚀 TRUNO Login v2 initialized');
-    console.log('📱 Biometric available:', biometricAvailable);
+    console.log('🚀 TRUNO Login DEBUG initialized');
   }
 
   if (document.readyState === 'loading') {
