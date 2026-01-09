@@ -1,6 +1,6 @@
 /**
- * TRUNO - Ventas Module v4
- * Con folio automático, tabs, detalle y filtro fechas
+ * TRUNO - Ventas Module v5
+ * Con impuestos dinámicos múltiples, folio automático, tabs, detalle y filtro fechas
  */
 
 (function() {
@@ -17,6 +17,7 @@
   const elements = {
     sidebar: $('sidebar'),
     sidebarOverlay: $('sidebarOverlay'),
+    sidebarClose: $('sidebarClose'),
     menuToggle: $('menuToggle'),
     orgSwitcher: $('orgSwitcher'),
     orgName: $('orgName'),
@@ -58,13 +59,16 @@
     fechaVencimiento: $('fechaVencimiento'),
     descripcion: $('descripcion'),
     subtotal: $('subtotal'),
-    impuesto: $('impuesto'),
     total: $('total'),
+    descuento: $('descuento'),
     moneda: $('moneda'),
     tipoCambio: $('tipoCambio'),
     uuidCfdi: $('uuidCfdi'),
     folioCfdi: $('folioCfdi'),
     notas: $('notas'),
+    // Impuestos dinámicos
+    impuestosContainer: $('impuestosContainer'),
+    addImpuestoBtn: $('addImpuestoBtn'),
     // Modal detalle
     detailModal: $('detailModal'),
     closeDetailModal: $('closeDetailModal'),
@@ -96,9 +100,18 @@
   };
 
   let state = {
-    user: null, org: null, ventas: [], contactos: [], cuentas: [],
+    user: null, 
+    org: null, 
+    ventas: [], 
+    contactos: [], 
+    cuentas: [],
+    impuestosCatalogo: [],  // Catálogo de impuestos disponibles
+    impuestosTemp: [],      // Impuestos del formulario actual
     paginacion: { pagina: 1, limite: 20, total: 0 },
-    editingId: null, deletingId: null, collectingVenta: null, viewingVenta: null,
+    editingId: null, 
+    deletingId: null, 
+    collectingVenta: null, 
+    viewingVenta: null,
     filters: { buscar: '', estatus: '', fecha_desde: '', fecha_hasta: '', solo_por_cobrar: false },
     ultimoFolio: 0
   };
@@ -208,6 +221,8 @@
     deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
     getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
     getCuentas() { return this.request('/api/cuentas-bancarias'); },
+    getImpuestos() { return this.request('/api/impuestos'); },
+    getVentaImpuestos(ventaId) { return this.request(`/api/ventas/${ventaId}/impuestos`); },
     getTransaccionesByVenta(ventaId) { return this.request(`/api/transacciones?venta_id=${ventaId}`); }
   };
 
@@ -233,6 +248,87 @@
       elements.tabTodas?.classList.toggle('active', !state.filters.solo_por_cobrar);
       elements.tabPorCobrar?.classList.toggle('active', state.filters.solo_por_cobrar);
     },
+    
+    // ========== IMPUESTOS DINÁMICOS ==========
+    impuestos() {
+      const container = elements.impuestosContainer;
+      if (!container) return;
+      
+      if (!state.impuestosTemp.length) {
+        container.innerHTML = '<div class="impuestos-empty">Sin impuestos agregados</div>';
+        return;
+      }
+      
+      const selectOpts = state.impuestosCatalogo.map(i => 
+        `<option value="${i.id}" data-tasa="${i.tasa}" data-tipo="${i.tipo}">${i.nombre} (${(i.tasa * 100).toFixed(0)}%)</option>`
+      ).join('');
+      
+      container.innerHTML = state.impuestosTemp.map((imp, idx) => `
+        <div class="impuesto-row" data-idx="${idx}">
+          <select class="imp-select">
+            <option value="">-- Seleccionar --</option>
+            ${selectOpts}
+          </select>
+          <span class="impuesto-tipo ${imp.tipo || 'traslado'}">${imp.tipo === 'retencion' ? 'Ret.' : 'Tras.'}</span>
+          <input type="number" class="imp-importe" value="${imp.importe || ''}" placeholder="0.00" step="0.01">
+          <button type="button" class="btn-remove-imp" title="Eliminar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      `).join('');
+      
+      // Bind events para cada fila
+      container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
+        const select = row.querySelector('.imp-select');
+        const impInput = row.querySelector('.imp-importe');
+        const tipoSpan = row.querySelector('.impuesto-tipo');
+        const removeBtn = row.querySelector('.btn-remove-imp');
+        
+        // Preseleccionar si ya tiene impuesto_id
+        if (state.impuestosTemp[idx].impuesto_id) {
+          select.value = state.impuestosTemp[idx].impuesto_id;
+        }
+        
+        // Cambio de select
+        select.addEventListener('change', () => {
+          const opt = select.selectedOptions[0];
+          const tasa = parseFloat(opt?.dataset?.tasa) || 0;
+          const tipo = opt?.dataset?.tipo || 'traslado';
+          
+          state.impuestosTemp[idx].impuesto_id = select.value;
+          state.impuestosTemp[idx].tasa = tasa;
+          state.impuestosTemp[idx].tipo = tipo;
+          
+          // Actualizar badge
+          tipoSpan.textContent = tipo === 'retencion' ? 'Ret.' : 'Tras.';
+          tipoSpan.className = `impuesto-tipo ${tipo}`;
+          
+          // Auto-calcular importe si hay subtotal
+          const subtotal = parseFloat(elements.subtotal.value) || 0;
+          if (subtotal > 0 && tasa > 0) {
+            const importe = subtotal * tasa;
+            impInput.value = importe.toFixed(2);
+            state.impuestosTemp[idx].importe = importe;
+          }
+          
+          handlers.calcTotal();
+        });
+        
+        // Cambio de importe manual
+        impInput.addEventListener('input', () => {
+          state.impuestosTemp[idx].importe = parseFloat(impInput.value) || 0;
+          handlers.calcTotal();
+        });
+        
+        // Eliminar fila
+        removeBtn.addEventListener('click', () => {
+          state.impuestosTemp.splice(idx, 1);
+          render.impuestos();
+          handlers.calcTotal();
+        });
+      });
+    },
+    
     ventas() {
       const { ventas, paginacion } = state;
       if (!ventas.length) { 
@@ -421,15 +517,17 @@
   const handlers = {
     async loadData() {
       try {
-        const [ventasData, contactosData, cuentasData] = await Promise.all([
+        const [ventasData, contactosData, cuentasData, impuestosData] = await Promise.all([
           api.getVentas({ ...state.filters, pagina: state.paginacion.pagina }),
           api.getContactos().catch(() => ({ contactos: [] })),
-          api.getCuentas().catch(() => ({ cuentas: [] }))
+          api.getCuentas().catch(() => ({ cuentas: [] })),
+          api.getImpuestos().catch(() => ({ impuestos: [] }))
         ]);
         state.ventas = ventasData.ventas || [];
         state.paginacion = ventasData.paginacion || state.paginacion;
         state.contactos = contactosData.contactos || [];
         state.cuentas = cuentasData.cuentas || [];
+        state.impuestosCatalogo = impuestosData.impuestos || [];
         render.ventas(); 
         render.stats(); 
         render.contactos(); 
@@ -460,6 +558,52 @@
       state.paginacion.pagina = 1;
       this.loadData();
     },
+    
+    // ========== IMPUESTOS HANDLERS ==========
+    addImpuesto() {
+      state.impuestosTemp.push({ 
+        impuesto_id: '', 
+        tasa: 0, 
+        tipo: 'traslado', 
+        importe: 0 
+      });
+      render.impuestos();
+    },
+    
+    recalcImpuestos() {
+      const subtotal = parseFloat(elements.subtotal.value) || 0;
+      state.impuestosTemp.forEach(imp => {
+        if (imp.tasa > 0 && subtotal > 0) {
+          imp.importe = subtotal * imp.tasa;
+        }
+      });
+      render.impuestos();
+      this.calcTotal();
+    },
+    
+    calcTotal() { 
+      const subtotal = parseFloat(elements.subtotal.value) || 0;
+      const descuento = parseFloat(elements.descuento?.value) || 0;
+      
+      let traslados = 0;
+      let retenciones = 0;
+      
+      state.impuestosTemp.forEach(imp => {
+        const importe = parseFloat(imp.importe) || 0;
+        if (imp.tipo === 'retencion') {
+          retenciones += importe;
+        } else {
+          traslados += importe;
+        }
+      });
+      
+      const total = subtotal + traslados - retenciones - descuento;
+      
+      if (subtotal > 0 || state.impuestosTemp.length > 0) {
+        elements.total.value = total.toFixed(2);
+      }
+    },
+    
     openCreateModal() {
       state.editingId = null; 
       elements.modalTitle.textContent = 'Nueva Venta'; 
@@ -467,10 +611,14 @@
       elements.fecha.value = utils.today();
       // Folio automático
       elements.folio.value = utils.generarFolio(state.ultimoFolio);
+      // Reset impuestos
+      state.impuestosTemp = [];
+      render.impuestos();
       elements.ventaModal.classList.add('active'); 
       elements.contactoId.focus();
     },
-    openEditModal(v) {
+    
+    async openEditModal(v) {
       state.editingId = v.id; 
       elements.modalTitle.textContent = 'Editar Venta';
       elements.contactoId.value = v.contacto_id || ''; 
@@ -479,22 +627,65 @@
       elements.fechaVencimiento.value = utils.formatDateInput(v.fecha_vencimiento);
       elements.descripcion.value = v.descripcion || ''; 
       elements.subtotal.value = v.subtotal || '';
-      elements.impuesto.value = v.impuesto || ''; 
       elements.total.value = v.total || '';
+      if (elements.descuento) elements.descuento.value = v.descuento || '';
       elements.moneda.value = v.moneda || 'MXN'; 
       elements.tipoCambio.value = v.tipo_cambio || 1;
       elements.uuidCfdi.value = v.uuid_cfdi || ''; 
       elements.folioCfdi.value = v.folio_cfdi || '';
       elements.notas.value = v.notas || ''; 
+      
+      // Cargar impuestos de la venta
+      state.impuestosTemp = [];
+      try {
+        const impRes = await api.getVentaImpuestos(v.id);
+        if (impRes.impuestos && impRes.impuestos.length > 0) {
+          state.impuestosTemp = impRes.impuestos.map(imp => ({
+            impuesto_id: imp.impuesto_id,
+            tasa: imp.tasa || 0,
+            tipo: imp.tipo || 'traslado',
+            importe: parseFloat(imp.importe) || 0
+          }));
+        }
+      } catch (e) {
+        // Si falla cargar impuestos, usar el campo legacy
+        if (v.impuesto && parseFloat(v.impuesto) > 0) {
+          const iva16 = state.impuestosCatalogo.find(i => i.nombre.includes('IVA') && i.tasa === 0.16);
+          if (iva16) {
+            state.impuestosTemp.push({ 
+              impuesto_id: iva16.id, 
+              tasa: iva16.tasa, 
+              tipo: iva16.tipo || 'traslado', 
+              importe: parseFloat(v.impuesto) 
+            });
+          }
+        }
+      }
+      
+      render.impuestos();
       elements.ventaModal.classList.add('active');
     },
+    
     closeVentaModal() { 
       elements.ventaModal.classList.remove('active'); 
       elements.ventaForm.reset(); 
-      state.editingId = null; 
+      state.editingId = null;
+      state.impuestosTemp = [];
     },
+    
     async submitVenta(e) {
       e.preventDefault();
+      
+      // Calcular impuesto legacy (suma de traslados - retenciones)
+      let totalImpuesto = 0;
+      state.impuestosTemp.forEach(imp => {
+        if (imp.tipo === 'traslado') {
+          totalImpuesto += (parseFloat(imp.importe) || 0);
+        } else {
+          totalImpuesto -= (parseFloat(imp.importe) || 0);
+        }
+      });
+      
       const d = {
         contacto_id: elements.contactoId.value || null, 
         folio: elements.folio.value.trim() || null,
@@ -502,14 +693,22 @@
         fecha_vencimiento: elements.fechaVencimiento.value || null,
         descripcion: elements.descripcion.value.trim() || null,
         subtotal: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
-        impuesto: parseFloat(elements.impuesto.value) || 0, 
+        impuesto: Math.abs(totalImpuesto), // Campo legacy para compatibilidad
+        descuento: parseFloat(elements.descuento?.value) || 0,
         total: parseFloat(elements.total.value),
         moneda: elements.moneda.value, 
         tipo_cambio: parseFloat(elements.tipoCambio.value) || 1,
         uuid_cfdi: elements.uuidCfdi.value.trim() || null, 
         folio_cfdi: elements.folioCfdi.value.trim() || null,
-        notas: elements.notas.value.trim() || null
+        notas: elements.notas.value.trim() || null,
+        // Array de impuestos para tabla venta_impuestos
+        impuestos: state.impuestosTemp.filter(i => i.impuesto_id).map(i => ({
+          impuesto_id: i.impuesto_id,
+          base: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
+          importe: parseFloat(i.importe) || 0
+        }))
       };
+      
       elements.submitModal.classList.add('loading'); 
       elements.submitModal.disabled = true;
       try {
@@ -530,6 +729,7 @@
         elements.submitModal.disabled = false; 
       }
     },
+    
     async openDetailModal(v) {
       if (!v) return;
       state.viewingVenta = v;
@@ -560,7 +760,7 @@
         <div class="detail-item"><label>Vencimiento</label><span>${utils.formatDate(v.fecha_vencimiento) || '-'}</span></div>
         <div class="detail-item"><label>Descripción</label><span>${v.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Subtotal</label><span>${utils.formatMoney(v.subtotal)}</span></div>
-        <div class="detail-item"><label>IVA</label><span>${utils.formatMoney(v.impuesto)}</span></div>
+        <div class="detail-item"><label>Impuestos</label><span>${utils.formatMoney(v.impuesto)}</span></div>
         <div class="detail-item"><label>Total</label><span class="income">${utils.formatMoney(total)}</span></div>
         <div class="detail-item"><label>Cobrado</label><span class="success">${utils.formatMoney(cobrado)}</span></div>
         <div class="detail-item"><label>Saldo</label><span class="${saldo > 0 ? 'expense' : 'success'}">${utils.formatMoney(saldo)}</span></div>
@@ -743,11 +943,6 @@
         this.loadData(); 
       } 
     },
-    calcTotal() { 
-      const s = parseFloat(elements.subtotal.value) || 0;
-      const i = parseFloat(elements.impuesto.value) || 0; 
-      if (s > 0) elements.total.value = (s + i).toFixed(2); 
-    },
     switchOrg() { 
       localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); 
       utils.redirect(CONFIG.REDIRECT.SELECT_ORG); 
@@ -764,6 +959,7 @@
 
     // Sidebar
     elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
     elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
     elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
@@ -781,8 +977,13 @@
     elements.cancelModal?.addEventListener('click', () => handlers.closeVentaModal());
     elements.ventaForm?.addEventListener('submit', e => handlers.submitVenta(e));
     elements.ventaModal?.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
-    elements.subtotal?.addEventListener('input', () => handlers.calcTotal());
-    elements.impuesto?.addEventListener('input', () => handlers.calcTotal());
+    
+    // Cálculo de totales con impuestos
+    elements.subtotal?.addEventListener('input', () => handlers.recalcImpuestos());
+    elements.descuento?.addEventListener('input', () => handlers.calcTotal());
+    
+    // Agregar impuesto
+    elements.addImpuestoBtn?.addEventListener('click', () => handlers.addImpuesto());
 
     // Modal detalle
     elements.closeDetailModal?.addEventListener('click', () => handlers.closeDetailModal());
@@ -812,7 +1013,7 @@
     elements.prevPage?.addEventListener('click', () => handlers.prevPage());
     elements.nextPage?.addEventListener('click', () => handlers.nextPage());
 
-    // Escape
+    // Escape para cerrar modales
     document.addEventListener('keydown', e => { 
       if (e.key === 'Escape') { 
         handlers.closeVentaModal();
@@ -823,7 +1024,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Ventas v4');
+    console.log('🚀 TRUNO Ventas v5 - Impuestos dinámicos');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
