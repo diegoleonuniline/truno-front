@@ -247,6 +247,7 @@
     </nav>
   </div>
 
+  
   <!-- Modal: Detalle -->
   <div class="modal-overlay" id="detailModal">
     <div class="modal modal-lg">
@@ -398,6 +399,43 @@
     </div>
   </div>
 
+<!-- Modal: Crear Método de Pago -->
+<div class="modal-overlay" id="metodoPagoModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 class="modal-title">Nuevo Método de Pago</h2>
+      <button class="modal-close" id="closeMetodoPagoModal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="metodoPagoForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label required">Nombre</label>
+          <input type="text" class="form-input" id="metodoNombre" placeholder="Ej: Transferencia SPEI" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clave</label>
+          <input type="text" class="form-input" id="metodoClave" placeholder="Ej: 03" maxlength="10">
+          <span class="form-hint">Clave SAT del método de pago</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <input type="text" class="form-input" id="metodoDescripcion" placeholder="Descripción opcional">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelMetodoPagoModal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Crear Método</button>
+      </div>
+    </form>
+  </div>
+</div>
+  
+  
   <!-- Modal: Crear Gasto (completo con impuestos) -->
   <div class="modal-overlay" id="gastoModal">
     <div class="modal">
@@ -472,16 +510,20 @@
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Método de pago</label>
-                <select class="form-select" id="gastoMetodoPago">
-                  <option value="">-- Seleccionar --</option>
-                  <option value="transferencia">Transferencia</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta_debito">Tarjeta Débito</option>
-                  <option value="tarjeta_credito">Tarjeta Crédito</option>
-                </select>
-              </div>
-            </div>
+   <div class="form-group">
+  <label class="form-label">Método de Pago</label>
+  <div class="select-with-add">
+    <select class="form-select" id="metodoPago">
+      <option value="">-- Seleccionar --</option>
+    </select>
+    <button type="button" class="btn-add" id="addMetodoPagoBtn" title="Crear método">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</div>
           </div>
 
           <div class="form-section">
