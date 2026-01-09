@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0a0e14">
   <title>Dashboard | TRUNO</title>
   <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="dashboard">
@@ -107,19 +108,14 @@
             <div class="org-switcher-name" id="orgName">Cargando...</div>
             <div class="org-switcher-plan" id="orgPlan">Plan Free</div>
           </div>
-          <svg class="org-switcher-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M7 15l5 5 5-5"/><path d="M7 9l5-5 5 5"/>
-          </svg>
         </button>
       </div>
     </aside>
 
-    <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Main Content -->
     <main class="main-content">
-      <!-- Header -->
       <header class="header">
         <div class="header-left">
           <button class="menu-toggle" id="menuToggle">
@@ -133,36 +129,14 @@
         </div>
 
         <div class="header-right">
-          <button class="header-btn" title="Notificaciones">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
-
           <div class="user-menu">
             <button class="user-btn" id="userMenuBtn">
               <div class="user-avatar" id="userAvatar">DL</div>
             </button>
             <div class="user-dropdown" id="userDropdown">
               <div class="dropdown-item" style="pointer-events:none; opacity:0.7;">
-                <span id="userFullName">Diego León</span>
+                <span id="userFullName">Usuario</span>
               </div>
-              <div class="dropdown-divider"></div>
-              <button class="dropdown-item" id="profileBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Mi Perfil
-              </button>
-              <button class="dropdown-item" id="settingsBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-                Configuración
-              </button>
               <div class="dropdown-divider"></div>
               <button class="dropdown-item" id="switchOrgBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -184,51 +158,82 @@
         </div>
       </header>
 
-      <!-- Page Content -->
       <div class="page-content">
-        <!-- Stats -->
+        <!-- Filtros de fecha -->
+        <div class="filters-section">
+          <div class="date-presets">
+            <button class="preset-btn" data-preset="today">Hoy</button>
+            <button class="preset-btn" data-preset="week">Semana</button>
+            <button class="preset-btn active" data-preset="month">Mes</button>
+            <button class="preset-btn" data-preset="quarter">Trimestre</button>
+            <button class="preset-btn" data-preset="year">Año</button>
+          </div>
+          <div class="date-range">
+            <input type="date" class="date-input" id="fechaDesde">
+            <span class="date-separator">a</span>
+            <input type="date" class="date-input" id="fechaHasta">
+            <button class="btn btn-primary btn-sm" id="applyDates">Aplicar</button>
+          </div>
+        </div>
+
+        <!-- Stats principales -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon blue">
+          <div class="stat-card stat-saldo">
+            <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                 <line x1="1" y1="10" x2="23" y2="10"/>
               </svg>
             </div>
             <div class="stat-info">
-              <div class="stat-label">Saldo Total</div>
+              <div class="stat-label">Saldo en Bancos</div>
               <div class="stat-value" id="saldoTotal">$0.00</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon green">
+          <div class="stat-card stat-ingresos">
+            <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
                 <polyline points="17 6 23 6 23 12"/>
               </svg>
             </div>
             <div class="stat-info">
-              <div class="stat-label">Ingresos del Mes</div>
-              <div class="stat-value" id="ingresosMes">$0.00</div>
+              <div class="stat-label">Ingresos</div>
+              <div class="stat-value" id="totalIngresos">$0.00</div>
+              <div class="stat-sub" id="txIngresos">0 transacciones</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon red">
+          <div class="stat-card stat-egresos">
+            <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
                 <polyline points="17 18 23 18 23 12"/>
               </svg>
             </div>
             <div class="stat-info">
-              <div class="stat-label">Egresos del Mes</div>
-              <div class="stat-value" id="egresosMes">$0.00</div>
+              <div class="stat-label">Egresos</div>
+              <div class="stat-value" id="totalEgresos">$0.00</div>
+              <div class="stat-sub" id="txEgresos">0 transacciones</div>
             </div>
           </div>
 
-          <div class="stat-card">
-            <div class="stat-icon yellow">
+          <div class="stat-card stat-balance">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Balance</div>
+              <div class="stat-value" id="balance">$0.00</div>
+            </div>
+          </div>
+
+          <div class="stat-card stat-por-cobrar clickable" onclick="window.location.href='../ventas/index.html'">
+            <div class="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
@@ -237,70 +242,131 @@
             <div class="stat-info">
               <div class="stat-label">Por Cobrar</div>
               <div class="stat-value" id="porCobrar">$0.00</div>
+              <div class="stat-sub" id="ventasPend">0 ventas</div>
+            </div>
+          </div>
+
+          <div class="stat-card stat-por-pagar clickable" onclick="window.location.href='../gastos/index.html'">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">Por Pagar</div>
+              <div class="stat-value" id="porPagar">$0.00</div>
+              <div class="stat-sub" id="gastosPend">0 gastos</div>
             </div>
           </div>
         </div>
 
-        <!-- Content Grid -->
-        <div class="content-grid">
-          <!-- Recent Transactions -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Últimas Transacciones</h3>
-              <a href="../transacciones/index.html" class="card-action">
-                Ver todas
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </a>
-            </div>
-            <div class="card-body">
-              <div class="transaction-list" id="transactionList">
-                <div class="empty-state">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
-                  </svg>
-                  <p>Sin transacciones recientes</p>
-                </div>
+        <!-- Gráfico principal: Flujo de efectivo -->
+        <div class="chart-section">
+          <div class="chart-card chart-large">
+            <div class="chart-header">
+              <h3>Flujo de Efectivo</h3>
+              <div class="chart-legend">
+                <span class="legend-item ingreso"><span class="legend-dot"></span> Ingresos</span>
+                <span class="legend-item egreso"><span class="legend-dot"></span> Egresos</span>
               </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="chartFlujo"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráficos secundarios -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Gastos por Categoría</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="chartCategorias"></canvas>
             </div>
           </div>
 
-          <!-- Pending Payments -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Pendientes de Pago</h3>
-              <a href="../ventas/index.html?status=pendiente" class="card-action">
-                Ver todos
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 18l6-6-6-6"/>
-                </svg>
-              </a>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Top Proveedores</h3>
             </div>
-            <div class="card-body">
-              <div class="pending-list" id="pendingList">
-                <div class="empty-state">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                  <p>No hay pagos pendientes</p>
-                </div>
-              </div>
+            <div class="chart-body">
+              <canvas id="chartProveedores"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Top Clientes</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="chartClientes"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>Cuentas Bancarias</h3>
+            </div>
+            <div class="chart-body">
+              <canvas id="chartCuentas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Listas de pendientes -->
+        <div class="lists-grid">
+          <div class="list-card">
+            <div class="list-header">
+              <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                </svg>
+                Ventas por Cobrar
+              </h3>
+              <a href="../ventas/index.html" class="list-action">Ver todas →</a>
+            </div>
+            <div class="list-body" id="listPorCobrar">
+              <div class="list-empty">Sin ventas pendientes</div>
+            </div>
+          </div>
+
+          <div class="list-card">
+            <div class="list-header">
+              <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/>
+                </svg>
+                Gastos por Pagar
+              </h3>
+              <a href="../gastos/index.html" class="list-action">Ver todos →</a>
+            </div>
+            <div class="list-body" id="listPorPagar">
+              <div class="list-empty">Sin gastos pendientes</div>
+            </div>
+          </div>
+
+          <div class="list-card list-full">
+            <div class="list-header">
+              <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                Últimas Transacciones
+              </h3>
+              <a href="../transacciones/index.html" class="list-action">Ver todas →</a>
+            </div>
+            <div class="list-body" id="listTransacciones">
+              <div class="list-empty">Sin transacciones recientes</div>
             </div>
           </div>
         </div>
       </div>
     </main>
-
-    <!-- FAB -->
-    <button class="fab" id="fabBtn" title="Nueva transacción">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-    </button>
   </div>
 
   <script src="dashboard.js"></script>
