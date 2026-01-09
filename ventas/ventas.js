@@ -1,6 +1,6 @@
 /**
- * TRUNO - Ventas Module v5
- * Con impuestos dinámicos múltiples, folio automático, tabs, detalle y filtro fechas
+ * TRUNO - Ventas Module v6
+ * Con crear cliente, crear impuesto y fix de transacciones
  */
 
 (function() {
@@ -46,7 +46,7 @@
     addVentaBtn: $('addVentaBtn'),
     addFirstVentaBtn: $('addFirstVentaBtn'),
     fabBtn: $('fabBtn'),
-    // Modal crear/editar
+    // Modal crear/editar venta
     ventaModal: $('ventaModal'),
     ventaForm: $('ventaForm'),
     modalTitle: $('modalTitle'),
@@ -54,6 +54,7 @@
     cancelModal: $('cancelModal'),
     submitModal: $('submitModal'),
     contactoId: $('contactoId'),
+    addClienteBtn: $('addClienteBtn'),
     folio: $('folio'),
     fecha: $('fecha'),
     fechaVencimiento: $('fechaVencimiento'),
@@ -69,6 +70,25 @@
     // Impuestos dinámicos
     impuestosContainer: $('impuestosContainer'),
     addImpuestoBtn: $('addImpuestoBtn'),
+    createImpuestoBtn: $('createImpuestoBtn'),
+    // Modal crear cliente
+    clienteModal: $('clienteModal'),
+    clienteForm: $('clienteForm'),
+    closeClienteModal: $('closeClienteModal'),
+    cancelClienteModal: $('cancelClienteModal'),
+    clienteNombre: $('clienteNombre'),
+    clienteEmail: $('clienteEmail'),
+    clienteTelefono: $('clienteTelefono'),
+    clienteRfc: $('clienteRfc'),
+    // Modal crear impuesto
+    impuestoModal: $('impuestoModal'),
+    impuestoForm: $('impuestoForm'),
+    closeImpuestoModal: $('closeImpuestoModal'),
+    cancelImpuestoModal: $('cancelImpuestoModal'),
+    impuestoNombre: $('impuestoNombre'),
+    impuestoClaveSat: $('impuestoClaveSat'),
+    impuestoTipo: $('impuestoTipo'),
+    impuestoTasa: $('impuestoTasa'),
     // Modal detalle
     detailModal: $('detailModal'),
     closeDetailModal: $('closeDetailModal'),
@@ -105,8 +125,8 @@
     ventas: [], 
     contactos: [], 
     cuentas: [],
-    impuestosCatalogo: [],  // Catálogo de impuestos disponibles
-    impuestosTemp: [],      // Impuestos del formulario actual
+    impuestosCatalogo: [],
+    impuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
     editingId: null, 
     deletingId: null, 
@@ -219,11 +239,13 @@
     createVenta(d) { return this.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }); },
     updateVenta(id, d) { return this.request(`/api/ventas/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
     deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
-    getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
+    getContactos() { return this.request('/api/contactos?limite=200'); },
+    createContacto(d) { return this.request('/api/contactos', { method: 'POST', body: JSON.stringify(d) }); },
     getCuentas() { return this.request('/api/cuentas-bancarias'); },
     getImpuestos() { return this.request('/api/impuestos'); },
+    createImpuesto(d) { return this.request('/api/impuestos', { method: 'POST', body: JSON.stringify(d) }); },
     getVentaImpuestos(ventaId) { return this.request(`/api/ventas/${ventaId}/impuestos`); },
-    getTransaccionesByVenta(ventaId) { return this.request(`/api/transacciones?venta_id=${ventaId}`); }
+    getTransacciones() { return this.request('/api/transacciones?limite=200'); }
   };
 
   const render = {
@@ -505,8 +527,9 @@
       });
     },
     contactos() { 
+      const clientes = state.contactos.filter(c => c.tipo === 'cliente' || c.tipo === 'ambos');
       elements.contactoId.innerHTML = '<option value="">-- Sin cliente --</option>' + 
-        state.contactos.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); 
+        clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); 
     },
     cuentas() { 
       elements.cobroCuenta.innerHTML = '<option value="">-- Seleccionar cuenta --</option>' + 
@@ -604,6 +627,91 @@
       }
     },
     
+    // ========== CREAR CLIENTE ==========
+    openClienteModal() {
+      elements.clienteForm.reset();
+      elements.clienteModal.classList.add('active');
+      elements.clienteNombre.focus();
+    },
+    closeClienteModal() {
+      elements.clienteModal.classList.remove('active');
+    },
+    async submitCliente(e) {
+      e.preventDefault();
+      const data = {
+        nombre: elements.clienteNombre.value.trim(),
+        tipo: 'cliente',
+        email: elements.clienteEmail.value.trim() || null,
+        telefono: elements.clienteTelefono.value.trim() || null,
+        rfc: elements.clienteRfc.value.trim().toUpperCase() || null
+      };
+      
+      try {
+        const result = await api.createContacto(data);
+        const nuevoCliente = result.contacto || result;
+        
+        // Agregar al state y recargar select
+        state.contactos.push(nuevoCliente);
+        render.contactos();
+        
+        // Seleccionar el nuevo cliente
+        elements.contactoId.value = nuevoCliente.id;
+        
+        this.closeClienteModal();
+        toast.success('Cliente creado');
+      } catch (e) {
+        toast.error(e.message);
+      }
+    },
+    
+    // ========== CREAR IMPUESTO ==========
+    openImpuestoModal() {
+      elements.impuestoForm.reset();
+      elements.impuestoTipo.value = 'traslado';
+      elements.impuestoModal.classList.add('active');
+      elements.impuestoNombre.focus();
+    },
+    closeImpuestoModal() {
+      elements.impuestoModal.classList.remove('active');
+    },
+    async submitImpuesto(e) {
+      e.preventDefault();
+      const tasaInput = parseFloat(elements.impuestoTasa.value);
+      // Si ponen 16, convertir a 0.16
+      const tasa = tasaInput > 1 ? tasaInput / 100 : tasaInput;
+      
+      const data = {
+        nombre: elements.impuestoNombre.value.trim(),
+        clave_sat: elements.impuestoClaveSat.value.trim() || null,
+        tipo: elements.impuestoTipo.value,
+        tasa: tasa
+      };
+      
+      try {
+        const result = await api.createImpuesto(data);
+        const nuevoImpuesto = result.impuesto || result;
+        
+        // Agregar al catálogo
+        state.impuestosCatalogo.push(nuevoImpuesto);
+        
+        // Agregar automáticamente a la lista temporal
+        state.impuestosTemp.push({
+          impuesto_id: nuevoImpuesto.id,
+          tasa: nuevoImpuesto.tasa,
+          tipo: nuevoImpuesto.tipo,
+          importe: 0
+        });
+        
+        render.impuestos();
+        this.recalcImpuestos();
+        
+        this.closeImpuestoModal();
+        toast.success('Impuesto creado y agregado');
+      } catch (e) {
+        toast.error(e.message);
+      }
+    },
+    
     openCreateModal() {
       state.editingId = null; 
       elements.modalTitle.textContent = 'Nueva Venta'; 
@@ -693,7 +801,7 @@
         fecha_vencimiento: elements.fechaVencimiento.value || null,
         descripcion: elements.descripcion.value.trim() || null,
         subtotal: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
-        impuesto: Math.abs(totalImpuesto), // Campo legacy para compatibilidad
+        impuesto: Math.abs(totalImpuesto),
         descuento: parseFloat(elements.descuento?.value) || 0,
         total: parseFloat(elements.total.value),
         moneda: elements.moneda.value, 
@@ -701,7 +809,6 @@
         uuid_cfdi: elements.uuidCfdi.value.trim() || null, 
         folio_cfdi: elements.folioCfdi.value.trim() || null,
         notas: elements.notas.value.trim() || null,
-        // Array de impuestos para tabla venta_impuestos
         impuestos: state.impuestosTemp.filter(i => i.impuesto_id).map(i => ({
           impuesto_id: i.impuesto_id,
           base: parseFloat(elements.subtotal.value) || parseFloat(elements.total.value),
@@ -766,7 +873,7 @@
         <div class="detail-item"><label>Saldo</label><span class="${saldo > 0 ? 'expense' : 'success'}">${utils.formatMoney(saldo)}</span></div>
       `;
 
-      // Cargar pagos (transacciones vinculadas)
+      // Cargar pagos
       elements.detailPagos.innerHTML = '<div class="loading-pagos">Cargando pagos...</div>';
 
       // Mostrar/ocultar botón cobrar
@@ -776,10 +883,13 @@
 
       elements.detailModal.classList.add('active');
 
-      // Cargar transacciones vinculadas
+      // Cargar transacciones - FILTRAR EN FRONTEND POR VENTA_ID
       try {
-        const txRes = await api.getTransaccionesByVenta(v.id);
-        const transacciones = txRes.transacciones || [];
+        const txRes = await api.getTransacciones();
+        let transacciones = txRes.transacciones || [];
+        
+        // FIX: Filtrar solo las que tienen venta_id igual a esta venta
+        transacciones = transacciones.filter(tx => tx.venta_id === v.id);
         
         if (transacciones.length) {
           elements.detailPagos.innerHTML = `
@@ -982,8 +1092,24 @@
     elements.subtotal?.addEventListener('input', () => handlers.recalcImpuestos());
     elements.descuento?.addEventListener('input', () => handlers.calcTotal());
     
-    // Agregar impuesto
+    // Agregar impuesto / Crear impuesto
     elements.addImpuestoBtn?.addEventListener('click', () => handlers.addImpuesto());
+    elements.createImpuestoBtn?.addEventListener('click', () => handlers.openImpuestoModal());
+    
+    // Crear cliente
+    elements.addClienteBtn?.addEventListener('click', () => handlers.openClienteModal());
+    
+    // Modal crear cliente
+    elements.closeClienteModal?.addEventListener('click', () => handlers.closeClienteModal());
+    elements.cancelClienteModal?.addEventListener('click', () => handlers.closeClienteModal());
+    elements.clienteForm?.addEventListener('submit', e => handlers.submitCliente(e));
+    elements.clienteModal?.addEventListener('click', e => { if (e.target === elements.clienteModal) handlers.closeClienteModal(); });
+    
+    // Modal crear impuesto
+    elements.closeImpuestoModal?.addEventListener('click', () => handlers.closeImpuestoModal());
+    elements.cancelImpuestoModal?.addEventListener('click', () => handlers.closeImpuestoModal());
+    elements.impuestoForm?.addEventListener('submit', e => handlers.submitImpuesto(e));
+    elements.impuestoModal?.addEventListener('click', e => { if (e.target === elements.impuestoModal) handlers.closeImpuestoModal(); });
 
     // Modal detalle
     elements.closeDetailModal?.addEventListener('click', () => handlers.closeDetailModal());
@@ -1017,6 +1143,8 @@
     document.addEventListener('keydown', e => { 
       if (e.key === 'Escape') { 
         handlers.closeVentaModal();
+        handlers.closeClienteModal();
+        handlers.closeImpuestoModal();
         handlers.closeDetailModal();
         handlers.closeCobroModal(); 
         handlers.closeDeleteModal(); 
@@ -1024,7 +1152,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Ventas v5 - Impuestos dinámicos');
+    console.log('🚀 TRUNO Ventas v6 - Crear cliente/impuesto + Fix transacciones');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
