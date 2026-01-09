@@ -1036,20 +1036,21 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   color: var(--brand-primary-light);
 }
 
-/* ========== MODALS ========== */
+/* ========== MODALS FIX ========== */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Cambiado de center */
   justify-content: center;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-base);
   z-index: 1000;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-overlay.active {
@@ -1060,24 +1061,19 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
 .modal {
   width: 100%;
   max-width: 560px;
-  max-height: calc(100vh - 48px);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  overflow: hidden;
   transform: scale(0.95);
   transition: transform var(--transition-base);
   display: flex;
   flex-direction: column;
-  margin: auto;
+  margin: var(--spacing-lg) auto;
+  max-height: none; /* Sin límite, el overlay hace scroll */
 }
 
 .modal-overlay.active .modal {
   transform: scale(1);
-}
-
-.modal-detail {
-  max-width: 600px;
 }
 
 .modal-header {
@@ -1086,40 +1082,17 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   justify-content: space-between;
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
-
-.modal-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  min-width: 36px;
-}
-
-.modal-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.modal-close svg {
-  width: 20px;
-  height: 20px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 10;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .modal-body {
   padding: var(--spacing-lg);
-  overflow-y: auto;
   flex: 1;
-  max-height: calc(100vh - 200px);
+  /* Sin max-height, el overlay scrollea */
 }
 
 .modal-footer {
@@ -1127,13 +1100,66 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card);
+  z-index: 10;
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   flex-wrap: wrap;
 }
 
 .modal-footer .btn {
   flex: 1;
   min-width: 120px;
+}
+
+/* Mobile modal adjustments */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end; /* Modal desde abajo como drawer */
+  }
+  
+  .modal {
+    margin: 0;
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 95vh;
+    max-height: 95dvh; /* Dynamic viewport height */
+  }
+  
+  .modal-header {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  
+  .modal-body {
+    overflow-y: auto;
+    max-height: calc(95vh - 140px);
+    max-height: calc(95dvh - 140px);
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-footer {
+    border-radius: 0;
+    padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0));
+  }
+  
+  .modal-footer .btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-body {
+    padding: var(--spacing-md);
+    max-height: calc(95vh - 130px);
+    max-height: calc(95dvh - 130px);
+  }
+  
+  .modal-header,
+  .modal-footer {
+    padding: var(--spacing-md);
+  }
 }
 
 /* ========== FORMS ========== */
