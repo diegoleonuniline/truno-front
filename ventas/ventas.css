@@ -498,6 +498,13 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   min-height: 36px;
 }
 
+.btn-xs {
+  height: 32px;
+  padding: 0 var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  min-height: 32px;
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -663,16 +670,23 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   border-color: var(--brand-primary);
 }
 
+/* Grupo de fechas siempre juntas */
+.filter-dates {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .filter-date {
   height: 44px;
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--spacing-sm);
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
-  min-width: 130px;
-  max-width: 100%;
+  width: 130px;
+  min-width: 0;
 }
 
 .filter-date:focus {
@@ -1036,13 +1050,13 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   color: var(--brand-primary-light);
 }
 
-/* ========== MODALS FIX ========== */
+/* ========== MODALS ========== */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
-  align-items: flex-start; /* Cambiado de center */
+  align-items: flex-start;
   justify-content: center;
   padding: var(--spacing-md);
   opacity: 0;
@@ -1069,7 +1083,7 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   display: flex;
   flex-direction: column;
   margin: var(--spacing-lg) auto;
-  max-height: none; /* Sin límite, el overlay hace scroll */
+  max-height: none;
 }
 
 .modal-overlay.active .modal {
@@ -1089,10 +1103,35 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
+.modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
 .modal-body {
   padding: var(--spacing-lg);
   flex: 1;
-  /* Sin max-height, el overlay scrollea */
 }
 
 .modal-footer {
@@ -1102,75 +1141,12 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
   background: var(--bg-card);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
 
 .modal-footer .btn {
   flex: 1;
   min-width: 0;
-}
-
-/* Mobile: mantener en fila, NO columna */
-@media (max-width: 768px) {
-  .modal-footer {
-    padding: var(--spacing-md);
-    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0));
-    gap: var(--spacing-sm);
-  }
-  
-  .modal-footer .btn {
-    flex: 1;
-    padding: 0 var(--spacing-md);
-    font-size: var(--font-size-sm);
-  }
-}
-
-/* Mobile modal adjustments */
-@media (max-width: 768px) {
-  .modal-overlay {
-    padding: 0;
-    align-items: flex-end; /* Modal desde abajo como drawer */
-  }
-  
-  .modal {
-    margin: 0;
-    max-width: 100%;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    max-height: 95vh;
-    max-height: 95dvh; /* Dynamic viewport height */
-  }
-  
-  .modal-header {
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  }
-  
-  .modal-body {
-    overflow-y: auto;
-    max-height: calc(95vh - 140px);
-    max-height: calc(95dvh - 140px);
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  .modal-footer {
-    border-radius: 0;
-    padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0));
-  }
-  
-  .modal-footer .btn {
-    flex: 1 1 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .modal-body {
-    padding: var(--spacing-md);
-    max-height: calc(95vh - 130px);
-    max-height: calc(95dvh - 130px);
-  }
-  
-  .modal-header,
-  .modal-footer {
-    padding: var(--spacing-md);
-  }
 }
 
 /* ========== FORMS ========== */
@@ -1257,6 +1233,98 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: var(--spacing-md);
+}
+
+/* ========== IMPUESTOS DINÁMICOS ========== */
+.impuestos-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.impuestos-empty {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.impuesto-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--bg-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+.impuesto-row .imp-select {
+  flex: 2;
+  height: 40px;
+  padding: 0 var(--spacing-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.impuesto-tipo {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--info);
+  min-width: 40px;
+  text-align: center;
+}
+
+.impuesto-tipo.retencion {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.impuesto-tipo.traslado {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.impuesto-row .imp-importe {
+  flex: 1;
+  height: 40px;
+  padding: 0 var(--spacing-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  text-align: right;
+  min-width: 80px;
+}
+
+.btn-remove-imp {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.btn-remove-imp:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.btn-remove-imp svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ========== DETAIL MODAL ========== */
@@ -1544,61 +1612,7 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
     grid-template-columns: 1fr 1fr;
   }
   
- .filters-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  flex-wrap: wrap;
-}
-
-.search-box {
-  flex: 1;
-  min-width: 200px;
-  max-width: 400px;
-  position: relative;
-}
-
-.filter-select {
-  height: 44px;
-  padding: 0 var(--spacing-xl) 0 var(--spacing-md);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-}
-
-/* Grupo de fechas siempre juntas */
-.filter-dates {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.filter-date {
-  height: 44px;
-  padding: 0 var(--spacing-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  width: 130px;
-  min-width: 0;
-}
-
-.filter-date:focus {
-  outline: none;
-  border-color: var(--brand-primary);
-}
-
-@media (max-width: 768px) {
+  /* Filters responsive */
   .filters-bar {
     flex-wrap: wrap;
   }
@@ -1625,15 +1639,6 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
     width: auto;
     min-width: 100px;
   }
-}
-
-@media (max-width: 480px) {
-  .filter-date {
-    min-width: 90px;
-    padding: 0 var(--spacing-xs);
-    font-size: var(--font-size-xs);
-  }
-}
   
   /* Hide more columns */
   .table th:nth-child(3),
@@ -1646,26 +1651,66 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
     grid-template-columns: 1fr;
   }
   
+  /* Modal como drawer desde abajo */
   .modal-overlay {
-    padding: var(--spacing-sm);
-    align-items: flex-start;
+    padding: 0;
+    align-items: flex-end;
   }
   
   .modal {
-    max-height: calc(100vh - 16px);
     margin: 0;
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 95vh;
+    max-height: 95dvh;
+  }
+  
+  .modal-header {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
   
   .modal-body {
-    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    max-height: calc(95vh - 140px);
+    max-height: calc(95dvh - 140px);
+    -webkit-overflow-scrolling: touch;
   }
   
+  /* Modal footer: botones lado a lado, NO columna */
   .modal-footer {
-    flex-direction: column;
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0));
+    gap: var(--spacing-sm);
+    border-radius: 0;
   }
   
   .modal-footer .btn {
-    width: 100%;
+    flex: 1;
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Impuestos responsive */
+  .impuesto-row {
+    flex-wrap: wrap;
+  }
+  
+  .impuesto-row .imp-select {
+    flex: 1 1 100%;
+    order: 1;
+  }
+  
+  .impuesto-tipo {
+    order: 2;
+  }
+  
+  .impuesto-row .imp-importe {
+    flex: 1;
+    order: 3;
+  }
+  
+  .btn-remove-imp {
+    order: 4;
   }
   
   .pagination {
@@ -1768,6 +1813,23 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
     width: 22px;
     height: 22px;
   }
+  
+  .filter-date {
+    min-width: 90px;
+    padding: 0 var(--spacing-xs);
+    font-size: var(--font-size-xs);
+  }
+  
+  .modal-body {
+    padding: var(--spacing-md);
+    max-height: calc(95vh - 130px);
+    max-height: calc(95dvh - 130px);
+  }
+  
+  .modal-header,
+  .modal-footer {
+    padding: var(--spacing-md);
+  }
 }
 
 /* Móvil muy pequeño: 360px */
@@ -1805,126 +1867,4 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
 button:focus:not(:focus-visible),
 a:focus:not(:focus-visible) {
   outline: none;
-}
-/* ========== IMPUESTOS DINÁMICOS ========== */
-.impuestos-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-}
-
-.impuestos-empty {
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  padding: var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  text-align: center;
-}
-
-.impuesto-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  background: var(--bg-tertiary);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-}
-
-.impuesto-row .imp-select {
-  flex: 2;
-  height: 40px;
-  padding: 0 var(--spacing-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-}
-
-.impuesto-tipo {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--info-bg);
-  color: var(--info);
-  min-width: 40px;
-  text-align: center;
-}
-
-.impuesto-tipo.retencion {
-  background: var(--error-bg);
-  color: var(--error);
-}
-
-.impuesto-tipo.traslado {
-  background: var(--success-bg);
-  color: var(--success);
-}
-
-.impuesto-row .imp-importe {
-  flex: 1;
-  height: 40px;
-  padding: 0 var(--spacing-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  text-align: right;
-  min-width: 80px;
-}
-
-.btn-remove-imp {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.btn-remove-imp:hover {
-  background: var(--error-bg);
-  color: var(--error);
-}
-
-.btn-remove-imp svg {
-  width: 16px;
-  height: 16px;
-}
-
-.btn-xs {
-  height: 32px;
-  padding: 0 var(--spacing-sm);
-  font-size: var(--font-size-xs);
-}
-
-/* Impuestos responsive */
-@media (max-width: 768px) {
-  .impuesto-row {
-    flex-wrap: wrap;
-  }
-  
-  .impuesto-row .imp-select {
-    flex: 1 1 100%;
-    order: 1;
-  }
-  
-  .impuesto-tipo {
-    order: 2;
-  }
-  
-  .impuesto-row .imp-importe {
-    flex: 1;
-    order: 3;
-  }
-  
-  .btn-remove-imp {
-    order: 4;
-  }
 }
