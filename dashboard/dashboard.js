@@ -1,6 +1,6 @@
 /**
  * TRUNO - Super Dashboard v3
- * Con gráficos, filtros y análisis completo
+ * Con gráficos, filtros, análisis completo y navegación móvil
  */
 
 (function() {
@@ -15,26 +15,53 @@
   const $ = id => document.getElementById(id);
 
   const elements = {
-    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
-    userMenuBtn: $('userMenuBtn'), userDropdown: $('userDropdown'),
-    userAvatar: $('userAvatar'), userFullName: $('userFullName'),
-    logoutBtn: $('logoutBtn'), switchOrgBtn: $('switchOrgBtn'),
-    orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'),
-    fechaDesde: $('fechaDesde'), fechaHasta: $('fechaHasta'), applyDates: $('applyDates'),
-    saldoTotal: $('saldoTotal'), totalIngresos: $('totalIngresos'), totalEgresos: $('totalEgresos'),
-    balance: $('balance'), porCobrar: $('porCobrar'), porPagar: $('porPagar'),
-    txIngresos: $('txIngresos'), txEgresos: $('txEgresos'),
-    ventasPend: $('ventasPend'), gastosPend: $('gastosPend'),
-    ventasPendientes: $('ventasPendientes'), gastosPendientes: $('gastosPendientes'),
-    listPorCobrar: $('listPorCobrar'), listPorPagar: $('listPorPagar'), listTransacciones: $('listTransacciones'),
-    chartFlujo: $('chartFlujo'), chartCategorias: $('chartCategorias'),
-    chartProveedores: $('chartProveedores'), chartClientes: $('chartClientes'), chartCuentas: $('chartCuentas')
+    sidebar: $('sidebar'),
+    sidebarOverlay: $('sidebarOverlay'),
+    sidebarClose: $('sidebarClose'),
+    menuToggle: $('menuToggle'),
+    userMenuBtn: $('userMenuBtn'),
+    userDropdown: $('userDropdown'),
+    userAvatar: $('userAvatar'),
+    userFullName: $('userFullName'),
+    logoutBtn: $('logoutBtn'),
+    sidebarLogoutBtn: $('sidebarLogoutBtn'),
+    switchOrgBtn: $('switchOrgBtn'),
+    orgSwitcher: $('orgSwitcher'),
+    orgName: $('orgName'),
+    orgPlan: $('orgPlan'),
+    fechaDesde: $('fechaDesde'),
+    fechaHasta: $('fechaHasta'),
+    applyDates: $('applyDates'),
+    saldoTotal: $('saldoTotal'),
+    totalIngresos: $('totalIngresos'),
+    totalEgresos: $('totalEgresos'),
+    balance: $('balance'),
+    porCobrar: $('porCobrar'),
+    porPagar: $('porPagar'),
+    txIngresos: $('txIngresos'),
+    txEgresos: $('txEgresos'),
+    ventasPend: $('ventasPend'),
+    gastosPend: $('gastosPend'),
+    listPorCobrar: $('listPorCobrar'),
+    listPorPagar: $('listPorPagar'),
+    listTransacciones: $('listTransacciones'),
+    chartFlujo: $('chartFlujo'),
+    chartCategorias: $('chartCategorias'),
+    chartProveedores: $('chartProveedores'),
+    chartClientes: $('chartClientes'),
+    chartCuentas: $('chartCuentas')
   };
 
   let state = {
-    user: null, org: null,
-    fechaDesde: null, fechaHasta: null,
-    transacciones: [], ventas: [], gastos: [], cuentas: [], categorias: [],
+    user: null,
+    org: null,
+    fechaDesde: null,
+    fechaHasta: null,
+    transacciones: [],
+    ventas: [],
+    gastos: [],
+    cuentas: [],
+    categorias: [],
     charts: {}
   };
 
@@ -213,7 +240,7 @@
           scales: {
             x: {
               grid: { display: false },
-              ticks: { color: '#64748b', font: { size: 11 } }
+              ticks: { color: '#64748b', font: { size: 11 }, maxRotation: 45, minRotation: 0 }
             },
             y: {
               grid: { color: 'rgba(148, 163, 184, 0.1)' },
@@ -384,44 +411,42 @@
   const render = {
     user() {
       if (!state.user) return;
-      elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido);
-      elements.userFullName.textContent = `${state.user.nombre || ''} ${state.user.apellido || ''}`.trim() || 'Usuario';
+      if (elements.userAvatar) {
+        elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido);
+      }
+      if (elements.userFullName) {
+        elements.userFullName.textContent = `${state.user.nombre || ''} ${state.user.apellido || ''}`.trim() || 'Usuario';
+      }
     },
 
     org() {
       if (!state.org) return;
-      elements.orgName.textContent = state.org.nombre;
-      elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`;
+      if (elements.orgName) elements.orgName.textContent = state.org.nombre;
+      if (elements.orgPlan) elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`;
     },
 
-   stats(data) {
-  elements.saldoTotal.textContent = utils.formatMoney(data.saldoTotal);
-  elements.totalIngresos.textContent = utils.formatMoney(data.ingresos);
-  elements.totalEgresos.textContent = utils.formatMoney(data.egresos);
-  elements.txIngresos.textContent = `${data.txIngresos} transacciones`;
-  elements.txEgresos.textContent = `${data.txEgresos} transacciones`;
-  
-  const balance = data.ingresos - data.egresos;
-  elements.balance.textContent = utils.formatMoney(balance);
-  elements.balance.className = `stat-value ${balance >= 0 ? 'positive' : 'negative'}`;
-  
-  elements.porCobrar.textContent = utils.formatMoney(data.porCobrar);
-  elements.porPagar.textContent = utils.formatMoney(data.porPagar);
-  elements.ventasPend.textContent = `${data.ventasPend} ventas`;
-  elements.gastosPend.textContent = `${data.gastosPend} gastos`;
-
-  // Badges sidebar - con optional chaining
-  if (elements.ventasPendientes) {
-    elements.ventasPendientes.textContent = data.ventasPend;
-    elements.ventasPendientes.style.display = data.ventasPend > 0 ? 'flex' : 'none';
-  }
-  if (elements.gastosPendientes) {
-    elements.gastosPendientes.textContent = data.gastosPend;
-    elements.gastosPendientes.style.display = data.gastosPend > 0 ? 'flex' : 'none';
-  }
-},
+    stats(data) {
+      if (elements.saldoTotal) elements.saldoTotal.textContent = utils.formatMoney(data.saldoTotal);
+      if (elements.totalIngresos) elements.totalIngresos.textContent = utils.formatMoney(data.ingresos);
+      if (elements.totalEgresos) elements.totalEgresos.textContent = utils.formatMoney(data.egresos);
+      if (elements.txIngresos) elements.txIngresos.textContent = `${data.txIngresos} transacciones`;
+      if (elements.txEgresos) elements.txEgresos.textContent = `${data.txEgresos} transacciones`;
+      
+      const balance = data.ingresos - data.egresos;
+      if (elements.balance) {
+        elements.balance.textContent = utils.formatMoney(balance);
+        elements.balance.className = `stat-value ${balance >= 0 ? 'positive' : 'negative'}`;
+      }
+      
+      if (elements.porCobrar) elements.porCobrar.textContent = utils.formatMoney(data.porCobrar);
+      if (elements.porPagar) elements.porPagar.textContent = utils.formatMoney(data.porPagar);
+      if (elements.ventasPend) elements.ventasPend.textContent = `${data.ventasPend} ventas`;
+      if (elements.gastosPend) elements.gastosPend.textContent = `${data.gastosPend} gastos`;
+    },
 
     listPorCobrar(ventas) {
+      if (!elements.listPorCobrar) return;
+      
       const pendientes = ventas.filter(v => {
         const saldo = (parseFloat(v.total) || 0) - (parseFloat(v.monto_cobrado) || 0);
         return saldo > 0;
@@ -448,6 +473,8 @@
     },
 
     listPorPagar(gastos) {
+      if (!elements.listPorPagar) return;
+      
       const pendientes = gastos.filter(g => {
         const saldo = (parseFloat(g.total) || 0) - (parseFloat(g.monto_pagado) || 0);
         return g.estatus_pago !== 'pagado' && saldo > 0;
@@ -474,6 +501,8 @@
     },
 
     listTransacciones(transacciones) {
+      if (!elements.listTransacciones) return;
+      
       if (!transacciones.length) {
         elements.listTransacciones.innerHTML = '<div class="list-empty">Sin transacciones recientes</div>';
         return;
@@ -564,7 +593,6 @@
       
       // Si hay muchos días, agrupar por semana
       if (days.length > 31) {
-        // Simplificar: mostrar solo algunos puntos
         const step = Math.ceil(days.length / 15);
         flujoData.labels = flujoData.labels.filter((_, i) => i % step === 0);
         flujoData.ingresos = flujoData.ingresos.filter((_, i) => i % step === 0);
@@ -647,8 +675,8 @@
 
       state.fechaDesde = desde;
       state.fechaHasta = hasta;
-      elements.fechaDesde.value = desde;
-      elements.fechaHasta.value = hasta;
+      if (elements.fechaDesde) elements.fechaDesde.value = desde;
+      if (elements.fechaHasta) elements.fechaHasta.value = hasta;
 
       // Update active button
       document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -659,27 +687,46 @@
     },
 
     applyDateRange() {
-      state.fechaDesde = elements.fechaDesde.value;
-      state.fechaHasta = elements.fechaHasta.value;
+      state.fechaDesde = elements.fechaDesde?.value;
+      state.fechaHasta = elements.fechaHasta?.value;
       document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
       this.loadDashboard();
     },
 
-    toggleSidebar() {
-      elements.sidebar.classList.toggle('open');
-      elements.sidebarOverlay.classList.toggle('active');
+    openSidebar() {
+      elements.sidebar?.classList.add('open');
+      elements.sidebarOverlay?.classList.add('active');
+      document.body.style.overflow = 'hidden';
     },
+
     closeSidebar() {
-      elements.sidebar.classList.remove('open');
-      elements.sidebarOverlay.classList.remove('active');
+      elements.sidebar?.classList.remove('open');
+      elements.sidebarOverlay?.classList.remove('active');
+      document.body.style.overflow = '';
     },
-    toggleUserMenu() { elements.userDropdown.classList.toggle('active'); },
+
+    toggleSidebar() {
+      if (elements.sidebar?.classList.contains('open')) {
+        this.closeSidebar();
+      } else {
+        this.openSidebar();
+      }
+    },
+
+    toggleUserMenu() {
+      elements.userDropdown?.classList.toggle('active');
+    },
+
     closeUserMenu(e) {
       if (!elements.userMenuBtn?.contains(e.target) && !elements.userDropdown?.contains(e.target)) {
         elements.userDropdown?.classList.remove('active');
       }
     },
-    logout() { utils.logout(); },
+
+    logout() {
+      utils.logout();
+    },
+
     switchOrg() {
       localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG);
       utils.redirect(CONFIG.REDIRECT.SELECT_ORG);
@@ -695,8 +742,8 @@
     // Fechas por defecto: mes actual
     state.fechaDesde = utils.startOfMonth();
     state.fechaHasta = utils.endOfMonth();
-    elements.fechaDesde.value = state.fechaDesde;
-    elements.fechaHasta.value = state.fechaHasta;
+    if (elements.fechaDesde) elements.fechaDesde.value = state.fechaDesde;
+    if (elements.fechaHasta) elements.fechaHasta.value = state.fechaHasta;
 
     render.user();
     render.org();
@@ -704,20 +751,38 @@
     // Event listeners
     elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
     elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
     elements.userMenuBtn?.addEventListener('click', () => handlers.toggleUserMenu());
     elements.logoutBtn?.addEventListener('click', () => handlers.logout());
+    elements.sidebarLogoutBtn?.addEventListener('click', () => handlers.logout());
     elements.switchOrgBtn?.addEventListener('click', () => handlers.switchOrg());
     elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
     elements.applyDates?.addEventListener('click', () => handlers.applyDateRange());
     document.addEventListener('click', e => handlers.closeUserMenu(e));
+
+    // Cerrar sidebar al hacer click en un nav-item (en móvil)
+    document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        if (window.innerWidth <= 1024) {
+          handlers.closeSidebar();
+        }
+      });
+    });
 
     // Preset buttons
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => handlers.setPreset(btn.dataset.preset));
     });
 
+    // Resize handler para cerrar sidebar si cambia a desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 1024) {
+        handlers.closeSidebar();
+      }
+    });
+
     handlers.loadDashboard();
-    console.log('🚀 TRUNO Super Dashboard v3');
+    console.log('🚀 TRUNO Super Dashboard v3 - Mobile Ready');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
