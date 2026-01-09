@@ -1,6 +1,6 @@
 /**
- * TRUNO - Ventas Module v3
- * Con toast notifications y columna de saldo
+ * TRUNO - Ventas Module v4
+ * Con folio automático, tabs, detalle y filtro fechas
  */
 
 (function() {
@@ -12,76 +12,95 @@
     REDIRECT: { LOGIN: '/truno-front/login/login.html', SELECT_ORG: '/truno-front/organizaciones/seleccionar.html' }
   };
 
+  const $ = id => document.getElementById(id);
+
   const elements = {
-    sidebar: document.getElementById('sidebar'),
-    sidebarOverlay: document.getElementById('sidebarOverlay'),
-    menuToggle: document.getElementById('menuToggle'),
-    orgSwitcher: document.getElementById('orgSwitcher'),
-    orgName: document.getElementById('orgName'),
-    orgPlan: document.getElementById('orgPlan'),
-    userAvatar: document.getElementById('userAvatar'),
-    totalMes: document.getElementById('totalMes'),
-    porCobrar: document.getElementById('porCobrar'),
-    vencidas: document.getElementById('vencidas'),
-    cobradas: document.getElementById('cobradas'),
-    searchInput: document.getElementById('searchInput'),
-    filterStatus: document.getElementById('filterStatus'),
-    tableContainer: document.getElementById('tableContainer'),
-    tableBody: document.getElementById('tableBody'),
-    mobileCards: document.getElementById('mobileCards'),
-    emptyState: document.getElementById('emptyState'),
-    pagination: document.getElementById('pagination'),
-    showingStart: document.getElementById('showingStart'),
-    showingEnd: document.getElementById('showingEnd'),
-    totalRecords: document.getElementById('totalRecords'),
-    prevPage: document.getElementById('prevPage'),
-    nextPage: document.getElementById('nextPage'),
-    addVentaBtn: document.getElementById('addVentaBtn'),
-    addFirstVentaBtn: document.getElementById('addFirstVentaBtn'),
-    fabBtn: document.getElementById('fabBtn'),
-    ventaModal: document.getElementById('ventaModal'),
-    ventaForm: document.getElementById('ventaForm'),
-    modalTitle: document.getElementById('modalTitle'),
-    closeModal: document.getElementById('closeModal'),
-    cancelModal: document.getElementById('cancelModal'),
-    submitModal: document.getElementById('submitModal'),
-    contactoId: document.getElementById('contactoId'),
-    folio: document.getElementById('folio'),
-    fecha: document.getElementById('fecha'),
-    fechaVencimiento: document.getElementById('fechaVencimiento'),
-    descripcion: document.getElementById('descripcion'),
-    subtotal: document.getElementById('subtotal'),
-    impuesto: document.getElementById('impuesto'),
-    total: document.getElementById('total'),
-    moneda: document.getElementById('moneda'),
-    tipoCambio: document.getElementById('tipoCambio'),
-    uuidCfdi: document.getElementById('uuidCfdi'),
-    folioCfdi: document.getElementById('folioCfdi'),
-    notas: document.getElementById('notas'),
-    cobroModal: document.getElementById('cobroModal'),
-    cobroForm: document.getElementById('cobroForm'),
-    closeCobroModal: document.getElementById('closeCobroModal'),
-    cancelCobroModal: document.getElementById('cancelCobroModal'),
-    cobroVentaInfo: document.getElementById('cobroVentaInfo'),
-    cobroTotal: document.getElementById('cobroTotal'),
-    cobroPendiente: document.getElementById('cobroPendiente'),
-    cobroMonto: document.getElementById('cobroMonto'),
-    cobroFecha: document.getElementById('cobroFecha'),
-    cobroCuenta: document.getElementById('cobroCuenta'),
-    cobroMetodo: document.getElementById('cobroMetodo'),
-    submitCobro: document.getElementById('submitCobro'),
-    deleteModal: document.getElementById('deleteModal'),
-    closeDeleteModal: document.getElementById('closeDeleteModal'),
-    cancelDeleteModal: document.getElementById('cancelDeleteModal'),
-    confirmDelete: document.getElementById('confirmDelete'),
-    deleteVentaName: document.getElementById('deleteVentaName')
+    sidebar: $('sidebar'),
+    sidebarOverlay: $('sidebarOverlay'),
+    menuToggle: $('menuToggle'),
+    orgSwitcher: $('orgSwitcher'),
+    orgName: $('orgName'),
+    orgPlan: $('orgPlan'),
+    userAvatar: $('userAvatar'),
+    totalMes: $('totalMes'),
+    porCobrar: $('porCobrar'),
+    vencidas: $('vencidas'),
+    cobradas: $('cobradas'),
+    tabTodas: $('tabTodas'),
+    tabPorCobrar: $('tabPorCobrar'),
+    searchInput: $('searchInput'),
+    filterStatus: $('filterStatus'),
+    filterFechaDesde: $('filterFechaDesde'),
+    filterFechaHasta: $('filterFechaHasta'),
+    tableContainer: $('tableContainer'),
+    tableBody: $('tableBody'),
+    mobileCards: $('mobileCards'),
+    emptyState: $('emptyState'),
+    pagination: $('pagination'),
+    showingStart: $('showingStart'),
+    showingEnd: $('showingEnd'),
+    totalRecords: $('totalRecords'),
+    prevPage: $('prevPage'),
+    nextPage: $('nextPage'),
+    addVentaBtn: $('addVentaBtn'),
+    addFirstVentaBtn: $('addFirstVentaBtn'),
+    fabBtn: $('fabBtn'),
+    // Modal crear/editar
+    ventaModal: $('ventaModal'),
+    ventaForm: $('ventaForm'),
+    modalTitle: $('modalTitle'),
+    closeModal: $('closeModal'),
+    cancelModal: $('cancelModal'),
+    submitModal: $('submitModal'),
+    contactoId: $('contactoId'),
+    folio: $('folio'),
+    fecha: $('fecha'),
+    fechaVencimiento: $('fechaVencimiento'),
+    descripcion: $('descripcion'),
+    subtotal: $('subtotal'),
+    impuesto: $('impuesto'),
+    total: $('total'),
+    moneda: $('moneda'),
+    tipoCambio: $('tipoCambio'),
+    uuidCfdi: $('uuidCfdi'),
+    folioCfdi: $('folioCfdi'),
+    notas: $('notas'),
+    // Modal detalle
+    detailModal: $('detailModal'),
+    closeDetailModal: $('closeDetailModal'),
+    closeDetailBtn: $('closeDetailBtn'),
+    detailAmount: $('detailAmount'),
+    detailGrid: $('detailGrid'),
+    detailPagos: $('detailPagos'),
+    editFromDetailBtn: $('editFromDetailBtn'),
+    cobrarFromDetailBtn: $('cobrarFromDetailBtn'),
+    // Modal cobro
+    cobroModal: $('cobroModal'),
+    cobroForm: $('cobroForm'),
+    closeCobroModal: $('closeCobroModal'),
+    cancelCobroModal: $('cancelCobroModal'),
+    cobroVentaInfo: $('cobroVentaInfo'),
+    cobroTotal: $('cobroTotal'),
+    cobroPendiente: $('cobroPendiente'),
+    cobroMonto: $('cobroMonto'),
+    cobroFecha: $('cobroFecha'),
+    cobroCuenta: $('cobroCuenta'),
+    cobroMetodo: $('cobroMetodo'),
+    submitCobro: $('submitCobro'),
+    // Modal eliminar
+    deleteModal: $('deleteModal'),
+    closeDeleteModal: $('closeDeleteModal'),
+    cancelDeleteModal: $('cancelDeleteModal'),
+    confirmDelete: $('confirmDelete'),
+    deleteVentaName: $('deleteVentaName')
   };
 
   let state = {
     user: null, org: null, ventas: [], contactos: [], cuentas: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
-    editingId: null, deletingId: null, collectingVenta: null,
-    filters: { buscar: '', estatus: '' }
+    editingId: null, deletingId: null, collectingVenta: null, viewingVenta: null,
+    filters: { buscar: '', estatus: '', fecha_desde: '', fecha_hasta: '', solo_por_cobrar: false },
+    ultimoFolio: 0
   };
 
   // ========== TOAST SYSTEM ==========
@@ -97,20 +116,17 @@
       this.init();
       const toastEl = document.createElement('div');
       toastEl.className = `toast toast-${type}`;
-      
       const icons = {
         success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
         error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
         warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
         info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
       };
-      
       toastEl.innerHTML = `
         <div class="toast-icon">${icons[type] || icons.info}</div>
         <div class="toast-message">${message}</div>
         <button class="toast-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       `;
-      
       this.container.appendChild(toastEl);
       requestAnimationFrame(() => toastEl.classList.add('show'));
       toastEl.querySelector('.toast-close').addEventListener('click', () => this.hide(toastEl));
@@ -118,6 +134,7 @@
       return toastEl;
     },
     hide(toastEl) {
+      if (!toastEl || !toastEl.parentNode) return;
       toastEl.classList.remove('show');
       toastEl.classList.add('hide');
       setTimeout(() => toastEl.remove(), 300);
@@ -154,30 +171,45 @@
     formatDateInput(d) { return d ? d.split('T')[0] : ''; },
     today() { return new Date().toISOString().split('T')[0]; },
     isOverdue(d) { return d && new Date(d) < new Date(); },
-    debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+    debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; },
+    generarFolio(ultimo) {
+      const num = (ultimo || 0) + 1;
+      return `V-${String(num).padStart(4, '0')}`;
+    },
+    extraerNumeroFolio(folio) {
+      if (!folio) return 0;
+      const match = folio.match(/V-(\d+)/i);
+      return match ? parseInt(match[1]) : 0;
+    }
   };
 
-const api = {
-  async request(endpoint, options = {}) {
-    const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
-      ...options,
-      headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
-    });
-    if (r.status === 401) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Error');
-    return data;
-  },
-  getVentas(p = {}) {
-    const q = new URLSearchParams({ pagina: p.pagina || 1, limite: p.limite || 20, ...(p.buscar && { buscar: p.buscar }), ...(p.estatus && { estatus: p.estatus }) });
-    return this.request(`/api/ventas?${q}`);
-  },
-  createVenta(d) { return this.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }); },
-  updateVenta(id, d) { return this.request(`/api/ventas/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
-  deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
-  getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
-  getCuentas() { return this.request('/api/cuentas-bancarias'); }
-};
+  const api = {
+    async request(endpoint, options = {}) {
+      const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+        ...options,
+        headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
+      });
+      if (r.status === 401) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      return data;
+    },
+    getVentas(p = {}) {
+      const q = new URLSearchParams({ pagina: p.pagina || 1, limite: p.limite || 20 });
+      if (p.buscar) q.append('buscar', p.buscar);
+      if (p.estatus) q.append('estatus', p.estatus);
+      if (p.fecha_desde) q.append('fecha_desde', p.fecha_desde);
+      if (p.fecha_hasta) q.append('fecha_hasta', p.fecha_hasta);
+      if (p.solo_por_cobrar) q.append('por_cobrar', '1');
+      return this.request(`/api/ventas?${q}`);
+    },
+    createVenta(d) { return this.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }); },
+    updateVenta(id, d) { return this.request(`/api/ventas/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
+    deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
+    getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
+    getCuentas() { return this.request('/api/cuentas-bancarias'); },
+    getTransaccionesByVenta(ventaId) { return this.request(`/api/transacciones?venta_id=${ventaId}`); }
+  };
 
   const render = {
     user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido); },
@@ -196,6 +228,10 @@ const api = {
       elements.porCobrar.textContent = utils.formatMoney(porCobrar);
       elements.vencidas.textContent = utils.formatMoney(vencidas);
       elements.cobradas.textContent = utils.formatMoney(cobradas);
+    },
+    tabs() {
+      elements.tabTodas?.classList.toggle('active', !state.filters.solo_por_cobrar);
+      elements.tabPorCobrar?.classList.toggle('active', state.filters.solo_por_cobrar);
     },
     ventas() {
       const { ventas, paginacion } = state;
@@ -218,6 +254,14 @@ const api = {
       elements.prevPage.disabled = paginacion.pagina <= 1; 
       elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
+      // Calcular último folio
+      let maxFolio = 0;
+      ventas.forEach(v => {
+        const num = utils.extraerNumeroFolio(v.folio);
+        if (num > maxFolio) maxFolio = num;
+      });
+      state.ultimoFolio = maxFolio;
+
       elements.tableBody.innerHTML = ventas.map(v => {
         const total = parseFloat(v.total) || 0;
         const cobrado = parseFloat(v.monto_cobrado) || 0;
@@ -232,7 +276,7 @@ const api = {
         };
         const sl = statusLabels[sc] || sc;
         
-        return `<tr data-id="${v.id}">
+        return `<tr data-id="${v.id}" class="clickable-row">
           <td>
             <div class="cell-main">${v.nombre_contacto || v.descripcion || 'Sin cliente'}</div>
             <div class="cell-sub">${v.folio ? `#${v.folio}` : ''}</div>
@@ -251,6 +295,12 @@ const api = {
           </td>
           <td>
             <div class="table-actions">
+              <button class="action-btn" title="Ver detalle" data-action="view" data-id="${v.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
               ${saldo > 0 ? `<button class="action-btn success" title="Cobrar" data-action="collect" data-id="${v.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="12" y1="1" x2="12" y2="23"/>
@@ -306,6 +356,12 @@ const api = {
           <div class="mobile-card-footer">
             <span class="status-badge ${sc}">${sl}</span>
             <div class="table-actions">
+              <button class="action-btn" data-action="view" data-id="${v.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
               ${saldo > 0 ? `<button class="action-btn success" data-action="collect" data-id="${v.id}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="12" y1="1" x2="12" y2="23"/>
@@ -329,10 +385,26 @@ const api = {
         </div>`;
       }).join('');
 
+      // Event listeners
       document.querySelectorAll('[data-action]').forEach(b => {
         b.addEventListener('click', e => { 
           e.stopPropagation(); 
           handlers.handleAction(b.dataset.action, b.dataset.id); 
+        });
+      });
+
+      // Click en fila para ver detalle
+      elements.tableBody.querySelectorAll('tr').forEach(row => {
+        row.addEventListener('click', e => {
+          if (e.target.closest('.action-btn')) return;
+          handlers.openDetailModal(state.ventas.find(v => v.id === row.dataset.id));
+        });
+      });
+
+      elements.mobileCards.querySelectorAll('.mobile-card').forEach(card => {
+        card.addEventListener('click', e => {
+          if (e.target.closest('.action-btn')) return;
+          handlers.openDetailModal(state.ventas.find(v => v.id === card.dataset.id));
         });
       });
     },
@@ -341,7 +413,7 @@ const api = {
         state.contactos.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); 
     },
     cuentas() { 
-      elements.cobroCuenta.innerHTML = '<option value="">-- Sin registrar en banco --</option>' + 
+      elements.cobroCuenta.innerHTML = '<option value="">-- Seleccionar cuenta --</option>' + 
         state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join(''); 
     }
   };
@@ -362,6 +434,7 @@ const api = {
         render.stats(); 
         render.contactos(); 
         render.cuentas();
+        render.tabs();
       } catch (e) { 
         console.error('Error:', e); 
         toast.error('Error al cargar datos');
@@ -377,15 +450,23 @@ const api = {
     },
     handleAction(action, id) {
       const v = state.ventas.find(x => x.id === id);
-      if (action === 'edit') this.openEditModal(v);
+      if (action === 'view') this.openDetailModal(v);
+      else if (action === 'edit') this.openEditModal(v);
       else if (action === 'delete') this.openDeleteModal(v);
       else if (action === 'collect') this.openCobroModal(v);
+    },
+    setTab(tab) {
+      state.filters.solo_por_cobrar = tab === 'por_cobrar';
+      state.paginacion.pagina = 1;
+      this.loadData();
     },
     openCreateModal() {
       state.editingId = null; 
       elements.modalTitle.textContent = 'Nueva Venta'; 
       elements.ventaForm.reset();
-      elements.fecha.value = utils.today(); 
+      elements.fecha.value = utils.today();
+      // Folio automático
+      elements.folio.value = utils.generarFolio(state.ultimoFolio);
       elements.ventaModal.classList.add('active'); 
       elements.contactoId.focus();
     },
@@ -449,6 +530,110 @@ const api = {
         elements.submitModal.disabled = false; 
       }
     },
+    async openDetailModal(v) {
+      if (!v) return;
+      state.viewingVenta = v;
+      
+      const total = parseFloat(v.total) || 0;
+      const cobrado = parseFloat(v.monto_cobrado) || 0;
+      const saldo = total - cobrado;
+      const sc = v.estatus_pago || 'pendiente';
+      const statusLabels = { 
+        pendiente: 'Por cobrar', 
+        parcial: 'Parcial', 
+        pagado: 'Cobrada', 
+        vencido: 'Vencida', 
+        cancelado: 'Cancelada' 
+      };
+
+      elements.detailAmount.innerHTML = `
+        <div class="detail-amount-value income">${utils.formatMoney(total)}</div>
+        <div class="detail-amount-label">
+          <span class="status-badge ${sc}">${statusLabels[sc] || sc}</span>
+        </div>
+      `;
+
+      elements.detailGrid.innerHTML = `
+        <div class="detail-item"><label>Folio</label><span>${v.folio || '-'}</span></div>
+        <div class="detail-item"><label>Cliente</label><span>${v.nombre_contacto || '-'}</span></div>
+        <div class="detail-item"><label>Fecha</label><span>${utils.formatDate(v.fecha)}</span></div>
+        <div class="detail-item"><label>Vencimiento</label><span>${utils.formatDate(v.fecha_vencimiento) || '-'}</span></div>
+        <div class="detail-item"><label>Descripción</label><span>${v.descripcion || '-'}</span></div>
+        <div class="detail-item"><label>Subtotal</label><span>${utils.formatMoney(v.subtotal)}</span></div>
+        <div class="detail-item"><label>IVA</label><span>${utils.formatMoney(v.impuesto)}</span></div>
+        <div class="detail-item"><label>Total</label><span class="income">${utils.formatMoney(total)}</span></div>
+        <div class="detail-item"><label>Cobrado</label><span class="success">${utils.formatMoney(cobrado)}</span></div>
+        <div class="detail-item"><label>Saldo</label><span class="${saldo > 0 ? 'expense' : 'success'}">${utils.formatMoney(saldo)}</span></div>
+      `;
+
+      // Cargar pagos (transacciones vinculadas)
+      elements.detailPagos.innerHTML = '<div class="loading-pagos">Cargando pagos...</div>';
+
+      // Mostrar/ocultar botón cobrar
+      if (elements.cobrarFromDetailBtn) {
+        elements.cobrarFromDetailBtn.style.display = saldo > 0 ? 'inline-flex' : 'none';
+      }
+
+      elements.detailModal.classList.add('active');
+
+      // Cargar transacciones vinculadas
+      try {
+        const txRes = await api.getTransaccionesByVenta(v.id);
+        const transacciones = txRes.transacciones || [];
+        
+        if (transacciones.length) {
+          elements.detailPagos.innerHTML = `
+            <div class="pagos-header">
+              <h4>Pagos registrados (${transacciones.length})</h4>
+            </div>
+            <div class="pagos-list">
+              ${transacciones.map(tx => `
+                <div class="pago-item">
+                  <div class="pago-info">
+                    <div class="pago-fecha">${utils.formatDate(tx.fecha)}</div>
+                    <div class="pago-desc">${tx.descripcion || 'Cobro'}</div>
+                    <div class="pago-cuenta">${tx.nombre_cuenta || '-'}</div>
+                  </div>
+                  <div class="pago-monto success">+${utils.formatMoney(tx.monto)}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          elements.detailPagos.innerHTML = `
+            <div class="pagos-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:32px;height:32px;opacity:0.5;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p>Sin pagos registrados</p>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error(e);
+        elements.detailPagos.innerHTML = '<div class="pagos-error">Error al cargar pagos</div>';
+      }
+    },
+    closeDetailModal() { 
+      elements.detailModal.classList.remove('active'); 
+      state.viewingVenta = null;
+    },
+    editFromDetail() {
+      const v = state.viewingVenta;
+      if (v) {
+        this.closeDetailModal();
+        this.openEditModal(v);
+      }
+    },
+    cobrarFromDetail() {
+      const v = state.viewingVenta;
+      if (v) {
+        this.closeDetailModal();
+        this.openCobroModal(v);
+      }
+    },
     openCobroModal(v) {
       state.collectingVenta = v;
       const pend = parseFloat(v.total) - parseFloat(v.monto_cobrado || 0);
@@ -468,51 +653,50 @@ const api = {
       elements.cobroForm.reset(); 
       state.collectingVenta = null; 
     },
- async submitCobro(e) {
-  e.preventDefault();
-  
-  const venta = state.collectingVenta;
-  const monto = parseFloat(elements.cobroMonto.value);
-  const cuentaId = elements.cobroCuenta.value;
-  
-  if (!cuentaId) {
-    toast.error('Selecciona una cuenta bancaria');
-    return;
-  }
-  
-  elements.submitCobro.classList.add('loading'); 
-  elements.submitCobro.disabled = true;
-  
-  try {
-    // Crear transacción de ingreso - el backend actualiza la venta automáticamente
-    const txData = {
-      tipo: 'ingreso',
-      cuenta_bancaria_id: cuentaId,
-      monto: monto,
-      fecha: elements.cobroFecha.value,
-      contacto_id: venta.contacto_id || null,
-      descripcion: `Cobro: ${venta.nombre_contacto || venta.folio || 'Venta'}`,
-      referencia: venta.folio || null,
-      venta_id: venta.id
-    };
-    
-    await api.request('/api/transacciones', { 
-      method: 'POST', 
-      body: JSON.stringify(txData) 
-    });
-    
-    this.closeCobroModal(); 
-    await this.loadData(); 
-    toast.success('Cobro registrado');
-  }
-  catch (e) { 
-    toast.error(e.message); 
-  }
-  finally { 
-    elements.submitCobro.classList.remove('loading'); 
-    elements.submitCobro.disabled = false; 
-  }
-},
+    async submitCobro(e) {
+      e.preventDefault();
+      
+      const venta = state.collectingVenta;
+      const monto = parseFloat(elements.cobroMonto.value);
+      const cuentaId = elements.cobroCuenta.value;
+      
+      if (!cuentaId) {
+        toast.error('Selecciona una cuenta bancaria');
+        return;
+      }
+      
+      elements.submitCobro.classList.add('loading'); 
+      elements.submitCobro.disabled = true;
+      
+      try {
+        const txData = {
+          tipo: 'ingreso',
+          cuenta_bancaria_id: cuentaId,
+          monto: monto,
+          fecha: elements.cobroFecha.value,
+          contacto_id: venta.contacto_id || null,
+          descripcion: `Cobro: ${venta.nombre_contacto || venta.folio || 'Venta'}`,
+          referencia: venta.folio || null,
+          venta_id: venta.id
+        };
+        
+        await api.request('/api/transacciones', { 
+          method: 'POST', 
+          body: JSON.stringify(txData) 
+        });
+        
+        this.closeCobroModal(); 
+        await this.loadData(); 
+        toast.success('Cobro registrado');
+      }
+      catch (e) { 
+        toast.error(e.message); 
+      }
+      finally { 
+        elements.submitCobro.classList.remove('loading'); 
+        elements.submitCobro.disabled = false; 
+      }
+    },
     openDeleteModal(v) { 
       state.deletingId = v.id; 
       elements.deleteVentaName.textContent = v.nombre_contacto || v.folio || `Venta del ${utils.formatDate(v.fecha)}`; 
@@ -541,7 +725,9 @@ const api = {
     },
     applyFilters() { 
       state.filters.buscar = elements.searchInput.value.trim(); 
-      state.filters.estatus = elements.filterStatus.value; 
+      state.filters.estatus = elements.filterStatus.value;
+      state.filters.fecha_desde = elements.filterFechaDesde?.value || '';
+      state.filters.fecha_hasta = elements.filterFechaHasta?.value || '';
       state.paginacion.pagina = 1; 
       this.loadData(); 
     },
@@ -576,43 +762,68 @@ const api = {
     render.user(); 
     render.org();
 
-    elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
-    elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
-    elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
-    elements.addVentaBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.addFirstVentaBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.closeModal.addEventListener('click', () => handlers.closeVentaModal());
-    elements.cancelModal.addEventListener('click', () => handlers.closeVentaModal());
-    elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
-    elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
-    elements.subtotal.addEventListener('input', () => handlers.calcTotal());
-    elements.impuesto.addEventListener('input', () => handlers.calcTotal());
-    elements.closeCobroModal.addEventListener('click', () => handlers.closeCobroModal());
-    elements.cancelCobroModal.addEventListener('click', () => handlers.closeCobroModal());
-    elements.cobroForm.addEventListener('submit', e => handlers.submitCobro(e));
-    elements.cobroModal.addEventListener('click', e => { if (e.target === elements.cobroModal) handlers.closeCobroModal(); });
-    elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
-    elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
-    
+    // Sidebar
+    elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
+
+    // Tabs
+    elements.tabTodas?.addEventListener('click', () => handlers.setTab('todas'));
+    elements.tabPorCobrar?.addEventListener('click', () => handlers.setTab('por_cobrar'));
+
+    // Botones crear
+    elements.addVentaBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstVentaBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn?.addEventListener('click', () => handlers.openCreateModal());
+
+    // Modal venta
+    elements.closeModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.cancelModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.ventaForm?.addEventListener('submit', e => handlers.submitVenta(e));
+    elements.ventaModal?.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
+    elements.subtotal?.addEventListener('input', () => handlers.calcTotal());
+    elements.impuesto?.addEventListener('input', () => handlers.calcTotal());
+
+    // Modal detalle
+    elements.closeDetailModal?.addEventListener('click', () => handlers.closeDetailModal());
+    elements.closeDetailBtn?.addEventListener('click', () => handlers.closeDetailModal());
+    elements.editFromDetailBtn?.addEventListener('click', () => handlers.editFromDetail());
+    elements.cobrarFromDetailBtn?.addEventListener('click', () => handlers.cobrarFromDetail());
+    elements.detailModal?.addEventListener('click', e => { if (e.target === elements.detailModal) handlers.closeDetailModal(); });
+
+    // Modal cobro
+    elements.closeCobroModal?.addEventListener('click', () => handlers.closeCobroModal());
+    elements.cancelCobroModal?.addEventListener('click', () => handlers.closeCobroModal());
+    elements.cobroForm?.addEventListener('submit', e => handlers.submitCobro(e));
+    elements.cobroModal?.addEventListener('click', e => { if (e.target === elements.cobroModal) handlers.closeCobroModal(); });
+
+    // Modal eliminar
+    elements.closeDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
+
+    // Filtros
     const df = utils.debounce(() => handlers.applyFilters(), 300);
-    elements.searchInput.addEventListener('input', df);
-    elements.filterStatus.addEventListener('change', () => handlers.applyFilters());
-    elements.prevPage.addEventListener('click', () => handlers.prevPage());
-    elements.nextPage.addEventListener('click', () => handlers.nextPage());
-    
+    elements.searchInput?.addEventListener('input', df);
+    elements.filterStatus?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterFechaDesde?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterFechaHasta?.addEventListener('change', () => handlers.applyFilters());
+    elements.prevPage?.addEventListener('click', () => handlers.prevPage());
+    elements.nextPage?.addEventListener('click', () => handlers.nextPage());
+
+    // Escape
     document.addEventListener('keydown', e => { 
       if (e.key === 'Escape') { 
-        handlers.closeVentaModal(); 
+        handlers.closeVentaModal();
+        handlers.closeDetailModal();
         handlers.closeCobroModal(); 
         handlers.closeDeleteModal(); 
       } 
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Ventas v3');
+    console.log('🚀 TRUNO Ventas v4');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
