@@ -1,6 +1,6 @@
 /**
- * TRUNO - Ventas Module v7
- * Con crear cliente, crear impuesto, fix transacciones + Monedas dinámicas
+ * TRUNO - Ventas Module v8
+ * Con crear cliente, crear impuesto, crear moneda + monedas dinámicas
  */
 
 (function() {
@@ -63,6 +63,7 @@
     total: $('total'),
     descuento: $('descuento'),
     moneda: $('moneda'),
+    addMonedaBtn: $('addMonedaBtn'),
     tipoCambio: $('tipoCambio'),
     uuidCfdi: $('uuidCfdi'),
     folioCfdi: $('folioCfdi'),
@@ -89,6 +90,15 @@
     impuestoClaveSat: $('impuestoClaveSat'),
     impuestoTipo: $('impuestoTipo'),
     impuestoTasa: $('impuestoTasa'),
+    // Modal crear moneda
+    monedaModal: $('monedaModal'),
+    monedaForm: $('monedaForm'),
+    closeMonedaModal: $('closeMonedaModal'),
+    cancelMonedaModal: $('cancelMonedaModal'),
+    monedaCodigo: $('monedaCodigo'),
+    monedaNombre: $('monedaNombre'),
+    monedaSimbolo: $('monedaSimbolo'),
+    monedaDecimales: $('monedaDecimales'),
     // Modal detalle
     detailModal: $('detailModal'),
     closeDetailModal: $('closeDetailModal'),
@@ -247,7 +257,8 @@
     createImpuesto(d) { return this.request('/api/impuestos', { method: 'POST', body: JSON.stringify(d) }); },
     getVentaImpuestos(ventaId) { return this.request(`/api/ventas/${ventaId}/impuestos`); },
     getTransacciones() { return this.request('/api/transacciones?limite=200'); },
-    getMonedas() { return this.request('/api/monedas'); }
+    getMonedas() { return this.request('/api/monedas'); },
+    createMoneda(d) { return this.request('/api/monedas', { method: 'POST', body: JSON.stringify(d) }); }
   };
 
   const render = {
@@ -278,14 +289,12 @@
       const select = elements.moneda;
       if (!select) return;
       
-      // Si hay monedas del API, usarlas
       if (state.monedas.length > 0) {
         const activas = state.monedas.filter(m => m.activo);
         select.innerHTML = activas.map(m => 
           `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`
         ).join('');
       } else {
-        // Fallback: monedas hardcodeadas
         select.innerHTML = `
           <option value="MXN" selected>MXN - Peso Mexicano</option>
           <option value="USD">USD - Dólar</option>
@@ -322,19 +331,16 @@
         </div>
       `).join('');
       
-      // Bind events para cada fila
       container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
         const select = row.querySelector('.imp-select');
         const impInput = row.querySelector('.imp-importe');
         const tipoSpan = row.querySelector('.impuesto-tipo');
         const removeBtn = row.querySelector('.btn-remove-imp');
         
-        // Preseleccionar si ya tiene impuesto_id
         if (state.impuestosTemp[idx].impuesto_id) {
           select.value = state.impuestosTemp[idx].impuesto_id;
         }
         
-        // Cambio de select
         select.addEventListener('change', () => {
           const opt = select.selectedOptions[0];
           const tasa = parseFloat(opt?.dataset?.tasa) || 0;
@@ -344,11 +350,9 @@
           state.impuestosTemp[idx].tasa = tasa;
           state.impuestosTemp[idx].tipo = tipo;
           
-          // Actualizar badge
           tipoSpan.textContent = tipo === 'retencion' ? 'Ret.' : 'Tras.';
           tipoSpan.className = `impuesto-tipo ${tipo}`;
           
-          // Auto-calcular importe si hay subtotal
           const subtotal = parseFloat(elements.subtotal.value) || 0;
           if (subtotal > 0 && tasa > 0) {
             const importe = subtotal * tasa;
@@ -359,13 +363,11 @@
           handlers.calcTotal();
         });
         
-        // Cambio de importe manual
         impInput.addEventListener('input', () => {
           state.impuestosTemp[idx].importe = parseFloat(impInput.value) || 0;
           handlers.calcTotal();
         });
         
-        // Eliminar fila
         removeBtn.addEventListener('click', () => {
           state.impuestosTemp.splice(idx, 1);
           render.impuestos();
@@ -395,7 +397,6 @@
       elements.prevPage.disabled = paginacion.pagina <= 1; 
       elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
-      // Calcular último folio
       let maxFolio = 0;
       ventas.forEach(v => {
         const num = utils.extraerNumeroFolio(v.folio);
@@ -526,7 +527,6 @@
         </div>`;
       }).join('');
 
-      // Event listeners
       document.querySelectorAll('[data-action]').forEach(b => {
         b.addEventListener('click', e => { 
           e.stopPropagation(); 
@@ -534,7 +534,6 @@
         });
       });
 
-      // Click en fila para ver detalle
       elements.tableBody.querySelectorAll('tr').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('.action-btn')) return;
@@ -676,11 +675,9 @@
         const result = await api.createContacto(data);
         const nuevoCliente = result.contacto || result;
         
-        // Agregar al state y recargar select
         state.contactos.push(nuevoCliente);
         render.contactos();
         
-        // Seleccionar el nuevo cliente
         elements.contactoId.value = nuevoCliente.id;
         
         this.closeClienteModal();
@@ -703,7 +700,6 @@
     async submitImpuesto(e) {
       e.preventDefault();
       const tasaInput = parseFloat(elements.impuestoTasa.value);
-      // Si ponen 16, convertir a 0.16
       const tasa = tasaInput > 1 ? tasaInput / 100 : tasaInput;
       
       const data = {
@@ -717,10 +713,8 @@
         const result = await api.createImpuesto(data);
         const nuevoImpuesto = result.impuesto || result;
         
-        // Agregar al catálogo
         state.impuestosCatalogo.push(nuevoImpuesto);
         
-        // Agregar automáticamente a la lista temporal
         state.impuestosTemp.push({
           impuesto_id: nuevoImpuesto.id,
           tasa: nuevoImpuesto.tasa,
@@ -738,17 +732,49 @@
       }
     },
     
+    // ========== CREAR MONEDA ==========
+    openMonedaModal() {
+      elements.monedaForm.reset();
+      elements.monedaDecimales.value = 2;
+      elements.monedaModal.classList.add('active');
+      elements.monedaCodigo.focus();
+    },
+    closeMonedaModal() {
+      elements.monedaModal.classList.remove('active');
+    },
+    async submitMoneda(e) {
+      e.preventDefault();
+      const data = {
+        codigo: elements.monedaCodigo.value.trim().toUpperCase(),
+        nombre: elements.monedaNombre.value.trim(),
+        simbolo: elements.monedaSimbolo.value.trim() || '$',
+        decimales: parseInt(elements.monedaDecimales.value) || 2
+      };
+      
+      try {
+        const result = await api.createMoneda(data);
+        const nuevaMoneda = result.moneda || result;
+        
+        state.monedas.push(nuevaMoneda);
+        render.monedas();
+        
+        elements.moneda.value = nuevaMoneda.codigo;
+        
+        this.closeMonedaModal();
+        toast.success('Moneda creada');
+      } catch (e) {
+        toast.error(e.message);
+      }
+    },
+    
     openCreateModal() {
       state.editingId = null; 
       elements.modalTitle.textContent = 'Nueva Venta'; 
       elements.ventaForm.reset();
       elements.fecha.value = utils.today();
-      // Folio automático
       elements.folio.value = utils.generarFolio(state.ultimoFolio);
-      // Reset impuestos
       state.impuestosTemp = [];
       render.impuestos();
-      // Resetear moneda al default
       render.monedas();
       elements.ventaModal.classList.add('active'); 
       elements.contactoId.focus();
@@ -771,7 +797,6 @@
       elements.folioCfdi.value = v.folio_cfdi || '';
       elements.notas.value = v.notas || ''; 
       
-      // Cargar impuestos de la venta
       state.impuestosTemp = [];
       try {
         const impRes = await api.getVentaImpuestos(v.id);
@@ -784,7 +809,6 @@
           }));
         }
       } catch (e) {
-        // Si falla cargar impuestos, usar el campo legacy
         if (v.impuesto && parseFloat(v.impuesto) > 0) {
           const iva16 = state.impuestosCatalogo.find(i => i.nombre.includes('IVA') && i.tasa === 0.16);
           if (iva16) {
@@ -812,7 +836,6 @@
     async submitVenta(e) {
       e.preventDefault();
       
-      // Calcular impuesto legacy (suma de traslados - retenciones)
       let totalImpuesto = 0;
       state.impuestosTemp.forEach(imp => {
         if (imp.tipo === 'traslado') {
@@ -901,22 +924,18 @@
         <div class="detail-item"><label>Saldo</label><span class="${saldo > 0 ? 'expense' : 'success'}">${utils.formatMoney(saldo)}</span></div>
       `;
 
-      // Cargar pagos
       elements.detailPagos.innerHTML = '<div class="loading-pagos">Cargando pagos...</div>';
 
-      // Mostrar/ocultar botón cobrar
       if (elements.cobrarFromDetailBtn) {
         elements.cobrarFromDetailBtn.style.display = saldo > 0 ? 'inline-flex' : 'none';
       }
 
       elements.detailModal.classList.add('active');
 
-      // Cargar transacciones - FILTRAR EN FRONTEND POR VENTA_ID
       try {
         const txRes = await api.getTransacciones();
         let transacciones = txRes.transacciones || [];
         
-        // FIX: Filtrar solo las que tienen venta_id igual a esta venta
         transacciones = transacciones.filter(tx => tx.venta_id === v.id);
         
         if (transacciones.length) {
@@ -1127,6 +1146,9 @@
     // Crear cliente
     elements.addClienteBtn?.addEventListener('click', () => handlers.openClienteModal());
     
+    // Crear moneda
+    elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
+    
     // Modal crear cliente
     elements.closeClienteModal?.addEventListener('click', () => handlers.closeClienteModal());
     elements.cancelClienteModal?.addEventListener('click', () => handlers.closeClienteModal());
@@ -1138,6 +1160,12 @@
     elements.cancelImpuestoModal?.addEventListener('click', () => handlers.closeImpuestoModal());
     elements.impuestoForm?.addEventListener('submit', e => handlers.submitImpuesto(e));
     elements.impuestoModal?.addEventListener('click', e => { if (e.target === elements.impuestoModal) handlers.closeImpuestoModal(); });
+    
+    // Modal crear moneda
+    elements.closeMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.cancelMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.monedaForm?.addEventListener('submit', e => handlers.submitMoneda(e));
+    elements.monedaModal?.addEventListener('click', e => { if (e.target === elements.monedaModal) handlers.closeMonedaModal(); });
 
     // Modal detalle
     elements.closeDetailModal?.addEventListener('click', () => handlers.closeDetailModal());
@@ -1173,6 +1201,7 @@
         handlers.closeVentaModal();
         handlers.closeClienteModal();
         handlers.closeImpuestoModal();
+        handlers.closeMonedaModal();
         handlers.closeDetailModal();
         handlers.closeCobroModal(); 
         handlers.closeDeleteModal(); 
@@ -1180,7 +1209,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Ventas v7 - Monedas dinámicas desde API');
+    console.log('🚀 TRUNO Ventas v8 - Crear cliente/impuesto/moneda + Monedas dinámicas');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
