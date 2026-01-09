@@ -1086,6 +1086,14 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   max-height: none;
 }
 
+.modal.modal-sm {
+  max-width: 420px;
+}
+
+.modal.modal-lg {
+  max-width: 640px;
+}
+
 .modal-overlay.active .modal {
   transform: scale(1);
 }
@@ -1325,6 +1333,25 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
 .btn-remove-imp svg {
   width: 16px;
   height: 16px;
+}
+
+/* Impuestos actions */
+.impuestos-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-outline:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* ========== DETAIL MODAL ========== */
