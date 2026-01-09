@@ -469,32 +469,61 @@
       elements.cobroForm.reset(); 
       state.collectingVenta = null; 
     },
-    async submitCobro(e) {
-      e.preventDefault();
-      const d = { 
-        tipo: 'venta', 
-        referencia_id: state.collectingVenta.id, 
-        monto: parseFloat(elements.cobroMonto.value), 
-        fecha: elements.cobroFecha.value, 
-        metodo_pago: elements.cobroMetodo.value, 
-        cuenta_bancaria_id: elements.cobroCuenta.value || null 
-      };
-      elements.submitCobro.classList.add('loading'); 
-      elements.submitCobro.disabled = true;
-      try { 
-        await api.registrarCobro(d); 
-        this.closeCobroModal(); 
-        await this.loadData(); 
-        toast.success('Cobro registrado');
-      }
-      catch (e) { 
-        toast.error(e.message); 
-      }
-      finally { 
-        elements.submitCobro.classList.remove('loading'); 
-        elements.submitCobro.disabled = false; 
-      }
-    },
+  async submitCobro(e) {
+  e.preventDefault();
+  
+  const venta = state.collectingVenta;
+  const monto = parseFloat(elements.cobroMonto.value);
+  const cuentaId = elements.cobroCuenta.value;
+  
+  if (!cuentaId) {
+    toast.error('Selecciona una cuenta bancaria');
+    return;
+  }
+  
+  elements.submitCobro.classList.add('loading'); 
+  elements.submitCobro.disabled = true;
+  
+  try {
+    // 1. Crear transacción de ingreso
+    const txData = {
+      tipo: 'ingreso',
+      cuenta_bancaria_id: cuentaId,
+      monto: monto,
+      fecha: elements.cobroFecha.value,
+      contacto_id: venta.contacto_id || null,
+      descripcion: `Cobro: ${venta.nombre_contacto || venta.folio || 'Venta'}`,
+      referencia: venta.folio || null,
+      venta_id: venta.id  // Vincular a la venta
+    };
+    
+    const txResult = await api.request('/api/transacciones', { 
+      method: 'POST', 
+      body: JSON.stringify(txData) 
+    });
+    
+    // 2. Actualizar venta con monto cobrado
+    const nuevoMontoCobrado = (parseFloat(venta.monto_cobrado) || 0) + monto;
+    const totalVenta = parseFloat(venta.total);
+    const nuevoEstatus = nuevoMontoCobrado >= totalVenta ? 'pagado' : 'parcial';
+    
+    await api.updateVenta(venta.id, {
+      monto_cobrado: nuevoMontoCobrado,
+      estatus_pago: nuevoEstatus
+    });
+    
+    this.closeCobroModal(); 
+    await this.loadData(); 
+    toast.success('Cobro registrado');
+  }
+  catch (e) { 
+    toast.error(e.message); 
+  }
+  finally { 
+    elements.submitCobro.classList.remove('loading'); 
+    elements.submitCobro.disabled = false; 
+  }
+},
     openDeleteModal(v) { 
       state.deletingId = v.id; 
       elements.deleteVentaName.textContent = v.nombre_contacto || v.folio || `Venta del ${utils.formatDate(v.fecha)}`; 
