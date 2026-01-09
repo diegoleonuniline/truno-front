@@ -1,6 +1,6 @@
 /**
- * TRUNO - Gastos Module v2
- * Con creación inline tipo Odoo
+ * TRUNO - Gastos Module v3
+ * Con creación inline de moneda y método de pago
  */
 
 (function() {
@@ -15,7 +15,7 @@
   const $ = id => document.getElementById(id);
 
   const elements = {
-    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
+    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), sidebarClose: $('sidebarClose'), menuToggle: $('menuToggle'),
     orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
     totalMes: $('totalMes'), pendientes: $('pendientes'), vencidos: $('vencidos'), pagados: $('pagados'),
     searchInput: $('searchInput'), filterStatus: $('filterStatus'), filterCategoria: $('filterCategoria'), filterFiscal: $('filterFiscal'),
@@ -32,16 +32,17 @@
     closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
     concepto: $('concepto'), proveedorId: $('proveedorId'), fecha: $('fecha'), fechaVencimiento: $('fechaVencimiento'),
     categoriaId: $('categoriaId'), subcategoriaId: $('subcategoriaId'),
-    subtotal: $('subtotal'), impuesto: $('impuesto'), total: $('total'), moneda: $('moneda'), metodoPago: $('metodoPago'),
+    subtotal: $('subtotal'), total: $('total'), moneda: $('moneda'), metodoPago: $('metodoPago'),
     esFiscal: $('esFiscal'), fiscalFields: $('fiscalFields'), facturaRecibida: $('facturaRecibida'),
     validadaRow: $('validadaRow'), facturaValidada: $('facturaValidada'), uuidCfdi: $('uuidCfdi'), folioCfdi: $('folioCfdi'),
     comprobanteUpload: $('comprobanteUpload'), comprobanteFile: $('comprobanteFile'),
     comprobantePreview: $('comprobantePreview'), comprobanteFileName: $('comprobanteFileName'),
     viewComprobante: $('viewComprobante'), removeComprobante: $('removeComprobante'),
     transaccionId: $('transaccionId'), notas: $('notas'),
-    // Quick create modals
+    // Quick create buttons
     addProveedorBtn: $('addProveedorBtn'), addCategoriaBtn: $('addCategoriaBtn'),
     addSubcategoriaBtn: $('addSubcategoriaBtn'), addTransaccionBtn: $('addTransaccionBtn'), addCuentaBtn: $('addCuentaBtn'),
+    addMonedaBtn: $('addMonedaBtn'), addMetodoPagoBtn: $('addMetodoPagoBtn'), addPagoMetodoBtn: $('addPagoMetodoBtn'),
     // Categoria Modal
     categoriaModal: $('categoriaModal'), categoriaForm: $('categoriaForm'), closeCategoriaModal: $('closeCategoriaModal'),
     cancelCategoriaModal: $('cancelCategoriaModal'), categoriaNombre: $('categoriaNombre'), categoriaDescripcion: $('categoriaDescripcion'),
@@ -58,6 +59,13 @@
     // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
     cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
+    // Moneda Modal
+    monedaModal: $('monedaModal'), monedaForm: $('monedaForm'), closeMonedaModal: $('closeMonedaModal'),
+    cancelMonedaModal: $('cancelMonedaModal'), monedaCodigo: $('monedaCodigo'), monedaSimbolo: $('monedaSimbolo'),
+    monedaNombre: $('monedaNombre'), monedaDecimales: $('monedaDecimales'), monedaTipoCambio: $('monedaTipoCambio'),
+    // Metodo Pago Modal
+    metodoPagoModal: $('metodoPagoModal'), metodoPagoForm: $('metodoPagoForm'), closeMetodoPagoModal: $('closeMetodoPagoModal'),
+    cancelMetodoPagoModal: $('cancelMetodoPagoModal'), metodoNombre: $('metodoNombre'), metodoClave: $('metodoClave'), metodoDescripcion: $('metodoDescripcion'),
     // Pago Modal
     pagoModal: $('pagoModal'), pagoForm: $('pagoForm'), closePagoModal: $('closePagoModal'),
     cancelPagoModal: $('cancelPagoModal'), submitPagoModal: $('submitPagoModal'),
@@ -65,11 +73,14 @@
     pagoCuenta: $('pagoCuenta'), pagoMetodo: $('pagoMetodo'), pagoReferencia: $('pagoReferencia'),
     // Delete Modal
     deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'),
-    confirmDelete: $('confirmDelete'), deleteGastoName: $('deleteGastoName')
+    confirmDelete: $('confirmDelete'), deleteGastoName: $('deleteGastoName'),
+    // Toast
+    toastContainer: $('toastContainer')
   };
 
   let state = {
-    user: null, org: null, gastos: [], gastosPorPagar: [], proveedores: [], categorias: [], subcategorias: [], cuentas: [], transacciones: [],
+    user: null, org: null, gastos: [], gastosPorPagar: [], proveedores: [], categorias: [], subcategorias: [],
+    cuentas: [], transacciones: [], monedas: [], metodosPago: [],
     impuestosCatalogo: [], impuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
     editingId: null, deletingId: null, payingGasto: null, comprobanteData: null,
@@ -105,6 +116,27 @@
     debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
   };
 
+  const toast = {
+    show(message, type = 'info') {
+      const container = elements.toastContainer;
+      if (!container) return;
+      const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="toast-message">${message}</div><button class="toast-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      container.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 10);
+      const close = () => { t.classList.remove('show'); t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
+      t.querySelector('.toast-close').addEventListener('click', close);
+      setTimeout(close, 4000);
+    }
+  };
+
   const api = {
     async request(endpoint, options = {}) {
       const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
@@ -134,7 +166,11 @@
     createCuenta(d) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }); },
     getTransacciones() { return this.request('/api/transacciones?tipo=egreso&limite=50&sin_conciliar=1'); },
     createTransaccion(d) { return this.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }); },
-    getImpuestos() { return this.request('/api/impuestos'); }
+    getImpuestos() { return this.request('/api/impuestos'); },
+    getMonedas() { return this.request('/api/monedas'); },
+    createMoneda(d) { return this.request('/api/monedas', { method: 'POST', body: JSON.stringify(d) }); },
+    getMetodosPago() { return this.request('/api/metodos-pago'); },
+    createMetodoPago(d) { return this.request('/api/metodos-pago', { method: 'POST', body: JSON.stringify(d) }); }
   };
 
   const render = {
@@ -166,7 +202,7 @@
     gastos() {
       const { gastos, paginacion } = state;
       if (!gastos.length) { elements.tableContainer.style.display = 'none'; elements.mobileCards.innerHTML = ''; elements.emptyState.style.display = 'block'; elements.pagination.style.display = 'none'; return; }
-      elements.emptyState.style.display = 'none'; elements.tableContainer.style.display = 'block'; elements.pagination.style.display = 'flex';
+      elements.emptyState.style.display = 'none'; elements.tableContainer.style.display = ''; elements.pagination.style.display = '';
       const start = (paginacion.pagina - 1) * paginacion.limite + 1, end = Math.min(paginacion.pagina * paginacion.limite, paginacion.total);
       elements.showingStart.textContent = start; elements.showingEnd.textContent = end; elements.totalRecords.textContent = paginacion.total;
       elements.prevPage.disabled = paginacion.pagina <= 1; elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
@@ -229,6 +265,18 @@
       const opts = state.subcategorias.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
       elements.subcategoriaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
     },
+    monedas() {
+      const opts = state.monedas.map(m => `<option value="${m.codigo}">${m.codigo} - ${m.nombre}</option>`).join('');
+      elements.moneda.innerHTML = opts || '<option value="MXN">MXN - Peso Mexicano</option><option value="USD">USD - Dólar</option>';
+    },
+    metodosPago() {
+      const opts = state.metodosPago.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
+      const defaultOpts = '<option value="">-- Seleccionar --</option><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="cheque">Cheque</option>';
+      elements.metodoPago.innerHTML = opts ? '<option value="">-- Seleccionar --</option>' + opts : defaultOpts;
+      if (elements.pagoMetodo) {
+        elements.pagoMetodo.innerHTML = opts ? '<option value="">-- Seleccionar --</option>' + opts : defaultOpts;
+      }
+    },
     impuestos() {
       const container = $('impuestosContainer');
       if (!container) return;
@@ -243,7 +291,6 @@
       ).join('');
       
       container.innerHTML = state.impuestosTemp.map((imp, idx) => {
-        const selected = state.impuestosCatalogo.find(i => i.id === imp.impuesto_id);
         return `<div class="impuesto-row" data-idx="${idx}">
           <select class="imp-select">
             <option value="">-- Seleccionar --</option>
@@ -257,7 +304,6 @@
         </div>`;
       }).join('');
       
-      // Set selected values and bind events
       container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
         const select = row.querySelector('.imp-select');
         const impInput = row.querySelector('.imp-importe');
@@ -277,7 +323,6 @@
           state.impuestosTemp[idx].tipo = tipo;
           tipoSpan.textContent = tipo === 'retencion' ? 'Ret.' : 'Tras.';
           tipoSpan.className = `impuesto-tipo ${tipo}`;
-          // Auto-calculate importe
           const subtotal = parseFloat(elements.subtotal.value) || 0;
           if (subtotal > 0 && tasa > 0) {
             impInput.value = (subtotal * tasa).toFixed(2);
@@ -346,10 +391,7 @@
             <div class="por-pagar-vence ${venceClass}">${venceText}</div>
           </div>
           <div class="por-pagar-actions">
-            <button class="btn btn-primary btn-sm" data-action="pagar" data-id="${g.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              Pagar
-            </button>
+            <button class="btn btn-primary btn-sm" data-action="pagar" data-id="${g.id}">Pagar</button>
           </div>
         </div>`;
       }).join('');
@@ -396,7 +438,6 @@
         return;
       }
       
-      // Agrupar por fecha
       const grupos = {};
       gastos.forEach(g => {
         const key = g.fecha_vencimiento || 'sin-fecha';
@@ -444,13 +485,15 @@
   const handlers = {
     async loadData() {
       try {
-        const [gastosData, provData, catData, cuentasData, txData, impData] = await Promise.all([
+        const [gastosData, provData, catData, cuentasData, txData, impData, monedasData, metodosData] = await Promise.all([
           api.getGastos({ ...state.filters, pagina: state.paginacion.pagina }),
           api.getProveedores().catch(() => ({ contactos: [] })),
           api.getCategorias().catch(() => ({ categorias: [] })),
           api.getCuentas().catch(() => ({ cuentas: [] })),
           api.getTransacciones().catch(() => ({ transacciones: [] })),
-          api.getImpuestos().catch(() => ({ impuestos: [] }))
+          api.getImpuestos().catch(() => ({ impuestos: [] })),
+          api.getMonedas().catch(() => ({ monedas: [] })),
+          api.getMetodosPago().catch(() => ({ metodos: [] }))
         ]);
         state.gastos = gastosData.gastos || [];
         state.paginacion = gastosData.paginacion || state.paginacion;
@@ -459,8 +502,11 @@
         state.cuentas = cuentasData.cuentas || [];
         state.transacciones = txData.transacciones || [];
         state.impuestosCatalogo = impData.impuestos || [];
-        render.gastos(); render.stats(); render.proveedores(); render.categorias(); render.cuentas(); render.transacciones();
-      } catch (e) { console.error('Error:', e); }
+        state.monedas = monedasData.monedas || [];
+        state.metodosPago = metodosData.metodos || metodosData.metodosPago || [];
+        render.gastos(); render.stats(); render.proveedores(); render.categorias();
+        render.cuentas(); render.transacciones(); render.monedas(); render.metodosPago();
+      } catch (e) { console.error('Error:', e); toast.show('Error cargando datos', 'error'); }
     },
     async loadSubcategorias(catId) {
       if (!catId) { state.subcategorias = []; render.subcategorias(); return; }
@@ -491,7 +537,7 @@
       elements.comprobantePreview.style.display = 'none';
       render.impuestos();
       elements.gastoModal.classList.add('active');
-      elements.concepto.focus();
+      setTimeout(() => elements.concepto.focus(), 100);
     },
     async openEditModal(g) {
       state.editingId = g.id; state.comprobanteData = g.comprobante_url || null;
@@ -517,7 +563,6 @@
       elements.folioCfdi.value = g.folio_cfdi || '';
       elements.transaccionId.value = g.transaccion_id || '';
       elements.notas.value = g.notas || '';
-      // Legacy: si hay impuesto simple, agregarlo como IVA
       if (g.impuesto && parseFloat(g.impuesto) > 0) {
         const iva16 = state.impuestosCatalogo.find(i => i.nombre.includes('IVA 16'));
         if (iva16) {
@@ -538,7 +583,6 @@
     closeGastoModal() { elements.gastoModal.classList.remove('active'); elements.gastoForm.reset(); state.editingId = null; state.comprobanteData = null; },
     async submitGasto(e) {
       e.preventDefault();
-      // Calcular impuesto total para compatibilidad
       let totalImpuesto = 0;
       state.impuestosTemp.forEach(imp => {
         if (imp.tipo === 'traslado') totalImpuesto += (imp.importe || 0);
@@ -575,11 +619,12 @@
       try {
         if (state.editingId) await api.updateGasto(state.editingId, d); else await api.createGasto(d);
         this.closeGastoModal(); await this.loadData();
-      } catch (e) { alert(e.message); }
+        toast.show(state.editingId ? 'Gasto actualizado' : 'Gasto creado', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
       finally { elements.submitModal.classList.remove('loading'); elements.submitModal.disabled = false; }
     },
     // Quick creates
-    openCategoriaModal() { elements.categoriaForm.reset(); elements.categoriaModal.classList.add('active'); elements.categoriaNombre.focus(); },
+    openCategoriaModal() { elements.categoriaForm.reset(); elements.categoriaModal.classList.add('active'); setTimeout(() => elements.categoriaNombre.focus(), 100); },
     closeCategoriaModal() { elements.categoriaModal.classList.remove('active'); },
     async submitCategoria(e) {
       e.preventDefault();
@@ -589,20 +634,21 @@
         render.categorias();
         elements.categoriaId.value = data.categoria?.id || data.id;
         this.closeCategoriaModal();
-      } catch (e) { alert(e.message); }
+        toast.show('Categoría creada', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
     },
     openSubcategoriaModal() {
       elements.subcategoriaForm.reset();
       elements.subcategoriaPadre.innerHTML = '<option value="">-- Seleccionar --</option>' + state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
       if (elements.categoriaId.value) elements.subcategoriaPadre.value = elements.categoriaId.value;
       elements.subcategoriaModal.classList.add('active');
-      elements.subcategoriaNombre.focus();
+      setTimeout(() => elements.subcategoriaNombre.focus(), 100);
     },
     closeSubcategoriaModal() { elements.subcategoriaModal.classList.remove('active'); },
     async submitSubcategoria(e) {
       e.preventDefault();
       const catId = elements.subcategoriaPadre.value;
-      if (!catId) { alert('Selecciona categoría padre'); return; }
+      if (!catId) { toast.show('Selecciona categoría padre', 'warning'); return; }
       try {
         const data = await api.createSubcategoria(catId, { nombre: elements.subcategoriaNombre.value.trim() });
         if (catId === elements.categoriaId.value) {
@@ -611,9 +657,10 @@
           elements.subcategoriaId.value = data.subcategoria?.id || data.id;
         }
         this.closeSubcategoriaModal();
-      } catch (e) { alert(e.message); }
+        toast.show('Subcategoría creada', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
     },
-    openProveedorModal() { elements.proveedorForm.reset(); elements.proveedorModal.classList.add('active'); elements.proveedorNombre.focus(); },
+    openProveedorModal() { elements.proveedorForm.reset(); elements.proveedorModal.classList.add('active'); setTimeout(() => elements.proveedorNombre.focus(), 100); },
     closeProveedorModal() { elements.proveedorModal.classList.remove('active'); },
     async submitProveedor(e) {
       e.preventDefault();
@@ -628,7 +675,8 @@
         render.proveedores();
         elements.proveedorId.value = data.contacto?.id || data.id;
         this.closeProveedorModal();
-      } catch (e) { alert(e.message); }
+        toast.show('Proveedor creado', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
     },
     openTransaccionModal() {
       elements.transaccionForm.reset();
@@ -653,9 +701,10 @@
         render.transacciones();
         elements.transaccionId.value = data.transaccion?.id || data.id;
         this.closeTransaccionModal();
-      } catch (e) { alert(e.message); }
+        toast.show('Transacción creada', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
     },
-    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); elements.cuentaNombre.focus(); },
+    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); setTimeout(() => elements.cuentaNombre.focus(), 100); },
     closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
     async submitCuenta(e) {
       e.preventDefault();
@@ -669,15 +718,56 @@
         render.cuentas();
         elements.txCuentaId.value = data.cuenta?.id || data.id;
         this.closeCuentaModal();
-      } catch (e) { alert(e.message); }
+        toast.show('Cuenta creada', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
+    },
+    // Moneda Modal
+    openMonedaModal() { elements.monedaForm.reset(); elements.monedaModal.classList.add('active'); setTimeout(() => elements.monedaCodigo.focus(), 100); },
+    closeMonedaModal() { elements.monedaModal.classList.remove('active'); },
+    async submitMoneda(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createMoneda({
+          codigo: elements.monedaCodigo.value.trim().toUpperCase(),
+          nombre: elements.monedaNombre.value.trim(),
+          simbolo: elements.monedaSimbolo.value.trim() || '$',
+          decimales: parseInt(elements.monedaDecimales.value) || 2,
+          tipo_cambio: parseFloat(elements.monedaTipoCambio.value) || 1
+        });
+        const moneda = data.moneda || data;
+        state.monedas.push(moneda);
+        render.monedas();
+        elements.moneda.value = moneda.codigo;
+        this.closeMonedaModal();
+        toast.show('Moneda creada', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
+    },
+    // Metodo Pago Modal
+    openMetodoPagoModal() { elements.metodoPagoForm.reset(); elements.metodoPagoModal.classList.add('active'); setTimeout(() => elements.metodoNombre.focus(), 100); },
+    closeMetodoPagoModal() { elements.metodoPagoModal.classList.remove('active'); },
+    async submitMetodoPago(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createMetodoPago({
+          nombre: elements.metodoNombre.value.trim(),
+          clave_sat: elements.metodoClave.value.trim() || null,
+          descripcion: elements.metodoDescripcion.value.trim() || null
+        });
+        const metodo = data.metodo || data.metodoPago || data;
+        state.metodosPago.push(metodo);
+        render.metodosPago();
+        elements.metodoPago.value = metodo.nombre;
+        this.closeMetodoPagoModal();
+        toast.show('Método de pago creado', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
     },
     // Delete
     openDeleteModal(g) { state.deletingId = g.id; elements.deleteGastoName.textContent = g.concepto || 'este gasto'; elements.deleteModal.classList.add('active'); },
     closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
       elements.confirmDelete.classList.add('loading'); elements.confirmDelete.disabled = true;
-      try { await api.deleteGasto(state.deletingId); this.closeDeleteModal(); await this.loadData(); }
-      catch (e) { alert(e.message); }
+      try { await api.deleteGasto(state.deletingId); this.closeDeleteModal(); await this.loadData(); toast.show('Gasto eliminado', 'success'); }
+      catch (e) { toast.show(e.message, 'error'); }
       finally { elements.confirmDelete.classList.remove('loading'); elements.confirmDelete.disabled = false; }
     },
     // Filters
@@ -722,7 +812,6 @@
     handleFileSelect(e) {
       const file = e.target.files[0];
       if (file) {
-        // Por ahora solo guardamos el nombre, en producción subirías a Cloudinary
         state.comprobanteData = file.name;
         elements.comprobanteUpload.classList.add('has-file');
         elements.comprobantePreview.style.display = 'flex';
@@ -761,6 +850,7 @@
       elements.pagoMonto.value = gasto.total;
       elements.pagoFecha.value = utils.today();
       render.cuentas();
+      render.metodosPago();
       elements.pagoModal.classList.add('active');
     },
     closePagoModal() {
@@ -774,11 +864,10 @@
       const monto = parseFloat(elements.pagoMonto.value);
       const cuentaId = elements.pagoCuenta.value;
       
-      if (!cuentaId) { alert('Selecciona una cuenta bancaria'); return; }
+      if (!cuentaId) { toast.show('Selecciona una cuenta bancaria', 'warning'); return; }
       
       elements.submitPagoModal.disabled = true;
       try {
-        // 1. Crear transacción de egreso
         const txData = {
           tipo: 'egreso',
           cuenta_bancaria_id: cuentaId,
@@ -786,12 +875,12 @@
           fecha: elements.pagoFecha.value,
           contacto_id: state.payingGasto.proveedor_id || null,
           descripcion: `Pago: ${state.payingGasto.concepto || 'Gasto'}`,
-          referencia: elements.pagoReferencia.value || null
+          referencia: elements.pagoReferencia.value || null,
+          metodo_pago: elements.pagoMetodo.value || null
         };
         const txResult = await api.createTransaccion(txData);
         const txId = txResult.transaccion?.id || txResult.id;
         
-        // 2. Actualizar gasto como pagado y vincular transacción
         await api.updateGasto(state.payingGasto.id, {
           estatus_pago: 'pagado',
           transaccion_id: txId,
@@ -801,12 +890,11 @@
         this.closePagoModal();
         await this.loadData();
         
-        // Actualizar tabs si estamos en ellos
         if (state.currentTab === 'por-pagar') render.porPagar();
         else if (state.currentTab === 'programacion') render.programacion();
         
-        alert('✅ Pago registrado correctamente');
-      } catch (e) { alert('Error: ' + e.message); }
+        toast.show('Pago registrado correctamente', 'success');
+      } catch (e) { toast.show('Error: ' + e.message, 'error'); }
       finally { elements.submitPagoModal.disabled = false; }
     }
   };
@@ -817,75 +905,91 @@
     state.user = utils.getUser(); render.user(); render.org();
 
     // Sidebar
-    elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
-    elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
-    elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
+    elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
+    elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
     // Add buttons
-    elements.addGastoBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.addFirstGastoBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
+    elements.addGastoBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstGastoBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn?.addEventListener('click', () => handlers.openCreateModal());
 
     // Gasto modal
-    elements.closeModal.addEventListener('click', () => handlers.closeGastoModal());
-    elements.cancelModal.addEventListener('click', () => handlers.closeGastoModal());
-    elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
-    elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
+    elements.closeModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.cancelModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.gastoForm?.addEventListener('submit', e => handlers.submitGasto(e));
+    elements.gastoModal?.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
 
     // Form interactions
-    elements.subtotal.addEventListener('input', () => handlers.recalcImpuestos());
-    elements.esFiscal.addEventListener('change', () => handlers.handleFiscalToggle());
-    elements.facturaRecibida.addEventListener('change', () => handlers.handleFacturaRecibidaToggle());
-    elements.categoriaId.addEventListener('change', () => handlers.loadSubcategorias(elements.categoriaId.value));
-    elements.comprobanteUpload.addEventListener('click', () => elements.comprobanteFile.click());
-    elements.comprobanteFile.addEventListener('change', e => handlers.handleFileSelect(e));
-    elements.removeComprobante.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
+    elements.subtotal?.addEventListener('input', () => handlers.recalcImpuestos());
+    elements.esFiscal?.addEventListener('change', () => handlers.handleFiscalToggle());
+    elements.facturaRecibida?.addEventListener('change', () => handlers.handleFacturaRecibidaToggle());
+    elements.categoriaId?.addEventListener('change', () => handlers.loadSubcategorias(elements.categoriaId.value));
+    elements.comprobanteUpload?.addEventListener('click', () => elements.comprobanteFile.click());
+    elements.comprobanteFile?.addEventListener('change', e => handlers.handleFileSelect(e));
+    elements.removeComprobante?.addEventListener('click', e => { e.stopPropagation(); handlers.removeComprobante(); });
     
     // Impuestos
     $('addImpuestoBtn')?.addEventListener('click', () => handlers.addImpuesto());
 
     // Quick create buttons
-    elements.addProveedorBtn.addEventListener('click', () => handlers.openProveedorModal());
-    elements.addCategoriaBtn.addEventListener('click', () => handlers.openCategoriaModal());
-    elements.addSubcategoriaBtn.addEventListener('click', () => handlers.openSubcategoriaModal());
-    elements.addTransaccionBtn.addEventListener('click', () => handlers.openTransaccionModal());
-    elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
+    elements.addProveedorBtn?.addEventListener('click', () => handlers.openProveedorModal());
+    elements.addCategoriaBtn?.addEventListener('click', () => handlers.openCategoriaModal());
+    elements.addSubcategoriaBtn?.addEventListener('click', () => handlers.openSubcategoriaModal());
+    elements.addTransaccionBtn?.addEventListener('click', () => handlers.openTransaccionModal());
+    elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
+    elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
+    elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
+    elements.addPagoMetodoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
 
     // Categoria modal
-    elements.closeCategoriaModal.addEventListener('click', () => handlers.closeCategoriaModal());
-    elements.cancelCategoriaModal.addEventListener('click', () => handlers.closeCategoriaModal());
-    elements.categoriaForm.addEventListener('submit', e => handlers.submitCategoria(e));
-    elements.categoriaModal.addEventListener('click', e => { if (e.target === elements.categoriaModal) handlers.closeCategoriaModal(); });
+    elements.closeCategoriaModal?.addEventListener('click', () => handlers.closeCategoriaModal());
+    elements.cancelCategoriaModal?.addEventListener('click', () => handlers.closeCategoriaModal());
+    elements.categoriaForm?.addEventListener('submit', e => handlers.submitCategoria(e));
+    elements.categoriaModal?.addEventListener('click', e => { if (e.target === elements.categoriaModal) handlers.closeCategoriaModal(); });
 
     // Subcategoria modal
-    elements.closeSubcategoriaModal.addEventListener('click', () => handlers.closeSubcategoriaModal());
-    elements.cancelSubcategoriaModal.addEventListener('click', () => handlers.closeSubcategoriaModal());
-    elements.subcategoriaForm.addEventListener('submit', e => handlers.submitSubcategoria(e));
-    elements.subcategoriaModal.addEventListener('click', e => { if (e.target === elements.subcategoriaModal) handlers.closeSubcategoriaModal(); });
+    elements.closeSubcategoriaModal?.addEventListener('click', () => handlers.closeSubcategoriaModal());
+    elements.cancelSubcategoriaModal?.addEventListener('click', () => handlers.closeSubcategoriaModal());
+    elements.subcategoriaForm?.addEventListener('submit', e => handlers.submitSubcategoria(e));
+    elements.subcategoriaModal?.addEventListener('click', e => { if (e.target === elements.subcategoriaModal) handlers.closeSubcategoriaModal(); });
 
     // Proveedor modal
-    elements.closeProveedorModal.addEventListener('click', () => handlers.closeProveedorModal());
-    elements.cancelProveedorModal.addEventListener('click', () => handlers.closeProveedorModal());
-    elements.proveedorForm.addEventListener('submit', e => handlers.submitProveedor(e));
-    elements.proveedorModal.addEventListener('click', e => { if (e.target === elements.proveedorModal) handlers.closeProveedorModal(); });
+    elements.closeProveedorModal?.addEventListener('click', () => handlers.closeProveedorModal());
+    elements.cancelProveedorModal?.addEventListener('click', () => handlers.closeProveedorModal());
+    elements.proveedorForm?.addEventListener('submit', e => handlers.submitProveedor(e));
+    elements.proveedorModal?.addEventListener('click', e => { if (e.target === elements.proveedorModal) handlers.closeProveedorModal(); });
 
     // Transaccion modal
-    elements.closeTransaccionModal.addEventListener('click', () => handlers.closeTransaccionModal());
-    elements.cancelTransaccionModal.addEventListener('click', () => handlers.closeTransaccionModal());
-    elements.transaccionForm.addEventListener('submit', e => handlers.submitTransaccion(e));
-    elements.transaccionModal.addEventListener('click', e => { if (e.target === elements.transaccionModal) handlers.closeTransaccionModal(); });
+    elements.closeTransaccionModal?.addEventListener('click', () => handlers.closeTransaccionModal());
+    elements.cancelTransaccionModal?.addEventListener('click', () => handlers.closeTransaccionModal());
+    elements.transaccionForm?.addEventListener('submit', e => handlers.submitTransaccion(e));
+    elements.transaccionModal?.addEventListener('click', e => { if (e.target === elements.transaccionModal) handlers.closeTransaccionModal(); });
 
     // Cuenta modal
-    elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
-    elements.cancelCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
-    elements.cuentaForm.addEventListener('submit', e => handlers.submitCuenta(e));
-    elements.cuentaModal.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
+    elements.closeCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cancelCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cuentaForm?.addEventListener('submit', e => handlers.submitCuenta(e));
+    elements.cuentaModal?.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
+
+    // Moneda modal
+    elements.closeMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.cancelMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.monedaForm?.addEventListener('submit', e => handlers.submitMoneda(e));
+    elements.monedaModal?.addEventListener('click', e => { if (e.target === elements.monedaModal) handlers.closeMonedaModal(); });
+
+    // Metodo Pago modal
+    elements.closeMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.cancelMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.metodoPagoForm?.addEventListener('submit', e => handlers.submitMetodoPago(e));
+    elements.metodoPagoModal?.addEventListener('click', e => { if (e.target === elements.metodoPagoModal) handlers.closeMetodoPagoModal(); });
 
     // Delete modal
-    elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
-    elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
+    elements.closeDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
     // Tabs
     document.querySelectorAll('.tab').forEach(tab => {
@@ -901,43 +1005,24 @@
 
     // Filters
     const df = utils.debounce(() => handlers.applyFilters(), 300);
-    elements.searchInput.addEventListener('input', df);
-    elements.filterStatus.addEventListener('change', () => handlers.applyFilters());
-    elements.filterCategoria.addEventListener('change', () => handlers.applyFilters());
-    elements.filterFiscal.addEventListener('change', () => handlers.applyFilters());
-    elements.prevPage.addEventListener('click', () => handlers.prevPage());
-    elements.nextPage.addEventListener('click', () => handlers.nextPage());
+    elements.searchInput?.addEventListener('input', df);
+    elements.filterStatus?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterCategoria?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterFiscal?.addEventListener('change', () => handlers.applyFilters());
+    elements.prevPage?.addEventListener('click', () => handlers.prevPage());
+    elements.nextPage?.addEventListener('click', () => handlers.nextPage());
 
     // ESC key
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         handlers.closeGastoModal(); handlers.closeCategoriaModal(); handlers.closeSubcategoriaModal();
         handlers.closeProveedorModal(); handlers.closeTransaccionModal(); handlers.closeCuentaModal();
-        handlers.closeDeleteModal(); handlers.closePagoModal();
+        handlers.closeDeleteModal(); handlers.closePagoModal(); handlers.closeMonedaModal(); handlers.closeMetodoPagoModal();
       }
     });
 
-    handlers.loadData().then(() => {
-      // Check URL params for creating from transaccion
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('crear') === '1') {
-        setTimeout(() => {
-          handlers.openCreateModal();
-          // Prellenar datos desde transacción
-          if (params.get('monto')) elements.total.value = params.get('monto');
-          if (params.get('fecha')) elements.fecha.value = params.get('fecha');
-          if (params.get('contacto_id')) elements.proveedorId.value = params.get('contacto_id');
-          if (params.get('descripcion')) elements.concepto.value = params.get('descripcion');
-          if (params.get('from_tx')) {
-            // Guardar referencia a transacción para conciliar después
-            state.fromTransaccionId = params.get('from_tx');
-          }
-          // Limpiar URL
-          window.history.replaceState({}, '', window.location.pathname);
-        }, 300);
-      }
-    });
-    console.log('🚀 TRUNO Gastos v4');
+    handlers.loadData();
+    console.log('🚀 TRUNO Gastos v3 - Mobile First');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
