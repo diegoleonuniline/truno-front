@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v8
- * Con toast notifications y texto "Saldo por conciliar"
+ * TRUNO - Transacciones v9
+ * Con crear contacto inline, método de pago, moneda en tabla
  */
 (function() {
   'use strict';
@@ -13,50 +13,147 @@
 
   const $ = id => document.getElementById(id);
 
+  const METODOS_PAGO = {
+    transferencia: 'Transferencia',
+    efectivo: 'Efectivo',
+    cheque: 'Cheque',
+    tarjeta_debito: 'T. Débito',
+    tarjeta_credito: 'T. Crédito'
+  };
+
   const elements = {
-    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), menuToggle: $('menuToggle'),
-    orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
-    ingresosMes: $('ingresosMes'), egresosMes: $('egresosMes'), sinConciliar: $('sinConciliar'), balance: $('balance'),
-    searchInput: $('searchInput'), filterType: $('filterType'), filterCuenta: $('filterCuenta'), filterConciliado: $('filterConciliado'),
-    tableContainer: $('tableContainer'), tableBody: $('tableBody'), mobileCards: $('mobileCards'), emptyState: $('emptyState'),
-    pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
-    prevPage: $('prevPage'), nextPage: $('nextPage'),
-    addTxBtn: $('addTxBtn'), addFirstTxBtn: $('addFirstTxBtn'), fabBtn: $('fabBtn'),
-    detailModal: $('detailModal'), closeDetailModal: $('closeDetailModal'), closeDetailBtn: $('closeDetailBtn'),
-    detailAmount: $('detailAmount'), detailGrid: $('detailGrid'), detailConciliacion: $('detailConciliacion'),
+    sidebar: $('sidebar'), 
+    sidebarOverlay: $('sidebarOverlay'), 
+    sidebarClose: $('sidebarClose'),
+    menuToggle: $('menuToggle'),
+    orgSwitcher: $('orgSwitcher'), 
+    orgName: $('orgName'), 
+    orgPlan: $('orgPlan'), 
+    userAvatar: $('userAvatar'),
+    ingresosMes: $('ingresosMes'), 
+    egresosMes: $('egresosMes'), 
+    sinConciliar: $('sinConciliar'), 
+    balance: $('balance'),
+    searchInput: $('searchInput'), 
+    filterType: $('filterType'), 
+    filterCuenta: $('filterCuenta'), 
+    filterConciliado: $('filterConciliado'),
+    tableContainer: $('tableContainer'), 
+    tableBody: $('tableBody'), 
+    mobileCards: $('mobileCards'), 
+    emptyState: $('emptyState'),
+    pagination: $('pagination'), 
+    showingStart: $('showingStart'), 
+    showingEnd: $('showingEnd'), 
+    totalRecords: $('totalRecords'),
+    prevPage: $('prevPage'), 
+    nextPage: $('nextPage'),
+    addTxBtn: $('addTxBtn'), 
+    addFirstTxBtn: $('addFirstTxBtn'), 
+    fabBtn: $('fabBtn'),
+    // Modal detalle
+    detailModal: $('detailModal'), 
+    closeDetailModal: $('closeDetailModal'), 
+    closeDetailBtn: $('closeDetailBtn'),
+    detailAmount: $('detailAmount'), 
+    detailGrid: $('detailGrid'), 
+    detailConciliacion: $('detailConciliacion'),
     editFromDetailBtn: $('editFromDetailBtn'),
-    txModal: $('txModal'), txForm: $('txForm'), modalTitle: $('modalTitle'),
-    closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
-    tipo: $('tipo'), cuentaId: $('cuentaId'), monto: $('monto'), fecha: $('fecha'),
-    contactoId: $('contactoId'), descripcion: $('descripcion'), referencia: $('referencia'),
+    // Modal transacción
+    txModal: $('txModal'), 
+    txForm: $('txForm'), 
+    modalTitle: $('modalTitle'),
+    closeModal: $('closeModal'), 
+    cancelModal: $('cancelModal'), 
+    submitModal: $('submitModal'),
+    tipo: $('tipo'), 
+    cuentaId: $('cuentaId'), 
+    monto: $('monto'), 
+    fecha: $('fecha'),
+    moneda: $('moneda'),
+    metodoPago: $('metodoPago'),
+    contactoId: $('contactoId'), 
+    descripcion: $('descripcion'), 
+    referencia: $('referencia'),
     addCuentaBtn: $('addCuentaBtn'),
-    gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
-    cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
-    gastoFromTxInfo: $('gastoFromTxInfo'), gastoFromTxBox: $('gastoFromTxBox'),
-    gastoConcepto: $('gastoConcepto'), gastoProveedor: $('gastoProveedor'),
-    gastoFecha: $('gastoFecha'), gastoFechaVencimiento: $('gastoFechaVencimiento'),
-    gastoCategoria: $('gastoCategoria'), gastoSubcategoria: $('gastoSubcategoria'),
-    gastoSubtotal: $('gastoSubtotal'), gastoTotal: $('gastoTotal'),
+    addContactoBtn: $('addContactoBtn'),
+    // Modal crear contacto
+    contactoModal: $('contactoModal'),
+    contactoForm: $('contactoForm'),
+    closeContactoModal: $('closeContactoModal'),
+    cancelContactoModal: $('cancelContactoModal'),
+    contactoNombre: $('contactoNombre'),
+    contactoTipo: $('contactoTipo'),
+    contactoEmail: $('contactoEmail'),
+    contactoTelefono: $('contactoTelefono'),
+    contactoRfc: $('contactoRfc'),
+    // Modal gasto
+    gastoModal: $('gastoModal'), 
+    gastoForm: $('gastoForm'), 
+    closeGastoModal: $('closeGastoModal'),
+    cancelGastoModal: $('cancelGastoModal'), 
+    submitGastoModal: $('submitGastoModal'),
+    gastoFromTxInfo: $('gastoFromTxInfo'), 
+    gastoFromTxBox: $('gastoFromTxBox'),
+    gastoConcepto: $('gastoConcepto'), 
+    gastoProveedor: $('gastoProveedor'),
+    gastoFecha: $('gastoFecha'), 
+    gastoFechaVencimiento: $('gastoFechaVencimiento'),
+    gastoCategoria: $('gastoCategoria'), 
+    gastoSubcategoria: $('gastoSubcategoria'),
+    gastoSubtotal: $('gastoSubtotal'), 
+    gastoTotal: $('gastoTotal'),
     gastoImpuestosContainer: $('gastoImpuestosContainer'),
-    gastoMoneda: $('gastoMoneda'), gastoMetodoPago: $('gastoMetodoPago'),
-    gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
-    gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
-    ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
-    cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
-    ventaFromTxInfo: $('ventaFromTxInfo'), ventaFromTxBox: $('ventaFromTxBox'),
-    ventaFolio: $('ventaFolio'), ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
-    ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'), ventaConcepto: $('ventaConcepto'),
-    cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
-    cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
-    deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'), confirmDelete: $('confirmDelete')
+    gastoMoneda: $('gastoMoneda'), 
+    gastoMetodoPago: $('gastoMetodoPago'),
+    gastoEsFiscal: $('gastoEsFiscal'), 
+    gastoFiscalFields: $('gastoFiscalFields'),
+    gastoUuid: $('gastoUuid'), 
+    gastoFolio: $('gastoFolio'), 
+    gastoNotas: $('gastoNotas'),
+    // Modal venta
+    ventaModal: $('ventaModal'), 
+    ventaForm: $('ventaForm'), 
+    closeVentaModal: $('closeVentaModal'),
+    cancelVentaModal: $('cancelVentaModal'), 
+    submitVentaModal: $('submitVentaModal'),
+    ventaFromTxInfo: $('ventaFromTxInfo'), 
+    ventaFromTxBox: $('ventaFromTxBox'),
+    ventaFolio: $('ventaFolio'), 
+    ventaCliente: $('ventaCliente'), 
+    ventaFecha: $('ventaFecha'),
+    ventaSubtotal: $('ventaSubtotal'), 
+    ventaTotal: $('ventaTotal'), 
+    ventaConcepto: $('ventaConcepto'),
+    // Modal cuenta
+    cuentaModal: $('cuentaModal'), 
+    cuentaForm: $('cuentaForm'), 
+    closeCuentaModal: $('closeCuentaModal'),
+    cancelCuentaModal: $('cancelCuentaModal'), 
+    cuentaNombre: $('cuentaNombre'), 
+    cuentaBanco: $('cuentaBanco'), 
+    cuentaSaldo: $('cuentaSaldo'),
+    // Modal eliminar
+    deleteModal: $('deleteModal'), 
+    closeDeleteModal: $('closeDeleteModal'), 
+    cancelDeleteModal: $('cancelDeleteModal'), 
+    confirmDelete: $('confirmDelete')
   };
 
   let state = {
-    user: null, org: null, 
-    transacciones: [], cuentas: [], contactos: [], categorias: [], impuestosCatalogo: [],
+    user: null, 
+    org: null, 
+    transacciones: [], 
+    cuentas: [], 
+    contactos: [], 
+    categorias: [], 
+    impuestosCatalogo: [],
+    monedas: [],
     gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
-    editingId: null, deletingId: null, viewingTx: null,
+    editingId: null, 
+    deletingId: null, 
+    viewingTx: null,
     gastoFromTxId: null,
     ventaFromTxId: null,
     filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
@@ -75,36 +172,25 @@
       this.init();
       const toastEl = document.createElement('div');
       toastEl.className = `toast toast-${type}`;
-      
       const icons = {
         success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
         error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
         warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
         info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
       };
-      
       toastEl.innerHTML = `
         <div class="toast-icon">${icons[type] || icons.info}</div>
         <div class="toast-message">${message}</div>
         <button class="toast-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       `;
-      
       this.container.appendChild(toastEl);
-      
-      // Trigger animation
       requestAnimationFrame(() => toastEl.classList.add('show'));
-      
-      // Close button
       toastEl.querySelector('.toast-close').addEventListener('click', () => this.hide(toastEl));
-      
-      // Auto hide
-      if (duration > 0) {
-        setTimeout(() => this.hide(toastEl), duration);
-      }
-      
+      if (duration > 0) setTimeout(() => this.hide(toastEl), duration);
       return toastEl;
     },
     hide(toastEl) {
+      if (!toastEl || !toastEl.parentNode) return;
       toastEl.classList.remove('show');
       toastEl.classList.add('hide');
       setTimeout(() => toastEl.remove(), 300);
@@ -120,7 +206,7 @@
     getUser: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.USER) || 'null'),
     getOrg: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.ORG) || 'null'),
     redirect: url => window.location.href = url,
-    getInitials: n => (n?.charAt(0) || '') + (n?.split(' ')[1]?.charAt(0) || ''),
+    getInitials: (n, a) => (n?.charAt(0).toUpperCase() || '') + (a?.charAt(0).toUpperCase() || '') || '??',
     formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
     formatDate(d) {
       if (!d) return '-';
@@ -169,9 +255,11 @@
     getCuentas: () => api.request('/api/cuentas-bancarias'),
     createCuenta: d => api.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }),
     getContactos: () => api.request('/api/contactos?limite=200'),
+    createContacto: d => api.request('/api/contactos', { method: 'POST', body: JSON.stringify(d) }),
     getCategorias: () => api.request('/api/categorias?tipo=gasto'),
     getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
     getImpuestos: () => api.request('/api/impuestos'),
+    getMonedas: () => api.request('/api/monedas'),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
     createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
     getGasto: id => api.request(`/api/gastos/${id}`),
@@ -179,7 +267,7 @@
   };
 
   const render = {
-    user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre); },
+    user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido); },
     org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
     stats() {
       const now = new Date(), m = now.getMonth(), y = now.getFullYear();
@@ -201,6 +289,21 @@
       const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
       elements.cuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       elements.filterCuenta.innerHTML = '<option value="">Cuenta</option>' + opts;
+    },
+    monedas() {
+      if (!elements.moneda) return;
+      if (state.monedas.length > 0) {
+        const activas = state.monedas.filter(m => m.activo);
+        elements.moneda.innerHTML = activas.map(m => 
+          `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`
+        ).join('');
+      } else {
+        elements.moneda.innerHTML = `
+          <option value="MXN" selected>MXN - Peso Mexicano</option>
+          <option value="USD">USD - Dólar</option>
+          <option value="EUR">EUR - Euro</option>
+        `;
+      }
     },
     contactos() {
       const provOpts = state.contactos.filter(c => c.tipo === 'proveedor' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
@@ -306,57 +409,94 @@
       elements.tableBody.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
+        const metodoLabel = METODOS_PAGO[t.metodo_pago] || '-';
+        const moneda = t.moneda || 'MXN';
+        
         return `<tr data-id="${t.id}" class="clickable-row">
-          <td><div class="cell-main">${t.descripcion || 'Sin descripción'}</div><div class="cell-sub">${t.referencia || ''}</div></td>
+          <td>
+            <div class="cell-main">${t.descripcion || 'Sin descripción'}</div>
+            <div class="cell-sub">${t.referencia || ''}</div>
+          </td>
           <td>${utils.formatDate(t.fecha)}</td>
           <td>${t.nombre_cuenta || '-'}</td>
           <td>${t.nombre_contacto || '-'}</td>
-          <td><div class="badges-group">
-            <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
-            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
-          </div></td>
-          <td style="text-align:right;"><div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div></td>
-          <td><div class="table-actions">
-            ${!conciliado ? `<button class="action-btn success" title="${isIncome ? 'Registrar Venta' : 'Registrar Gasto'}" data-action="conciliar" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>` : ''}
-            <button class="action-btn" title="Ver" data-action="view" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-            <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-          </div></td>
+          <td><span class="metodo-badge">${metodoLabel}</span></td>
+          <td>
+            <div class="badges-group">
+              <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+              ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
+            </div>
+          </td>
+          <td style="text-align:right;">
+            <div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto), moneda)}</div>
+            <div class="cell-sub">${moneda}</div>
+          </td>
+          <td>
+            <div class="table-actions">
+              ${!conciliado ? `<button class="action-btn success" title="${isIncome ? 'Registrar Venta' : 'Registrar Gasto'}" data-action="conciliar" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>` : ''}
+              <button class="action-btn" title="Ver" data-action="view" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </div>
+          </td>
         </tr>`;
       }).join('');
 
       elements.mobileCards.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
+        const metodoLabel = METODOS_PAGO[t.metodo_pago] || '';
+        const moneda = t.moneda || 'MXN';
+        
         return `<div class="mobile-card" data-id="${t.id}">
           <div class="mobile-card-header">
             <div class="mobile-card-title">${t.descripcion || 'Sin descripción'}</div>
-            <div class="mobile-card-amount ${isIncome ? 'income' : ''}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div>
+            <div class="mobile-card-amount ${isIncome ? 'income' : ''}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto), moneda)}</div>
           </div>
           <div class="mobile-card-meta">
             <span>${utils.formatDate(t.fecha)}</span>
             <span>${t.nombre_cuenta || '-'}</span>
+            ${metodoLabel ? `<span>${metodoLabel}</span>` : ''}
+            <span>${moneda}</span>
           </div>
-          <div class="mobile-card-badges">
-            <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
-            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
+          <div class="mobile-card-footer">
+            <div class="mobile-card-badges">
+              <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+              ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
+            </div>
+            <div class="table-actions">
+              ${!conciliado ? `<button class="action-btn success" data-action="conciliar" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>` : ''}
+              <button class="action-btn" data-action="view" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button class="action-btn danger" data-action="delete" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+            </div>
           </div>
         </div>`;
       }).join('');
 
+      // Event listeners para la tabla
       elements.tableBody.querySelectorAll('tr').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('.action-btn')) return;
           handlers.openDetailModal(state.transacciones.find(t => t.id === row.dataset.id));
         });
       });
-      elements.tableBody.querySelectorAll('[data-action="view"]').forEach(btn => {
-        btn.addEventListener('click', () => handlers.openDetailModal(state.transacciones.find(t => t.id === btn.dataset.id)));
+      
+      document.querySelectorAll('[data-action="view"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          handlers.openDetailModal(state.transacciones.find(t => t.id === btn.dataset.id));
+        });
       });
-      elements.tableBody.querySelectorAll('[data-action="delete"]').forEach(btn => {
-        btn.addEventListener('click', () => handlers.openDeleteModal(state.transacciones.find(t => t.id === btn.dataset.id)));
+      
+      document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          handlers.openDeleteModal(state.transacciones.find(t => t.id === btn.dataset.id));
+        });
       });
-      elements.tableBody.querySelectorAll('[data-action="conciliar"]').forEach(btn => {
-        btn.addEventListener('click', () => {
+      
+      document.querySelectorAll('[data-action="conciliar"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
           const tx = state.transacciones.find(t => t.id === btn.dataset.id);
           if (tx) {
             state.viewingTx = tx;
@@ -365,23 +505,35 @@
           }
         });
       });
+      
       elements.mobileCards.querySelectorAll('.mobile-card').forEach(card => {
-        card.addEventListener('click', () => handlers.openDetailModal(state.transacciones.find(t => t.id === card.dataset.id)));
+        card.addEventListener('click', e => {
+          if (e.target.closest('.action-btn')) return;
+          handlers.openDetailModal(state.transacciones.find(t => t.id === card.dataset.id));
+        });
       });
     }
   };
 
   const handlers = {
-    toggleSidebar() { elements.sidebar.classList.toggle('open'); elements.sidebarOverlay.classList.toggle('active'); },
-    closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
+    toggleSidebar() { 
+      elements.sidebar.classList.toggle('open'); 
+      elements.sidebarOverlay.classList.toggle('active'); 
+    },
+    closeSidebar() { 
+      elements.sidebar.classList.remove('open'); 
+      elements.sidebarOverlay.classList.remove('active'); 
+    },
+    
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes, catRes, impRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
           api.getContactos(),
           api.getCategorias().catch(() => ({ categorias: [] })),
-          api.getImpuestos().catch(() => ({ impuestos: [] }))
+          api.getImpuestos().catch(() => ({ impuestos: [] })),
+          api.getMonedas().catch(() => ({ monedas: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
@@ -389,13 +541,19 @@
         state.contactos = contactosRes.contactos || [];
         state.categorias = catRes.categorias || [];
         state.impuestosCatalogo = impRes.impuestos || [];
+        state.monedas = monedasRes.monedas || [];
         render.cuentas();
         render.contactos();
         render.categorias();
+        render.monedas();
         render.stats();
         render.transacciones();
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error(e); 
+        toast.error('Error al cargar datos');
+      }
     },
+    
     async loadSubcategorias() {
       const catId = elements.gastoCategoria.value;
       if (!catId) { render.subcategorias([]); return; }
@@ -404,15 +562,18 @@
         render.subcategorias(res.subcategorias || []);
       } catch (e) { render.subcategorias([]); }
     },
+    
     async openDetailModal(tx) {
       if (!tx) return;
       state.viewingTx = tx;
       const isIncome = tx.tipo === 'ingreso';
       const conciliado = tx.gasto_id || tx.venta_id;
+      const metodoLabel = METODOS_PAGO[tx.metodo_pago] || '-';
+      const moneda = tx.moneda || 'MXN';
 
       elements.detailAmount.innerHTML = `
-        <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto))}</div>
-        <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'}</div>
+        <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), moneda)}</div>
+        <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'} • ${moneda}</div>
       `;
 
       const contacto = state.contactos.find(c => c.id === tx.contacto_id);
@@ -420,6 +581,8 @@
         <div class="detail-item"><label>Fecha</label><span>${utils.formatDate(tx.fecha)}</span></div>
         <div class="detail-item"><label>Cuenta</label><span>${tx.nombre_cuenta || '-'}</span></div>
         <div class="detail-item"><label>Contacto</label><span>${contacto?.nombre || tx.nombre_contacto || '-'}</span></div>
+        <div class="detail-item"><label>Método de Pago</label><span>${metodoLabel}</span></div>
+        <div class="detail-item"><label>Moneda</label><span>${moneda}</span></div>
         <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
       `;
@@ -462,19 +625,27 @@
 
       elements.detailModal.classList.add('active');
     },
+    
     closeDetailModal() { 
       elements.detailModal.classList.remove('active'); 
     },
+    
     editFromDetail() {
-      if (state.viewingTx) { this.closeDetailModal(); this.openEditModal(state.viewingTx); }
+      if (state.viewingTx) { 
+        this.closeDetailModal(); 
+        this.openEditModal(state.viewingTx); 
+      }
     },
+    
     openCreateModal() {
       state.editingId = null;
       elements.modalTitle.textContent = 'Nuevo Movimiento';
       elements.txForm.reset();
       elements.fecha.value = utils.today();
+      render.monedas();
       elements.txModal.classList.add('active');
     },
+    
     openEditModal(tx) {
       state.editingId = tx.id;
       elements.modalTitle.textContent = 'Editar Movimiento';
@@ -482,12 +653,19 @@
       elements.cuentaId.value = tx.cuenta_bancaria_id;
       elements.monto.value = tx.monto;
       elements.fecha.value = utils.formatDateInput(tx.fecha);
+      elements.moneda.value = tx.moneda || 'MXN';
+      elements.metodoPago.value = tx.metodo_pago || '';
       elements.contactoId.value = tx.contacto_id || '';
       elements.descripcion.value = tx.descripcion || '';
       elements.referencia.value = tx.referencia || '';
       elements.txModal.classList.add('active');
     },
-    closeTxModal() { elements.txModal.classList.remove('active'); state.editingId = null; },
+    
+    closeTxModal() { 
+      elements.txModal.classList.remove('active'); 
+      state.editingId = null; 
+    },
+    
     async submitTx(e) {
       e.preventDefault();
       const d = {
@@ -495,6 +673,8 @@
         cuenta_bancaria_id: elements.cuentaId.value,
         monto: parseFloat(elements.monto.value),
         fecha: elements.fecha.value,
+        moneda: elements.moneda.value || 'MXN',
+        metodo_pago: elements.metodoPago.value || null,
         contacto_id: elements.contactoId.value || null,
         descripcion: elements.descripcion.value.trim() || null,
         referencia: elements.referencia.value.trim() || null
@@ -509,6 +689,46 @@
       } catch (e) { toast.error(e.message); }
       finally { elements.submitModal.disabled = false; }
     },
+    
+    // ========== CREAR CONTACTO ==========
+    openContactoModal() {
+      elements.contactoForm.reset();
+      elements.contactoTipo.value = 'cliente';
+      elements.contactoModal.classList.add('active');
+      elements.contactoNombre.focus();
+    },
+    
+    closeContactoModal() {
+      elements.contactoModal.classList.remove('active');
+    },
+    
+    async submitContacto(e) {
+      e.preventDefault();
+      const data = {
+        nombre: elements.contactoNombre.value.trim(),
+        tipo: elements.contactoTipo.value,
+        email: elements.contactoEmail.value.trim() || null,
+        telefono: elements.contactoTelefono.value.trim() || null,
+        rfc: elements.contactoRfc.value.trim().toUpperCase() || null
+      };
+      
+      try {
+        const result = await api.createContacto(data);
+        const nuevoContacto = result.contacto || result;
+        
+        state.contactos.push(nuevoContacto);
+        render.contactos();
+        
+        elements.contactoId.value = nuevoContacto.id;
+        
+        this.closeContactoModal();
+        toast.success('Contacto creado');
+      } catch (e) {
+        toast.error(e.message);
+      }
+    },
+    
+    // ========== GASTO DESDE TRANSACCIÓN ==========
     openGastoFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
@@ -520,13 +740,15 @@
       elements.gastoForm.reset();
       state.gastoImpuestosTemp = [];
       elements.gastoFromTxBox.style.display = 'block';
-      elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto, tx.moneda || 'MXN')} del ${utils.formatDate(tx.fecha)}`;
       
       elements.gastoConcepto.value = tx.descripcion || '';
       elements.gastoProveedor.value = tx.contacto_id || '';
       elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
       elements.gastoTotal.value = tx.monto;
       elements.gastoSubtotal.value = tx.monto;
+      elements.gastoMoneda.value = tx.moneda || 'MXN';
+      elements.gastoMetodoPago.value = tx.metodo_pago || '';
       
       elements.gastoFiscalFields.style.display = 'none';
       elements.gastoEsFiscal.checked = false;
@@ -535,15 +757,18 @@
       
       elements.gastoModal.classList.add('active');
     },
+    
     closeGastoModal() { 
       elements.gastoModal.classList.remove('active'); 
       state.gastoFromTxId = null;
       state.viewingTx = null;
     },
+    
     addGastoImpuesto() {
       state.gastoImpuestosTemp.push({ impuesto_id: '', tasa: 0, tipo: 'traslado', importe: 0 });
       render.gastoImpuestos();
     },
+    
     calcGastoTotal() {
       const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
       let traslados = 0, retenciones = 0;
@@ -556,6 +781,7 @@
         elements.gastoTotal.value = total.toFixed(2);
       }
     },
+    
     recalcGastoImpuestos() {
       const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
       state.gastoImpuestosTemp.forEach(imp => {
@@ -566,6 +792,7 @@
       render.gastoImpuestos();
       this.calcGastoTotal();
     },
+    
     async submitGasto(e) {
       e.preventDefault();
       
@@ -611,6 +838,8 @@
       } catch (e) { toast.error(e.message); }
       finally { elements.submitGastoModal.disabled = false; }
     },
+    
+    // ========== VENTA DESDE TRANSACCIÓN ==========
     openVentaFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
@@ -621,7 +850,7 @@
       
       elements.ventaForm.reset();
       elements.ventaFromTxBox.style.display = 'block';
-      elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto, tx.moneda || 'MXN')} del ${utils.formatDate(tx.fecha)}`;
       
       elements.ventaCliente.value = tx.contacto_id || '';
       elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
@@ -631,11 +860,13 @@
       
       elements.ventaModal.classList.add('active');
     },
+    
     closeVentaModal() { 
       elements.ventaModal.classList.remove('active'); 
       state.ventaFromTxId = null;
       state.viewingTx = null;
     },
+    
     async submitVenta(e) {
       e.preventDefault();
       
@@ -666,8 +897,17 @@
       } catch (e) { toast.error(e.message); }
       finally { elements.submitVentaModal.disabled = false; }
     },
-    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); },
-    closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
+    
+    // ========== CUENTA ==========
+    openCuentaModal() { 
+      elements.cuentaForm.reset(); 
+      elements.cuentaModal.classList.add('active'); 
+    },
+    
+    closeCuentaModal() { 
+      elements.cuentaModal.classList.remove('active'); 
+    },
+    
     async submitCuenta(e) {
       e.preventDefault();
       try {
@@ -683,8 +923,18 @@
         toast.success('Cuenta creada');
       } catch (e) { toast.error(e.message); }
     },
-    openDeleteModal(t) { state.deletingId = t.id; elements.deleteModal.classList.add('active'); },
-    closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
+    
+    // ========== ELIMINAR ==========
+    openDeleteModal(t) { 
+      state.deletingId = t.id; 
+      elements.deleteModal.classList.add('active'); 
+    },
+    
+    closeDeleteModal() { 
+      elements.deleteModal.classList.remove('active'); 
+      state.deletingId = null; 
+    },
+    
     async confirmDelete() {
       elements.confirmDelete.disabled = true;
       try { 
@@ -696,6 +946,7 @@
       catch (e) { toast.error(e.message); }
       finally { elements.confirmDelete.disabled = false; }
     },
+    
     applyFilters() {
       state.filters.buscar = elements.searchInput.value.trim();
       state.filters.tipo = elements.filterType.value;
@@ -704,9 +955,25 @@
       state.paginacion.pagina = 1;
       this.loadData();
     },
-    prevPage() { if (state.paginacion.pagina > 1) { state.paginacion.pagina--; this.loadData(); } },
-    nextPage() { if (state.paginacion.pagina < state.paginacion.paginas) { state.paginacion.pagina++; this.loadData(); } },
-    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); }
+    
+    prevPage() { 
+      if (state.paginacion.pagina > 1) { 
+        state.paginacion.pagina--; 
+        this.loadData(); 
+      } 
+    },
+    
+    nextPage() { 
+      if (state.paginacion.pagina < state.paginacion.paginas) { 
+        state.paginacion.pagina++; 
+        this.loadData(); 
+      } 
+    },
+    
+    switchOrg() { 
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); 
+      utils.redirect(CONFIG.REDIRECT.SELECT_ORG); 
+    }
   };
 
   function init() {
@@ -717,69 +984,92 @@
     render.user();
     render.org();
 
-    elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
-    elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
-    elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
+    // Sidebar
+    elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
+    elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
-    elements.addTxBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.addFirstTxBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
+    // Botones crear
+    elements.addTxBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstTxBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn?.addEventListener('click', () => handlers.openCreateModal());
 
-    elements.closeDetailModal.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
-    elements.closeDetailBtn.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
-    elements.editFromDetailBtn.addEventListener('click', () => handlers.editFromDetail());
-    elements.detailModal.addEventListener('click', e => { if (e.target === elements.detailModal) { handlers.closeDetailModal(); state.viewingTx = null; } });
+    // Modal detalle
+    elements.closeDetailModal?.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
+    elements.closeDetailBtn?.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
+    elements.editFromDetailBtn?.addEventListener('click', () => handlers.editFromDetail());
+    elements.detailModal?.addEventListener('click', e => { if (e.target === elements.detailModal) { handlers.closeDetailModal(); state.viewingTx = null; } });
 
-    elements.closeModal.addEventListener('click', () => handlers.closeTxModal());
-    elements.cancelModal.addEventListener('click', () => handlers.closeTxModal());
-    elements.txForm.addEventListener('submit', e => handlers.submitTx(e));
-    elements.txModal.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
-    elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
+    // Modal transacción
+    elements.closeModal?.addEventListener('click', () => handlers.closeTxModal());
+    elements.cancelModal?.addEventListener('click', () => handlers.closeTxModal());
+    elements.txForm?.addEventListener('submit', e => handlers.submitTx(e));
+    elements.txModal?.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
+    elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
+    elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
 
-    elements.closeGastoModal.addEventListener('click', () => handlers.closeGastoModal());
-    elements.cancelGastoModal.addEventListener('click', () => handlers.closeGastoModal());
-    elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
-    elements.gastoModal.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
-    elements.gastoCategoria.addEventListener('change', () => handlers.loadSubcategorias());
-    elements.gastoSubtotal.addEventListener('input', () => handlers.recalcGastoImpuestos());
-    elements.gastoEsFiscal.addEventListener('change', () => {
+    // Modal crear contacto
+    elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
+    elements.cancelContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
+    elements.contactoForm?.addEventListener('submit', e => handlers.submitContacto(e));
+    elements.contactoModal?.addEventListener('click', e => { if (e.target === elements.contactoModal) handlers.closeContactoModal(); });
+
+    // Modal gasto
+    elements.closeGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.cancelGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.gastoForm?.addEventListener('submit', e => handlers.submitGasto(e));
+    elements.gastoModal?.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
+    elements.gastoCategoria?.addEventListener('change', () => handlers.loadSubcategorias());
+    elements.gastoSubtotal?.addEventListener('input', () => handlers.recalcGastoImpuestos());
+    elements.gastoEsFiscal?.addEventListener('change', () => {
       elements.gastoFiscalFields.style.display = elements.gastoEsFiscal.checked ? 'block' : 'none';
     });
     $('addGastoImpuestoBtn')?.addEventListener('click', () => handlers.addGastoImpuesto());
 
-    elements.closeVentaModal.addEventListener('click', () => handlers.closeVentaModal());
-    elements.cancelVentaModal.addEventListener('click', () => handlers.closeVentaModal());
-    elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
-    elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
+    // Modal venta
+    elements.closeVentaModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.cancelVentaModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.ventaForm?.addEventListener('submit', e => handlers.submitVenta(e));
+    elements.ventaModal?.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
 
-    elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
-    elements.cancelCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
-    elements.cuentaForm.addEventListener('submit', e => handlers.submitCuenta(e));
-    elements.cuentaModal.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
+    // Modal cuenta
+    elements.closeCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cancelCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cuentaForm?.addEventListener('submit', e => handlers.submitCuenta(e));
+    elements.cuentaModal?.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
 
-    elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
-    elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
+    // Modal eliminar
+    elements.closeDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
+    // Filtros
     const df = utils.debounce(() => handlers.applyFilters(), 300);
-    elements.searchInput.addEventListener('input', df);
-    elements.filterType.addEventListener('change', () => handlers.applyFilters());
-    elements.filterCuenta.addEventListener('change', () => handlers.applyFilters());
-    elements.filterConciliado.addEventListener('change', () => handlers.applyFilters());
-    elements.prevPage.addEventListener('click', () => handlers.prevPage());
-    elements.nextPage.addEventListener('click', () => handlers.nextPage());
+    elements.searchInput?.addEventListener('input', df);
+    elements.filterType?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterCuenta?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterConciliado?.addEventListener('change', () => handlers.applyFilters());
+    elements.prevPage?.addEventListener('click', () => handlers.prevPage());
+    elements.nextPage?.addEventListener('click', () => handlers.nextPage());
 
+    // Escape para cerrar modales
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        handlers.closeDetailModal(); state.viewingTx = null;
-        handlers.closeTxModal(); handlers.closeGastoModal();
-        handlers.closeVentaModal(); handlers.closeCuentaModal(); handlers.closeDeleteModal();
+        handlers.closeDetailModal(); 
+        state.viewingTx = null;
+        handlers.closeTxModal(); 
+        handlers.closeContactoModal();
+        handlers.closeGastoModal();
+        handlers.closeVentaModal(); 
+        handlers.closeCuentaModal(); 
+        handlers.closeDeleteModal();
       }
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v8');
+    console.log('🚀 TRUNO Transacciones v9 - Crear contacto, método pago, moneda');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
