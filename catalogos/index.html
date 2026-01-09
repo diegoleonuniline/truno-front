@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e14">
+  <title>Catálogos | TRUNO</title>
+  <link rel="stylesheet" href="catalogos.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
+            <path d="M4 10v11"/><path d="M20 10v11"/>
+            <path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/>
+          </svg>
+        </div>
+        <span class="sidebar-brand">TRUNO</span>
+        <button class="sidebar-close" id="sidebarClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="../dashboard/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Dashboard
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Finanzas</div>
+          <a href="../bancos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Bancos
+          </a>
+          <a href="../transacciones/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+              <polyline points="17 6 23 6 23 12"/>
+            </svg>
+            Transacciones
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Operaciones</div>
+          <a href="../ventas/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Ventas
+          </a>
+          <a href="../gastos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Gastos
+          </a>
+          <a href="../contactos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+            Contactos
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Configuración</div>
+          <a href="../catalogos/index.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16"/>
+              <circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/>
+            </svg>
+            Catálogos
+          </a>
+          <a href="../configuracion/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Configuración
+          </a>
+        </div>
+
+        <div class="nav-section nav-section-mobile-only">
+          <div class="nav-section-title">Sesión</div>
+          <button class="nav-item nav-item-logout" id="sidebarLogoutBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar-org">
+        <button class="org-switcher" id="orgSwitcher">
+          <div class="org-switcher-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
+              <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
+              <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+            </svg>
+          </div>
+          <div class="org-switcher-info">
+            <div class="org-switcher-name" id="orgName">Cargando...</div>
+            <div class="org-switcher-plan" id="orgPlan">Plan Free</div>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <h1 class="header-title">Catálogos</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-avatar" id="userAvatar">--</div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header">
+          <div class="page-header-info">
+            <h2>Gestión de Catálogos</h2>
+            <p>Administra categorías, impuestos, métodos de pago y más</p>
+          </div>
+        </div>
+
+        <!-- Tabs Container -->
+        <div class="tabs-container">
+          <div class="tabs-header">
+            <button class="tab-btn active" data-tab="categorias">Categorías</button>
+            <button class="tab-btn" data-tab="subcategorias">Subcategorías</button>
+            <button class="tab-btn" data-tab="impuestos">Impuestos</button>
+            <button class="tab-btn" data-tab="metodos-pago">Métodos Pago</button>
+            <button class="tab-btn" data-tab="monedas">Monedas</button>
+          </div>
+
+          <!-- Tab: Categorías -->
+          <div class="tab-content active" id="tab-categorias">
+            <div class="catalog-header">
+              <h3 class="catalog-title">Categorías</h3>
+              <div class="catalog-actions">
+                <button class="btn btn-primary btn-sm" id="addCategoriaBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Color</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableCategorias"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="emptyCategoria" style="display:none;">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <h3>Sin categorías</h3>
+              <p>Crea tu primera categoría</p>
+            </div>
+          </div>
+
+          <!-- Tab: Subcategorías -->
+          <div class="tab-content" id="tab-subcategorias">
+            <div class="catalog-header">
+              <h3 class="catalog-title">Subcategorías</h3>
+              <div class="catalog-actions">
+                <button class="btn btn-primary btn-sm" id="addSubcategoriaBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableSubcategorias"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="emptySubcategoria" style="display:none;">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <h3>Sin subcategorías</h3>
+              <p>Crea tu primera subcategoría</p>
+            </div>
+          </div>
+
+          <!-- Tab: Impuestos -->
+          <div class="tab-content" id="tab-impuestos">
+            <div class="catalog-header">
+              <h3 class="catalog-title">Impuestos</h3>
+              <div class="catalog-actions">
+                <button class="btn btn-primary btn-sm" id="addImpuestoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Clave SAT</th>
+                    <th>Tipo</th>
+                    <th>Tasa</th>
+                    <th>Estado</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableImpuestos"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="emptyImpuesto" style="display:none;">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <h3>Sin impuestos</h3>
+              <p>Crea tu primer impuesto</p>
+            </div>
+          </div>
+
+          <!-- Tab: Métodos de Pago -->
+          <div class="tab-content" id="tab-metodos-pago">
+            <div class="catalog-header">
+              <h3 class="catalog-title">Métodos de Pago</h3>
+              <div class="catalog-actions">
+                <button class="btn btn-primary btn-sm" id="addMetodoPagoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Clave</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableMetodosPago"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="emptyMetodoPago" style="display:none;">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <h3>Sin métodos de pago</h3>
+              <p>Crea tu primer método de pago</p>
+            </div>
+          </div>
+
+          <!-- Tab: Monedas -->
+          <div class="tab-content" id="tab-monedas">
+            <div class="catalog-header">
+              <h3 class="catalog-title">Monedas</h3>
+              <div class="catalog-actions">
+                <button class="btn btn-primary btn-sm" id="addMonedaBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Agregar
+                </button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Símbolo</th>
+                    <th>Decimales</th>
+                    <th>Default</th>
+                    <th>Estado</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableMonedas"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="emptyMoneda" style="display:none;">
+              <div class="empty-state-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 10h6M9 14h4"/></svg>
+              </div>
+              <h3>Sin monedas</h3>
+              <p>Crea tu primera moneda</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+      <a href="../dashboard/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Inicio</span>
+      </a>
+      <a href="../transacciones/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span>Movimientos</span>
+      </a>
+      <a href="../ventas/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Ventas</span>
+      </a>
+      <a href="../gastos/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Gastos</span>
+      </a>
+      <a href="../catalogos/index.html" class="bottom-nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Config</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Modal: Categoría -->
+  <div class="modal-overlay" id="categoriaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalCategoriaTitle">Nueva Categoría</h2>
+        <button class="modal-close" id="closeCategoriaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="categoriaForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="catNombre" placeholder="Ej: Servicios" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipo</label>
+              <select class="form-input" id="catTipo">
+                <option value="ambos">Ambos</option>
+                <option value="ingreso">Ingreso</option>
+                <option value="gasto">Gasto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color</label>
+              <div class="form-color-group">
+                <input type="color" class="form-color" id="catColor" value="#6366f1">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="catActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelCategoriaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Subcategoría -->
+  <div class="modal-overlay" id="subcategoriaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalSubcategoriaTitle">Nueva Subcategoría</h2>
+        <button class="modal-close" id="closeSubcategoriaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="subcategoriaForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="subcatNombre" placeholder="Ej: Consultoría" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Categoría</label>
+            <select class="form-input" id="subcatCategoriaId" required>
+              <option value="">-- Seleccionar --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="subcatActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelSubcategoriaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Impuesto -->
+  <div class="modal-overlay" id="impuestoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalImpuestoTitle">Nuevo Impuesto</h2>
+        <button class="modal-close" id="closeImpuestoModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="impuestoForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="impNombre" placeholder="Ej: IVA 16%" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Clave SAT</label>
+              <input type="text" class="form-input" id="impClaveSat" placeholder="002" maxlength="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label required">Tasa %</label>
+              <input type="number" class="form-input" id="impTasa" placeholder="16" step="0.01" min="0" max="100" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-input" id="impTipo">
+              <option value="traslado">Traslado (+)</option>
+              <option value="retencion">Retención (-)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="impActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelImpuestoModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Método de Pago -->
+  <div class="modal-overlay" id="metodoPagoModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalMetodoPagoTitle">Nuevo Método de Pago</h2>
+        <button class="modal-close" id="closeMetodoPagoModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="metodoPagoForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="metNombre" placeholder="Ej: Transferencia" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clave</label>
+            <input type="text" class="form-input" id="metClave" placeholder="TRA" maxlength="20">
+            <span class="form-hint">Clave corta para identificar el método</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-input" id="metDescripcion" placeholder="Descripción opcional">
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="metActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelMetodoPagoModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Moneda -->
+  <div class="modal-overlay" id="monedaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalMonedaTitle">Nueva Moneda</h2>
+        <button class="modal-close" id="closeMonedaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="monedaForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Código</label>
+              <input type="text" class="form-input" id="monCodigo" placeholder="MXN" maxlength="3" required style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Símbolo</label>
+              <input type="text" class="form-input" id="monSimbolo" placeholder="$" maxlength="5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="monNombre" placeholder="Peso Mexicano" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Decimales</label>
+            <input type="number" class="form-input" id="monDecimales" value="2" min="0" max="6">
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Moneda por defecto</label>
+              <label class="toggle">
+                <input type="checkbox" id="monDefault">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="monActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelMonedaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><span class="btn-text">Guardar</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Eliminar -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Confirmar Eliminación</h2>
+        <button class="modal-close" id="closeDeleteModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de eliminar <strong id="deleteItemName"></strong>?</p>
+        <p style="color: var(--text-muted); margin-top: var(--spacing-sm); font-size: var(--font-size-sm);">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmDelete"><span class="btn-text">Eliminar</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="catalogos.js"></script>
+</body>
+</html>
