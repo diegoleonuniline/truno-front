@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v6
- * Con diseño consistente e impuestos múltiples
+ * TRUNO - Transacciones v7
+ * FIX: Guardar txId antes de cerrar modal
  */
 (function() {
   'use strict';
@@ -22,17 +22,14 @@
     pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
     prevPage: $('prevPage'), nextPage: $('nextPage'),
     addTxBtn: $('addTxBtn'), addFirstTxBtn: $('addFirstTxBtn'), fabBtn: $('fabBtn'),
-    // Detail Modal
     detailModal: $('detailModal'), closeDetailModal: $('closeDetailModal'), closeDetailBtn: $('closeDetailBtn'),
     detailAmount: $('detailAmount'), detailGrid: $('detailGrid'), detailConciliacion: $('detailConciliacion'),
     editFromDetailBtn: $('editFromDetailBtn'),
-    // Tx Modal
     txModal: $('txModal'), txForm: $('txForm'), modalTitle: $('modalTitle'),
     closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
     tipo: $('tipo'), cuentaId: $('cuentaId'), monto: $('monto'), fecha: $('fecha'),
     contactoId: $('contactoId'), descripcion: $('descripcion'), referencia: $('referencia'),
     addCuentaBtn: $('addCuentaBtn'),
-    // Gasto Modal
     gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
     cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
     gastoFromTxInfo: $('gastoFromTxInfo'), gastoFromTxBox: $('gastoFromTxBox'),
@@ -44,16 +41,13 @@
     gastoMoneda: $('gastoMoneda'), gastoMetodoPago: $('gastoMetodoPago'),
     gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
     gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
-    // Venta Modal
     ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
     cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
     ventaFromTxInfo: $('ventaFromTxInfo'), ventaFromTxBox: $('ventaFromTxBox'),
     ventaFolio: $('ventaFolio'), ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
     ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'), ventaConcepto: $('ventaConcepto'),
-    // Cuenta Modal
     cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
     cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
-    // Delete Modal
     deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'), confirmDelete: $('confirmDelete')
   };
 
@@ -63,6 +57,8 @@
     gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, deletingId: null, viewingTx: null,
+    gastoFromTxId: null,  // ← NUEVO: guardar ID para gasto
+    ventaFromTxId: null,  // ← NUEVO: guardar ID para venta
     filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
   };
 
@@ -355,7 +351,6 @@
         render.subcategorias(res.subcategorias || []);
       } catch (e) { render.subcategorias([]); }
     },
-    // Detail Modal
     async openDetailModal(tx) {
       if (!tx) return;
       state.viewingTx = tx;
@@ -414,11 +409,13 @@
 
       elements.detailModal.classList.add('active');
     },
-    closeDetailModal() { elements.detailModal.classList.remove('active'); state.viewingTx = null; },
+    closeDetailModal() { 
+      elements.detailModal.classList.remove('active'); 
+      // NO limpiar viewingTx aquí si estamos abriendo gasto/venta
+    },
     editFromDetail() {
       if (state.viewingTx) { this.closeDetailModal(); this.openEditModal(state.viewingTx); }
     },
-    // Tx Modal
     openCreateModal() {
       state.editingId = null;
       elements.modalTitle.textContent = 'Nuevo Movimiento';
@@ -459,10 +456,15 @@
       } catch (e) { alert(e.message); }
       finally { elements.submitModal.disabled = false; }
     },
-    // Gasto from Tx
+    // ========== GASTO FROM TX - CORREGIDO ==========
     openGastoFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
+      
+      // ✅ GUARDAR EL ID ANTES DE CERRAR
+      state.gastoFromTxId = tx.id;
+      console.log('🔗 Guardando gastoFromTxId:', state.gastoFromTxId);
+      
       this.closeDetailModal();
       
       elements.gastoForm.reset();
@@ -470,7 +472,6 @@
       elements.gastoFromTxBox.style.display = 'block';
       elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
       
-      // Heredar datos de la transacción
       elements.gastoConcepto.value = tx.descripcion || '';
       elements.gastoProveedor.value = tx.contacto_id || '';
       elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
@@ -484,7 +485,11 @@
       
       elements.gastoModal.classList.add('active');
     },
-    closeGastoModal() { elements.gastoModal.classList.remove('active'); },
+    closeGastoModal() { 
+      elements.gastoModal.classList.remove('active'); 
+      state.gastoFromTxId = null;  // Limpiar al cerrar
+      state.viewingTx = null;
+    },
     addGastoImpuesto() {
       state.gastoImpuestosTemp.push({ impuesto_id: '', tasa: 0, tipo: 'traslado', importe: 0 });
       render.gastoImpuestos();
@@ -513,7 +518,10 @@
     },
     async submitGasto(e) {
       e.preventDefault();
-      const tx = state.viewingTx;
+      
+      // ✅ USAR gastoFromTxId EN LUGAR DE viewingTx
+      const txId = state.gastoFromTxId;
+      console.log('📤 Enviando gasto con transaccion_id:', txId);
       
       let totalImpuesto = 0;
       state.gastoImpuestosTemp.forEach(imp => {
@@ -537,7 +545,7 @@
         uuid_cfdi: elements.gastoUuid.value.trim() || null,
         folio_cfdi: elements.gastoFolio.value.trim() || null,
         notas: elements.gastoNotas.value.trim() || null,
-        transaccion_id: tx?.id || null,
+        transaccion_id: txId,  // ✅ AQUÍ USA EL ID GUARDADO
         estatus_pago: 'pagado',
         impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
           impuesto_id: i.impuesto_id,
@@ -546,31 +554,33 @@
         }))
       };
       
+      console.log('📦 gastoData:', gastoData);
+      
       elements.submitGastoModal.disabled = true;
       try {
         const result = await api.createGasto(gastoData);
-        const gastoId = result.gasto?.id || result.id;
-        if (tx?.id && gastoId) {
-          await api.updateTransaccion(tx.id, { gasto_id: gastoId });
-        }
+        console.log('✅ Gasto creado:', result);
         this.closeGastoModal();
-        state.viewingTx = null;
         await this.loadData();
         alert('✅ Gasto registrado y conciliado');
       } catch (e) { alert(e.message); }
       finally { elements.submitGastoModal.disabled = false; }
     },
-    // Venta from Tx
+    // ========== VENTA FROM TX - CORREGIDO ==========
     openVentaFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
+      
+      // ✅ GUARDAR EL ID ANTES DE CERRAR
+      state.ventaFromTxId = tx.id;
+      console.log('🔗 Guardando ventaFromTxId:', state.ventaFromTxId);
+      
       this.closeDetailModal();
       
       elements.ventaForm.reset();
       elements.ventaFromTxBox.style.display = 'block';
       elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
       
-      // Heredar datos de la transacción
       elements.ventaCliente.value = tx.contacto_id || '';
       elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
       elements.ventaTotal.value = tx.monto;
@@ -579,10 +589,17 @@
       
       elements.ventaModal.classList.add('active');
     },
-    closeVentaModal() { elements.ventaModal.classList.remove('active'); },
+    closeVentaModal() { 
+      elements.ventaModal.classList.remove('active'); 
+      state.ventaFromTxId = null;
+      state.viewingTx = null;
+    },
     async submitVenta(e) {
       e.preventDefault();
-      const tx = state.viewingTx;
+      
+      // ✅ USAR ventaFromTxId
+      const txId = state.ventaFromTxId;
+      console.log('📤 Enviando venta, vinculando a transaccion:', txId);
       
       const ventaData = {
         folio: elements.ventaFolio.value.trim() || null,
@@ -597,17 +614,20 @@
       elements.submitVentaModal.disabled = true;
       try {
         const result = await api.createVenta(ventaData);
-        if (tx?.id && result.id) {
-          await api.updateTransaccion(tx.id, { venta_id: result.id });
+        const ventaId = result.venta?.id || result.id;
+        
+        // Vincular transacción con la venta
+        if (txId && ventaId) {
+          console.log('🔗 Vinculando tx', txId, 'con venta', ventaId);
+          await api.updateTransaccion(txId, { venta_id: ventaId });
         }
+        
         this.closeVentaModal();
-        state.viewingTx = null;
         await this.loadData();
         alert('✅ Venta registrada y conciliada');
       } catch (e) { alert(e.message); }
       finally { elements.submitVentaModal.disabled = false; }
     },
-    // Cuenta Modal
     openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); },
     closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
     async submitCuenta(e) {
@@ -624,7 +644,6 @@
         this.closeCuentaModal();
       } catch (e) { alert(e.message); }
     },
-    // Delete
     openDeleteModal(t) { state.deletingId = t.id; elements.deleteModal.classList.add('active'); },
     closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
@@ -633,7 +652,6 @@
       catch (e) { alert(e.message); }
       finally { elements.confirmDelete.disabled = false; }
     },
-    // Filters
     applyFilters() {
       state.filters.buscar = elements.searchInput.value.trim();
       state.filters.tipo = elements.filterType.value;
@@ -655,30 +673,25 @@
     render.user();
     render.org();
 
-    // Sidebar
     elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
     elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
     elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
 
-    // Add buttons
     elements.addTxBtn.addEventListener('click', () => handlers.openCreateModal());
     elements.addFirstTxBtn.addEventListener('click', () => handlers.openCreateModal());
     elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
 
-    // Detail modal
-    elements.closeDetailModal.addEventListener('click', () => handlers.closeDetailModal());
-    elements.closeDetailBtn.addEventListener('click', () => handlers.closeDetailModal());
+    elements.closeDetailModal.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
+    elements.closeDetailBtn.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
     elements.editFromDetailBtn.addEventListener('click', () => handlers.editFromDetail());
-    elements.detailModal.addEventListener('click', e => { if (e.target === elements.detailModal) handlers.closeDetailModal(); });
+    elements.detailModal.addEventListener('click', e => { if (e.target === elements.detailModal) { handlers.closeDetailModal(); state.viewingTx = null; } });
 
-    // Tx modal
     elements.closeModal.addEventListener('click', () => handlers.closeTxModal());
     elements.cancelModal.addEventListener('click', () => handlers.closeTxModal());
     elements.txForm.addEventListener('submit', e => handlers.submitTx(e));
     elements.txModal.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
     elements.addCuentaBtn.addEventListener('click', () => handlers.openCuentaModal());
 
-    // Gasto modal
     elements.closeGastoModal.addEventListener('click', () => handlers.closeGastoModal());
     elements.cancelGastoModal.addEventListener('click', () => handlers.closeGastoModal());
     elements.gastoForm.addEventListener('submit', e => handlers.submitGasto(e));
@@ -690,25 +703,21 @@
     });
     $('addGastoImpuestoBtn')?.addEventListener('click', () => handlers.addGastoImpuesto());
 
-    // Venta modal
     elements.closeVentaModal.addEventListener('click', () => handlers.closeVentaModal());
     elements.cancelVentaModal.addEventListener('click', () => handlers.closeVentaModal());
     elements.ventaForm.addEventListener('submit', e => handlers.submitVenta(e));
     elements.ventaModal.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
 
-    // Cuenta modal
     elements.closeCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
     elements.cancelCuentaModal.addEventListener('click', () => handlers.closeCuentaModal());
     elements.cuentaForm.addEventListener('submit', e => handlers.submitCuenta(e));
     elements.cuentaModal.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
 
-    // Delete modal
     elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
     elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
     elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
     elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
-    // Filters
     const df = utils.debounce(() => handlers.applyFilters(), 300);
     elements.searchInput.addEventListener('input', df);
     elements.filterType.addEventListener('change', () => handlers.applyFilters());
@@ -717,16 +726,16 @@
     elements.prevPage.addEventListener('click', () => handlers.prevPage());
     elements.nextPage.addEventListener('click', () => handlers.nextPage());
 
-    // ESC
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        handlers.closeDetailModal(); handlers.closeTxModal(); handlers.closeGastoModal();
+        handlers.closeDetailModal(); state.viewingTx = null;
+        handlers.closeTxModal(); handlers.closeGastoModal();
         handlers.closeVentaModal(); handlers.closeCuentaModal(); handlers.closeDeleteModal();
       }
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v6');
+    console.log('🚀 TRUNO Transacciones v7 - Fix vinculación');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
