@@ -267,14 +267,13 @@
     },
     monedas() {
       const opts = state.monedas.map(m => `<option value="${m.codigo}">${m.codigo} - ${m.nombre}</option>`).join('');
-      elements.moneda.innerHTML = opts || '<option value="MXN">MXN - Peso Mexicano</option><option value="USD">USD - Dólar</option>';
+      elements.moneda.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
     },
     metodosPago() {
       const opts = state.metodosPago.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
-      const defaultOpts = '<option value="">-- Seleccionar --</option><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="cheque">Cheque</option>';
-      elements.metodoPago.innerHTML = opts ? '<option value="">-- Seleccionar --</option>' + opts : defaultOpts;
+      elements.metodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       if (elements.pagoMetodo) {
-        elements.pagoMetodo.innerHTML = opts ? '<option value="">-- Seleccionar --</option>' + opts : defaultOpts;
+        elements.pagoMetodo.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       }
     },
     impuestos() {
