@@ -468,7 +468,7 @@ const api = {
       elements.cobroForm.reset(); 
       state.collectingVenta = null; 
     },
-  async submitCobro(e) {
+ async submitCobro(e) {
   e.preventDefault();
   
   const venta = state.collectingVenta;
@@ -484,7 +484,7 @@ const api = {
   elements.submitCobro.disabled = true;
   
   try {
-    // 1. Crear transacción de ingreso
+    // Crear transacción de ingreso - el backend actualiza la venta automáticamente
     const txData = {
       tipo: 'ingreso',
       cuenta_bancaria_id: cuentaId,
@@ -493,22 +493,12 @@ const api = {
       contacto_id: venta.contacto_id || null,
       descripcion: `Cobro: ${venta.nombre_contacto || venta.folio || 'Venta'}`,
       referencia: venta.folio || null,
-      venta_id: venta.id  // Vincular a la venta
+      venta_id: venta.id
     };
     
-    const txResult = await api.request('/api/transacciones', { 
+    await api.request('/api/transacciones', { 
       method: 'POST', 
       body: JSON.stringify(txData) 
-    });
-    
-    // 2. Actualizar venta con monto cobrado
-    const nuevoMontoCobrado = (parseFloat(venta.monto_cobrado) || 0) + monto;
-    const totalVenta = parseFloat(venta.total);
-    const nuevoEstatus = nuevoMontoCobrado >= totalVenta ? 'pagado' : 'parcial';
-    
-    await api.updateVenta(venta.id, {
-      monto_cobrado: nuevoMontoCobrado,
-      estatus_pago: nuevoEstatus
     });
     
     this.closeCobroModal(); 
