@@ -207,25 +207,27 @@
           <button class="tab-btn" id="tabPorCobrar">Por cobrar</button>
         </div>
 
-        <div class="filters-bar">
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Buscar por cliente, folio...">
-          </div>
-          <select class="filter-select" id="filterStatus">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Por cobrar</option>
-            <option value="parcial">Parcial</option>
-            <option value="pagado">Cobrada</option>
-            <option value="vencido">Vencida</option>
-            <option value="cancelado">Cancelada</option>
-          </select>
-          <input type="date" class="filter-date" id="filterFechaDesde" title="Fecha desde">
-          <input type="date" class="filter-date" id="filterFechaHasta" title="Fecha hasta">
-        </div>
+    <div class="filters-bar">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="searchInput" placeholder="Buscar por cliente, folio...">
+  </div>
+  <select class="filter-select" id="filterStatus">
+    <option value="">Todos los estados</option>
+    <option value="pendiente">Por cobrar</option>
+    <option value="parcial">Parcial</option>
+    <option value="pagado">Cobrada</option>
+    <option value="vencido">Vencida</option>
+    <option value="cancelado">Cancelada</option>
+  </select>
+  <div class="filter-dates">
+    <input type="date" class="filter-date" id="filterFechaDesde" title="Desde">
+    <input type="date" class="filter-date" id="filterFechaHasta" title="Hasta">
+  </div>
+</div>
 
         <div class="table-container" id="tableContainer">
           <div class="table-wrapper">
