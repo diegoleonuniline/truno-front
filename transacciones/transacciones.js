@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v9
- * Con crear contacto inline, método de pago, moneda en tabla
+ * TRUNO - Transacciones v10
+ * Con crear contacto, crear método de pago, moneda dinámica
  */
 (function() {
   'use strict';
@@ -12,14 +12,6 @@
   };
 
   const $ = id => document.getElementById(id);
-
-  const METODOS_PAGO = {
-    transferencia: 'Transferencia',
-    efectivo: 'Efectivo',
-    cheque: 'Cheque',
-    tarjeta_debito: 'T. Débito',
-    tarjeta_credito: 'T. Crédito'
-  };
 
   const elements = {
     sidebar: $('sidebar'), 
@@ -77,6 +69,7 @@
     referencia: $('referencia'),
     addCuentaBtn: $('addCuentaBtn'),
     addContactoBtn: $('addContactoBtn'),
+    addMetodoPagoBtn: $('addMetodoPagoBtn'),
     // Modal crear contacto
     contactoModal: $('contactoModal'),
     contactoForm: $('contactoForm'),
@@ -87,6 +80,14 @@
     contactoEmail: $('contactoEmail'),
     contactoTelefono: $('contactoTelefono'),
     contactoRfc: $('contactoRfc'),
+    // Modal crear método de pago
+    metodoPagoModal: $('metodoPagoModal'),
+    metodoPagoForm: $('metodoPagoForm'),
+    closeMetodoPagoModal: $('closeMetodoPagoModal'),
+    cancelMetodoPagoModal: $('cancelMetodoPagoModal'),
+    metodoNombre: $('metodoNombre'),
+    metodoClave: $('metodoClave'),
+    metodoDescripcion: $('metodoDescripcion'),
     // Modal gasto
     gastoModal: $('gastoModal'), 
     gastoForm: $('gastoForm'), 
@@ -149,6 +150,7 @@
     categorias: [], 
     impuestosCatalogo: [],
     monedas: [],
+    metodosPago: [],
     gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, 
@@ -260,6 +262,8 @@
     getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
     getImpuestos: () => api.request('/api/impuestos'),
     getMonedas: () => api.request('/api/monedas'),
+    getMetodosPago: () => api.request('/api/metodos-pago'),
+    createMetodoPago: d => api.request('/api/metodos-pago', { method: 'POST', body: JSON.stringify(d) }),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
     createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
     getGasto: id => api.request(`/api/gastos/${id}`),
@@ -303,6 +307,33 @@
           <option value="USD">USD - Dólar</option>
           <option value="EUR">EUR - Euro</option>
         `;
+      }
+    },
+    metodosPago() {
+      if (!elements.metodoPago) return;
+      
+      // Métodos por defecto si no hay en BD
+      const defaultMetodos = [
+        { id: 'transferencia', nombre: 'Transferencia' },
+        { id: 'efectivo', nombre: 'Efectivo' },
+        { id: 'cheque', nombre: 'Cheque' },
+        { id: 'tarjeta_debito', nombre: 'Tarjeta Débito' },
+        { id: 'tarjeta_credito', nombre: 'Tarjeta Crédito' }
+      ];
+      
+      const metodos = state.metodosPago.length > 0 
+        ? state.metodosPago.filter(m => m.activo !== false)
+        : defaultMetodos;
+      
+      const opts = metodos.map(m => 
+        `<option value="${m.id || m.clave || m.nombre}">${m.nombre}</option>`
+      ).join('');
+      
+      elements.metodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      
+      // También actualizar el del modal de gasto si existe
+      if (elements.gastoMetodoPago) {
+        elements.gastoMetodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       }
     },
     contactos() {
@@ -406,10 +437,26 @@
       elements.prevPage.disabled = paginacion.pagina <= 1; 
       elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
+      // Función para obtener label del método
+      const getMetodoLabel = (metodo) => {
+        if (!metodo) return '-';
+        const found = state.metodosPago.find(m => m.id === metodo || m.clave === metodo || m.nombre === metodo);
+        if (found) return found.nombre;
+        // Fallback a labels estáticos
+        const labels = {
+          transferencia: 'Transferencia',
+          efectivo: 'Efectivo',
+          cheque: 'Cheque',
+          tarjeta_debito: 'T. Débito',
+          tarjeta_credito: 'T. Crédito'
+        };
+        return labels[metodo] || metodo;
+      };
+
       elements.tableBody.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
-        const metodoLabel = METODOS_PAGO[t.metodo_pago] || '-';
+        const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
         
         return `<tr data-id="${t.id}" class="clickable-row">
@@ -444,7 +491,7 @@
       elements.mobileCards.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
-        const metodoLabel = METODOS_PAGO[t.metodo_pago] || '';
+        const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
         
         return `<div class="mobile-card" data-id="${t.id}">
@@ -455,7 +502,7 @@
           <div class="mobile-card-meta">
             <span>${utils.formatDate(t.fecha)}</span>
             <span>${t.nombre_cuenta || '-'}</span>
-            ${metodoLabel ? `<span>${metodoLabel}</span>` : ''}
+            ${metodoLabel !== '-' ? `<span>${metodoLabel}</span>` : ''}
             <span>${moneda}</span>
           </div>
           <div class="mobile-card-footer">
@@ -472,7 +519,7 @@
         </div>`;
       }).join('');
 
-      // Event listeners para la tabla
+      // Event listeners
       elements.tableBody.querySelectorAll('tr').forEach(row => {
         row.addEventListener('click', e => {
           if (e.target.closest('.action-btn')) return;
@@ -527,13 +574,14 @@
     
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes, metodosRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
           api.getContactos(),
           api.getCategorias().catch(() => ({ categorias: [] })),
           api.getImpuestos().catch(() => ({ impuestos: [] })),
-          api.getMonedas().catch(() => ({ monedas: [] }))
+          api.getMonedas().catch(() => ({ monedas: [] })),
+          api.getMetodosPago().catch(() => ({ metodos_pago: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
@@ -542,10 +590,12 @@
         state.categorias = catRes.categorias || [];
         state.impuestosCatalogo = impRes.impuestos || [];
         state.monedas = monedasRes.monedas || [];
+        state.metodosPago = metodosRes.metodos_pago || metodosRes.metodosPago || [];
         render.cuentas();
         render.contactos();
         render.categorias();
         render.monedas();
+        render.metodosPago();
         render.stats();
         render.transacciones();
       } catch (e) { 
@@ -568,8 +618,17 @@
       state.viewingTx = tx;
       const isIncome = tx.tipo === 'ingreso';
       const conciliado = tx.gasto_id || tx.venta_id;
-      const metodoLabel = METODOS_PAGO[tx.metodo_pago] || '-';
       const moneda = tx.moneda || 'MXN';
+      
+      // Obtener label del método
+      const getMetodoLabel = (metodo) => {
+        if (!metodo) return '-';
+        const found = state.metodosPago.find(m => m.id === metodo || m.clave === metodo || m.nombre === metodo);
+        if (found) return found.nombre;
+        const labels = { transferencia: 'Transferencia', efectivo: 'Efectivo', cheque: 'Cheque', tarjeta_debito: 'Tarjeta Débito', tarjeta_credito: 'Tarjeta Crédito' };
+        return labels[metodo] || metodo;
+      };
+      const metodoLabel = getMetodoLabel(tx.metodo_pago);
 
       elements.detailAmount.innerHTML = `
         <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), moneda)}</div>
@@ -643,6 +702,7 @@
       elements.txForm.reset();
       elements.fecha.value = utils.today();
       render.monedas();
+      render.metodosPago();
       elements.txModal.classList.add('active');
     },
     
@@ -723,6 +783,42 @@
         
         this.closeContactoModal();
         toast.success('Contacto creado');
+      } catch (e) {
+        toast.error(e.message);
+      }
+    },
+    
+    // ========== CREAR MÉTODO DE PAGO ==========
+    openMetodoPagoModal() {
+      elements.metodoPagoForm.reset();
+      elements.metodoPagoModal.classList.add('active');
+      elements.metodoNombre.focus();
+    },
+    
+    closeMetodoPagoModal() {
+      elements.metodoPagoModal.classList.remove('active');
+    },
+    
+    async submitMetodoPago(e) {
+      e.preventDefault();
+      const data = {
+        nombre: elements.metodoNombre.value.trim(),
+        clave: elements.metodoClave.value.trim() || null,
+        descripcion: elements.metodoDescripcion.value.trim() || null
+      };
+      
+      try {
+        const result = await api.createMetodoPago(data);
+        const nuevoMetodo = result.metodo_pago || result.metodoPago || result;
+        
+        state.metodosPago.push(nuevoMetodo);
+        render.metodosPago();
+        
+        // Seleccionar el nuevo método
+        elements.metodoPago.value = nuevoMetodo.id || nuevoMetodo.clave || nuevoMetodo.nombre;
+        
+        this.closeMetodoPagoModal();
+        toast.success('Método de pago creado');
       } catch (e) {
         toast.error(e.message);
       }
@@ -1008,12 +1104,19 @@
     elements.txModal?.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
     elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
+    elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
 
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
     elements.cancelContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
     elements.contactoForm?.addEventListener('submit', e => handlers.submitContacto(e));
     elements.contactoModal?.addEventListener('click', e => { if (e.target === elements.contactoModal) handlers.closeContactoModal(); });
+
+    // Modal crear método de pago
+    elements.closeMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.cancelMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.metodoPagoForm?.addEventListener('submit', e => handlers.submitMetodoPago(e));
+    elements.metodoPagoModal?.addEventListener('click', e => { if (e.target === elements.metodoPagoModal) handlers.closeMetodoPagoModal(); });
 
     // Modal gasto
     elements.closeGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
@@ -1061,6 +1164,7 @@
         state.viewingTx = null;
         handlers.closeTxModal(); 
         handlers.closeContactoModal();
+        handlers.closeMetodoPagoModal();
         handlers.closeGastoModal();
         handlers.closeVentaModal(); 
         handlers.closeCuentaModal(); 
@@ -1069,7 +1173,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v9 - Crear contacto, método pago, moneda');
+    console.log('🚀 TRUNO Transacciones v10 - Crear contacto, método pago, moneda dinámica');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
