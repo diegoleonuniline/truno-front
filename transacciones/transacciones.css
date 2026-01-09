@@ -568,3 +568,55 @@ a { color: inherit; text-decoration: none; }
   flex-wrap: wrap;
   gap: var(--spacing-xs);
 }
+/* ========== BOTTOM NAV - SOLO MÓVIL ========== */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 10px;
+    gap: 4px;
+    transition: color var(--transition-fast);
+  }
+  
+  .bottom-nav-item svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .bottom-nav-item.active,
+  .bottom-nav-item:hover {
+    color: var(--brand-primary);
+  }
+  
+  .page-content {
+    padding-bottom: 80px;
+  }
+  
+  .fab {
+    bottom: 80px;
+  }
+}
