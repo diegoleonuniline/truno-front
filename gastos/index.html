@@ -4,119 +4,158 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a0e14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Gastos | TRUNO</title>
   <link rel="stylesheet" href="gastos.css">
 </head>
 <body>
   <div class="app">
+    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="sidebar-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/></svg></div>
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
+            <path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v3"/>
+            <path d="M12 14v3"/><path d="M16 14v3"/>
+          </svg>
+        </div>
         <span class="sidebar-brand">TRUNO</span>
+        <button class="sidebar-close" id="sidebarClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <nav class="sidebar-nav">
-           <div class="nav-section">
-  <div class="nav-section-title">Principal</div>
-  <a href="../dashboard/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-      <polyline points="9 22 9 12 15 12 15 22"/>
-    </svg>
-    Dashboard
-  </a>
-</div>
-
-<div class="nav-section">
-  <div class="nav-section-title">Finanzas</div>
-  <a href="../bancos/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
-    Bancos
-  </a>
-  <a href="../transacciones/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-      <polyline points="17 6 23 6 23 12"/>
-    </svg>
-    Transacciones
-  </a>
-  <a href="../transferencias/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-      <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-    </svg>
-    Transferencias
-  </a>
-</div>
-
-<div class="nav-section">
-  <div class="nav-section-title">Operaciones</div>
-  <a href="../ventas/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <line x1="12" y1="1" x2="12" y2="23"/>
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-    </svg>
-    Ventas
-  </a>
-  <a href="../gastos/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="7 10 12 15 17 10"/>
-      <line x1="12" y1="15" x2="12" y2="3"/>
-    </svg>
-    Gastos
-  </a>
-  <a href="../contactos/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-    Contactos
-  </a>
-</div>
-
-<div class="nav-section">
-  <div class="nav-section-title">Análisis</div>
-  <a href="../reportes/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-      <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-    </svg>
-    Reportes
-  </a>
-</div>
-
-<div class="nav-section">
-  <div class="nav-section-title">Cuenta</div>
-  <a href="../configuracion/index.html" class="nav-item">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-    Configuración
-  </a>
-</div>
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="../dashboard/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Dashboard
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Finanzas</div>
+          <a href="../bancos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+            Bancos
+          </a>
+          <a href="../transacciones/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+              <polyline points="17 6 23 6 23 12"/>
+            </svg>
+            Transacciones
+          </a>
+          <a href="../transferencias/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+            Transferencias
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Operaciones</div>
+          <a href="../ventas/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Ventas
+          </a>
+          <a href="../gastos/index.html" class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Gastos
+          </a>
+          <a href="../contactos/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Contactos
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Análisis</div>
+          <a href="../reportes/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+            Reportes
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cuenta</div>
+          <a href="../configuracion/index.html" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Configuración
+          </a>
+        </div>
+        <div class="nav-section nav-section-mobile-only">
+          <div class="nav-section-title">Sesión</div>
+          <button class="nav-item nav-item-logout" id="sidebarLogoutBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Cerrar Sesión
+          </button>
+        </div>
       </nav>
       <div class="sidebar-org">
         <button class="org-switcher" id="orgSwitcher">
-          <div class="org-switcher-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg></div>
-          <div class="org-switcher-info"><div class="org-switcher-name" id="orgName">Cargando...</div><div class="org-switcher-plan" id="orgPlan">Plan Free</div></div>
+          <div class="org-switcher-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/>
+              <path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/>
+              <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+            </svg>
+          </div>
+          <div class="org-switcher-info">
+            <div class="org-switcher-name" id="orgName">Cargando...</div>
+            <div class="org-switcher-plan" id="orgPlan">Plan Free</div>
+          </div>
         </button>
       </div>
     </aside>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+    <!-- Main Content -->
     <main class="main-content">
       <header class="header">
         <div class="header-left">
-          <button class="menu-toggle" id="menuToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <button class="menu-toggle" id="menuToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <h1 class="header-title">Gastos</h1>
         </div>
-        <div class="header-right"><div class="user-avatar" id="userAvatar">DL</div></div>
+        <div class="header-right">
+          <div class="user-avatar" id="userAvatar">DL</div>
+        </div>
       </header>
 
       <div class="page-content">
@@ -125,25 +164,41 @@
             <h2>Registro de Gastos</h2>
             <p>Compras, servicios y gastos operativos</p>
           </div>
-          <button class="btn btn-primary" id="addGastoBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <button class="btn btn-primary desktop-only" id="addGastoBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
             <span class="btn-text">Nuevo Gasto</span>
           </button>
         </div>
 
+        <!-- Stats Grid 2x2 -->
         <div class="stats-row">
-          <div class="stat-card"><div class="stat-card-label">Total del Mes</div><div class="stat-card-value danger" id="totalMes">$0.00</div></div>
-          <div class="stat-card"><div class="stat-card-label">Por Pagar</div><div class="stat-card-value warning" id="pendientes">$0.00</div></div>
-          <div class="stat-card"><div class="stat-card-label">Vencidos</div><div class="stat-card-value purple" id="vencidos">$0.00</div></div>
-          <div class="stat-card"><div class="stat-card-label">Pagados</div><div class="stat-card-value success" id="pagados">$0.00</div></div>
+          <div class="stat-card">
+            <div class="stat-card-label">Total del Mes</div>
+            <div class="stat-card-value danger" id="totalMes">$0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Por Pagar</div>
+            <div class="stat-card-value warning" id="pendientes">$0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Vencidos</div>
+            <div class="stat-card-value purple" id="vencidos">$0.00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Pagados</div>
+            <div class="stat-card-value success" id="pagados">$0.00</div>
+          </div>
         </div>
 
         <!-- Tabs -->
         <div class="tabs-container">
           <div class="tabs">
-            <button class="tab active" data-tab="todos">📋 Todos los Gastos</button>
+            <button class="tab active" data-tab="todos">📋 Todos</button>
             <button class="tab" data-tab="por-pagar">💰 Por Pagar <span class="tab-badge" id="tabBadgePorPagar">0</span></button>
-            <button class="tab" data-tab="programacion">📅 Programación de Pagos</button>
+            <button class="tab" data-tab="programacion">📅 Programación</button>
           </div>
         </div>
 
@@ -151,47 +206,88 @@
         <div class="tab-content active" id="tabTodos">
           <div class="filters-bar">
             <div class="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="searchInput" placeholder="Buscar por concepto, proveedor...">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="searchInput" placeholder="Buscar gasto...">
             </div>
-            <select class="filter-select" id="filterStatus"><option value="">Estado</option><option value="pendiente">Pendiente</option><option value="pagado">Pagado</option><option value="vencido">Vencido</option></select>
-            <select class="filter-select" id="filterCategoria"><option value="">Categoría</option></select>
-            <select class="filter-select" id="filterFiscal"><option value="">Fiscal</option><option value="1">Es fiscal</option><option value="0">No fiscal</option></select>
+            <div class="filters-row">
+              <select class="filter-select" id="filterStatus">
+                <option value="">Estado</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="pagado">Pagado</option>
+                <option value="vencido">Vencido</option>
+              </select>
+              <select class="filter-select" id="filterCategoria">
+                <option value="">Categoría</option>
+              </select>
+              <select class="filter-select" id="filterFiscal">
+                <option value="">Fiscal</option>
+                <option value="1">Es fiscal</option>
+                <option value="0">No fiscal</option>
+              </select>
+            </div>
           </div>
 
+          <!-- Table (Desktop) -->
           <div class="table-container" id="tableContainer">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Concepto / Proveedor</th>
-                  <th>Fecha</th>
-                  <th>Categoría</th>
-                  <th>Fiscal</th>
-                  <th>Estado</th>
-                  <th style="text-align:right;">Total</th>
-                  <th style="width:80px;"></th>
-                </tr>
-              </thead>
-              <tbody id="tableBody">
-                <tr><td colspan="7" style="text-align:center; padding: 48px;"><div class="empty-state-icon" style="margin: 0 auto 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><h3>Cargando gastos...</h3></td></tr>
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Concepto / Proveedor</th>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Fiscal</th>
+                    <th>Estado</th>
+                    <th style="text-align:right;">Total</th>
+                    <th style="width:100px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
             <div class="pagination" id="pagination" style="display:none;">
-              <div class="pagination-info">Mostrando <span id="showingStart">0</span>-<span id="showingEnd">0</span> de <span id="totalRecords">0</span></div>
+              <div class="pagination-info">
+                Mostrando <span id="showingStart">0</span>-<span id="showingEnd">0</span> de <span id="totalRecords">0</span>
+              </div>
               <div class="pagination-controls">
-                <button class="pagination-btn" id="prevPage" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
-                <button class="pagination-btn" id="nextPage" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+                <button class="pagination-btn" id="prevPage" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                </button>
+                <button class="pagination-btn" id="nextPage" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
 
+          <!-- Mobile Cards -->
           <div class="mobile-cards" id="mobileCards"></div>
 
+          <!-- Empty State -->
           <div class="empty-state" id="emptyState" style="display:none;">
-            <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
             <h3>Sin gastos registrados</h3>
             <p>Registra tu primer gasto para comenzar</p>
-            <button class="btn btn-primary" id="addFirstGastoBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo Gasto</button>
+            <button class="btn btn-primary" id="addFirstGastoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Nuevo Gasto
+            </button>
           </div>
         </div>
 
@@ -221,7 +317,54 @@
         </div>
       </div>
     </main>
-    <button class="fab" id="fabBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+
+    <!-- FAB (Mobile) -->
+    <button class="fab" id="fabBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="bottom-nav" id="bottomNav">
+      <a href="../dashboard/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Inicio</span>
+      </a>
+      <a href="../transacciones/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+          <polyline points="17 6 23 6 23 12"/>
+        </svg>
+        <span>Movimientos</span>
+      </a>
+      <a href="../ventas/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        <span>Ventas</span>
+      </a>
+      <a href="../gastos/index.html" class="bottom-nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Gastos</span>
+      </a>
+      <a href="../contactos/index.html" class="bottom-nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+        </svg>
+        <span>Contactos</span>
+      </a>
+    </nav>
   </div>
 
   <!-- Modal: Registrar Pago -->
@@ -229,13 +372,17 @@
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">Registrar Pago</h2>
-        <button class="modal-close" id="closePagoModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closePagoModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="pagoForm">
         <div class="modal-body">
           <div class="form-info-box" id="pagoGastoInfo"></div>
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Detalles del Pago</div>
+            <div class="form-section-title">Detalles del Pago</div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label required">Monto a pagar</label>
@@ -253,12 +400,14 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Método de pago</label>
-                <select class="form-select" id="pagoMetodo">
-                  <option value="transferencia">Transferencia</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="tarjeta">Tarjeta</option>
-                </select>
+                <div class="select-with-add">
+                  <select class="form-select" id="pagoMetodo"></select>
+                  <button type="button" class="btn-add" id="addPagoMetodoBtn" title="Crear método">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="form-group">
@@ -280,22 +429,30 @@
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title" id="modalTitle">Nuevo Gasto</h2>
-        <button class="modal-close" id="closeModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="gastoForm">
         <div class="modal-body">
           <!-- Información básica -->
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Información del Gasto</div>
+            <div class="form-section-title">Información del Gasto</div>
             <div class="form-group">
               <label class="form-label required">Concepto</label>
               <input type="text" class="form-input" id="concepto" placeholder="¿Qué compraste o pagaste?" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Proveedor / A quién le pagaste</label>
+              <label class="form-label">Proveedor</label>
               <div class="select-with-add">
                 <select class="form-select" id="proveedorId"><option value="">-- Seleccionar --</option></select>
-                <button type="button" class="btn-add" id="addProveedorBtn" title="Crear proveedor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                <button type="button" class="btn-add" id="addProveedorBtn" title="Crear proveedor">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
               </div>
             </div>
             <div class="form-row">
@@ -313,14 +470,22 @@
                 <label class="form-label">Categoría</label>
                 <div class="select-with-add">
                   <select class="form-select" id="categoriaId"><option value="">-- Seleccionar --</option></select>
-                  <button type="button" class="btn-add" id="addCategoriaBtn" title="Crear categoría"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                  <button type="button" class="btn-add" id="addCategoriaBtn" title="Crear categoría">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Subcategoría</label>
                 <div class="select-with-add">
                   <select class="form-select" id="subcategoriaId"><option value="">-- Seleccionar --</option></select>
-                  <button type="button" class="btn-add" id="addSubcategoriaBtn" title="Crear subcategoría"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                  <button type="button" class="btn-add" id="addSubcategoriaBtn" title="Crear subcategoría">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -328,7 +493,7 @@
 
           <!-- Montos -->
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Montos</div>
+            <div class="form-section-title">Montos</div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Subtotal</label>
@@ -344,44 +509,49 @@
               <label class="form-label">Impuestos</label>
               <div class="impuestos-container" id="impuestosContainer"></div>
               <button type="button" class="btn btn-xs btn-secondary" id="addImpuestoBtn" style="margin-top:8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
                 Agregar impuesto
               </button>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Moneda</label>
-                <select class="form-select" id="moneda">
-                  <option value="MXN">MXN - Peso Mexicano</option>
-                  <option value="USD">USD - Dólar</option>
-                  <option value="EUR">EUR - Euro</option>
-                </select>
+                <div class="select-with-add">
+                  <select class="form-select" id="moneda"></select>
+                  <button type="button" class="btn-add" id="addMonedaBtn" title="Crear moneda">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Método de pago</label>
-                <select class="form-select" id="metodoPago">
-                  <option value="">-- Seleccionar --</option>
-                  <option value="transferencia">Transferencia</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta_debito">Tarjeta Débito</option>
-                  <option value="tarjeta_credito">Tarjeta Crédito</option>
-                  <option value="cheque">Cheque</option>
-                </select>
+                <div class="select-with-add">
+                  <select class="form-select" id="metodoPago"></select>
+                  <button type="button" class="btn-add" id="addMetodoPagoBtn" title="Crear método">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Fiscal / Factura -->
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Información Fiscal</div>
+            <div class="form-section-title">Información Fiscal</div>
             <div class="toggle-row">
               <div class="toggle-info">
                 <div class="toggle-info-label">¿Es gasto fiscal?</div>
-                <div class="toggle-info-hint">Marca si este gasto es deducible de impuestos</div>
+                <div class="toggle-info-hint">Marca si es deducible de impuestos</div>
               </div>
               <label class="toggle"><input type="checkbox" id="esFiscal"><span class="toggle-slider"></span></label>
             </div>
-            <div id="fiscalFields" style="display:none; margin-top: var(--spacing-md);">
+            <div id="fiscalFields" style="display:none; margin-top: 16px;">
               <div class="toggle-row">
                 <div class="toggle-info">
                   <div class="toggle-info-label">¿Ya recibiste la factura?</div>
@@ -396,14 +566,14 @@
                 </div>
                 <label class="toggle"><input type="checkbox" id="facturaValidada"><span class="toggle-slider"></span></label>
               </div>
-              <div class="form-row" style="margin-top: var(--spacing-md);">
+              <div class="form-row" style="margin-top: 16px;">
                 <div class="form-group">
                   <label class="form-label">UUID CFDI</label>
-                  <input type="text" class="form-input" id="uuidCfdi" placeholder="Ej: 6ba7b810-9dad-11d1-80b4-00c04fd430c8">
+                  <input type="text" class="form-input" id="uuidCfdi" placeholder="UUID de la factura">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Folio Fiscal</label>
-                  <input type="text" class="form-input" id="folioCfdi" placeholder="Ej: A-1234">
+                  <input type="text" class="form-input" id="folioCfdi" placeholder="Folio fiscal">
                 </div>
               </div>
             </div>
@@ -411,12 +581,18 @@
 
           <!-- Comprobante -->
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Comprobante</div>
+            <div class="form-section-title">Comprobante</div>
             <div class="file-upload" id="comprobanteUpload">
               <div class="file-upload-content">
-                <div class="file-upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div class="file-upload-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </div>
                 <div class="file-upload-text">
-                  <div class="file-upload-text-main"><strong>Haz clic</strong> o arrastra el archivo</div>
+                  <div class="file-upload-text-main"><strong>Haz clic</strong> o arrastra</div>
                   <div class="file-upload-text-hint">PDF, imagen (máx 5MB)</div>
                 </div>
               </div>
@@ -433,12 +609,16 @@
 
           <!-- Conciliación -->
           <div class="form-section">
-            <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Conciliación Bancaria</div>
+            <div class="form-section-title">Conciliación Bancaria</div>
             <div class="form-group">
-              <label class="form-label">Vincular con transacción bancaria</label>
+              <label class="form-label">Vincular con transacción</label>
               <div class="select-with-add">
                 <select class="form-select" id="transaccionId"><option value="">-- Sin conciliar --</option></select>
-                <button type="button" class="btn-add" id="addTransaccionBtn" title="Crear transacción"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                <button type="button" class="btn-add" id="addTransaccionBtn" title="Crear transacción">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
               </div>
               <span class="form-hint">Si el pago ya salió del banco, vincúlalo aquí</span>
             </div>
@@ -447,7 +627,7 @@
           <!-- Notas -->
           <div class="form-group">
             <label class="form-label">Notas</label>
-            <textarea class="form-textarea" id="notas" placeholder="Notas adicionales..."></textarea>
+            <textarea class="form-textarea" id="notas" rows="2" placeholder="Notas adicionales..."></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -463,13 +643,17 @@
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nueva Categoría</h2>
-        <button class="modal-close" id="closeCategoriaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeCategoriaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="categoriaForm">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label required">Nombre de la categoría</label>
-            <input type="text" class="form-input" id="categoriaNombre" placeholder="Ej: Servicios, Materiales, Nómina" required>
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="categoriaNombre" placeholder="Ej: Servicios, Materiales" required>
           </div>
           <div class="form-group">
             <label class="form-label">Descripción</label>
@@ -478,7 +662,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelCategoriaModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear</span></button>
+          <button type="submit" class="btn btn-primary">Crear</button>
         </div>
       </form>
     </div>
@@ -489,7 +673,11 @@
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nueva Subcategoría</h2>
-        <button class="modal-close" id="closeSubcategoriaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeSubcategoriaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="subcategoriaForm">
         <div class="modal-body">
@@ -498,24 +686,28 @@
             <select class="form-select" id="subcategoriaPadre" required></select>
           </div>
           <div class="form-group">
-            <label class="form-label required">Nombre de la subcategoría</label>
+            <label class="form-label required">Nombre</label>
             <input type="text" class="form-input" id="subcategoriaNombre" placeholder="Ej: Luz, Agua, Internet" required>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelSubcategoriaModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear</span></button>
+          <button type="submit" class="btn btn-primary">Crear</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Crear Proveedor Rápido -->
+  <!-- Modal: Crear Proveedor -->
   <div class="modal-overlay" id="proveedorModal">
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nuevo Proveedor</h2>
-        <button class="modal-close" id="closeProveedorModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeProveedorModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="proveedorForm">
         <div class="modal-body">
@@ -540,18 +732,104 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelProveedorModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear</span></button>
+          <button type="submit" class="btn btn-primary">Crear</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Crear Transacción Rápida -->
+  <!-- Modal: Crear Método de Pago -->
+  <div class="modal-overlay" id="metodoPagoModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Nuevo Método de Pago</h2>
+        <button class="modal-close" id="closeMetodoPagoModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="metodoPagoForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="metodoNombre" placeholder="Ej: Transferencia SPEI" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Clave SAT</label>
+            <input type="text" class="form-input" id="metodoClave" placeholder="Ej: 03" maxlength="10">
+            <span class="form-hint">Clave del catálogo SAT c_FormaPago</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-input" id="metodoDescripcion" placeholder="Descripción opcional">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelMetodoPagoModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Método</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Moneda -->
+  <div class="modal-overlay" id="monedaModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva Moneda</h2>
+        <button class="modal-close" id="closeMonedaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="monedaForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Código</label>
+              <input type="text" class="form-input" id="monedaCodigo" placeholder="MXN" maxlength="3" style="text-transform:uppercase" required>
+              <span class="form-hint">3 letras (ISO 4217)</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Símbolo</label>
+              <input type="text" class="form-input" id="monedaSimbolo" placeholder="$" maxlength="5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="monedaNombre" placeholder="Peso Mexicano" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Decimales</label>
+              <input type="number" class="form-input" id="monedaDecimales" value="2" min="0" max="4">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo de Cambio</label>
+              <input type="number" class="form-input" id="monedaTipoCambio" value="1" step="0.0001" min="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelMonedaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Moneda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Transacción -->
   <div class="modal-overlay" id="transaccionModal">
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nueva Transacción (Egreso)</h2>
-        <button class="modal-close" id="closeTransaccionModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeTransaccionModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="transaccionForm">
         <div class="modal-body">
@@ -559,7 +837,11 @@
             <label class="form-label required">Cuenta bancaria</label>
             <div class="select-with-add">
               <select class="form-select" id="txCuentaId" required></select>
-              <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+              <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
             </div>
           </div>
           <div class="form-row">
@@ -579,61 +861,72 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelTransaccionModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear y Vincular</span></button>
+          <button type="submit" class="btn btn-primary">Crear y Vincular</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Crear Cuenta Bancaria Rápida -->
+  <!-- Modal: Crear Cuenta -->
   <div class="modal-overlay" id="cuentaModal">
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nueva Cuenta Bancaria</h2>
-        <button class="modal-close" id="closeCuentaModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeCuentaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="cuentaForm">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label required">Nombre de la cuenta</label>
-            <input type="text" class="form-input" id="cuentaNombre" placeholder="Ej: BBVA Principal" required>
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="cuentaNombre" placeholder="BBVA Principal" required>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Banco</label>
-              <input type="text" class="form-input" id="cuentaBanco" placeholder="Ej: BBVA, Banorte">
+              <input type="text" class="form-input" id="cuentaBanco" placeholder="BBVA">
             </div>
             <div class="form-group">
               <label class="form-label">Saldo inicial</label>
-              <input type="number" class="form-input" id="cuentaSaldo" placeholder="0.00" step="0.01" value="0">
+              <input type="number" class="form-input" id="cuentaSaldo" step="0.01" value="0">
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelCuentaModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><span class="btn-text">Crear</span></button>
+          <button type="submit" class="btn btn-primary">Crear</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Confirmar Eliminar -->
+  <!-- Modal: Eliminar -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Eliminar Gasto</h2>
-        <button class="modal-close" id="closeDeleteModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeDeleteModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <div class="modal-body">
         <p>¿Estás seguro de eliminar <strong id="deleteGastoName"></strong>?</p>
-        <p style="color: var(--text-muted); margin-top: var(--spacing-sm); font-size: var(--font-size-sm);">Esta acción no se puede deshacer.</p>
+        <p style="color: var(--text-muted); margin-top: 8px; font-size: 14px;">Esta acción no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete"><span class="btn-text">Eliminar</span></button>
+        <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
       </div>
     </div>
   </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <script src="gastos.js"></script>
 </body>
