@@ -157,28 +157,27 @@
     debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
   };
 
-  const api = {
-    async request(endpoint, options = {}) {
-      const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
-        ...options,
-        headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
-      });
-      if (r.status === 401) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Error');
-      return data;
-    },
-    getVentas(p = {}) {
-      const q = new URLSearchParams({ pagina: p.pagina || 1, limite: p.limite || 20, ...(p.buscar && { buscar: p.buscar }), ...(p.estatus && { estatus: p.estatus }) });
-      return this.request(`/api/ventas?${q}`);
-    },
-    createVenta(d) { return this.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }); },
-    updateVenta(id, d) { return this.request(`/api/ventas/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
-    deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
-    getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
-    getCuentas() { return this.request('/api/cuentas-bancarias'); },
-    registrarCobro(d) { return this.request('/api/pagos', { method: 'POST', body: JSON.stringify(d) }); }
-  };
+const api = {
+  async request(endpoint, options = {}) {
+    const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+      ...options,
+      headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
+    });
+    if (r.status === 401) { utils.redirect(CONFIG.REDIRECT.LOGIN); return; }
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    return data;
+  },
+  getVentas(p = {}) {
+    const q = new URLSearchParams({ pagina: p.pagina || 1, limite: p.limite || 20, ...(p.buscar && { buscar: p.buscar }), ...(p.estatus && { estatus: p.estatus }) });
+    return this.request(`/api/ventas?${q}`);
+  },
+  createVenta(d) { return this.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }); },
+  updateVenta(id, d) { return this.request(`/api/ventas/${id}`, { method: 'PUT', body: JSON.stringify(d) }); },
+  deleteVenta(id) { return this.request(`/api/ventas/${id}`, { method: 'DELETE' }); },
+  getContactos() { return this.request('/api/contactos?tipo=cliente&limite=100'); },
+  getCuentas() { return this.request('/api/cuentas-bancarias'); }
+};
 
   const render = {
     user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido); },
