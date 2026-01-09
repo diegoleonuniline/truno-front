@@ -1930,3 +1930,9 @@ a:focus:not(:focus-visible) {
   width: 18px;
   height: 18px;
 }
+/* Fix para select con botón agregar */
+.select-with-add .form-input {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
