@@ -1895,3 +1895,38 @@ button:focus:not(:focus-visible),
 a:focus:not(:focus-visible) {
   outline: none;
 }
+/* Select con botón agregar */
+.select-with-add {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.select-with-add select {
+  flex: 1;
+}
+
+.btn-add {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-add:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.btn-add svg {
+  width: 18px;
+  height: 18px;
+}
