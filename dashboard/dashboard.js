@@ -1,5 +1,5 @@
 /**
- * TRUNO - Dashboard
+ * TRUNO - Dashboard v2
  */
 
 (function() {
@@ -31,18 +31,14 @@
     orgSwitcher: document.getElementById('orgSwitcher'),
     orgName: document.getElementById('orgName'),
     orgPlan: document.getElementById('orgPlan'),
-    // Stats
     saldoTotal: document.getElementById('saldoTotal'),
     ingresosMes: document.getElementById('ingresosMes'),
     egresosMes: document.getElementById('egresosMes'),
     porCobrar: document.getElementById('porCobrar'),
-    // Lists
     transactionList: document.getElementById('transactionList'),
     pendingList: document.getElementById('pendingList'),
-    // Badges
     ventasPendientes: document.getElementById('ventasPendientes'),
     gastosPendientes: document.getElementById('gastosPendientes'),
-    // FAB
     fabBtn: document.getElementById('fabBtn')
   };
 
@@ -51,9 +47,6 @@
     org: null
   };
 
-  // ============================================
-  // UTILITIES
-  // ============================================
   const utils = {
     getToken: () => localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN),
     getUser: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.USER) || 'null'),
@@ -84,7 +77,7 @@
     },
 
     formatDate(dateStr) {
-      if (!dateStr) return '';
+      if (!dateStr) return '-';
       let date;
       if (typeof dateStr === 'string') {
         if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
@@ -106,36 +99,36 @@
     }
   };
 
-  // ============================================
-  // API
-  // ============================================
   const api = {
     async request(endpoint, options = {}) {
-      const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
-        ...options,
-        headers: {
-          'Authorization': `Bearer ${utils.getToken()}`,
-          'X-Organization-Id': state.org?.id,
-          'Content-Type': 'application/json',
-          ...options.headers
+      try {
+        const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${utils.getToken()}`,
+            'X-Organization-Id': state.org?.id,
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
+
+        if (response.status === 401) {
+          utils.logout();
+          return null;
         }
-      });
 
-      if (response.status === 401) {
-        utils.logout();
-        return;
+        if (!response.ok) {
+          console.error(`API Error: ${endpoint}`, response.status);
+          return null;
+        }
+
+        return response.json();
+      } catch (e) {
+        console.error(`API Error: ${endpoint}`, e);
+        return null;
       }
-
-      if (!response.ok) {
-        throw new Error('Error en la petición');
-      }
-
-      return response.json();
     },
 
-    getDashboard(periodo = 'month') {
-      return this.request(`/api/reportes/dashboard?periodo=${periodo}`);
-    },
     getTransacciones() {
       return this.request('/api/transacciones?limite=10');
     },
@@ -150,14 +143,11 @@
     }
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
   const render = {
     user() {
       if (!state.user) return;
       elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido);
-      elements.userFullName.textContent = `${state.user.nombre} ${state.user.apellido}`;
+      elements.userFullName.textContent = `${state.user.nombre || ''} ${state.user.apellido || ''}`.trim() || 'Usuario';
     },
 
     org() {
@@ -167,19 +157,23 @@
     },
 
     stats(data) {
-      elements.saldoTotal.textContent = utils.formatMoney(data.saldo?.total);
-      elements.ingresosMes.textContent = utils.formatMoney(data.flujo_efectivo?.ingresos);
-      elements.egresosMes.textContent = utils.formatMoney(data.flujo_efectivo?.egresos);
-      elements.porCobrar.textContent = utils.formatMoney(data.pendientes?.por_cobrar);
+      elements.saldoTotal.textContent = utils.formatMoney(data.saldoTotal);
+      elements.ingresosMes.textContent = utils.formatMoney(data.ingresos);
+      elements.egresosMes.textContent = utils.formatMoney(data.egresos);
+      elements.porCobrar.textContent = utils.formatMoney(data.porCobrar);
 
-      // Badges
-      if (data.pendientes?.por_cobrar_cantidad > 0) {
-        elements.ventasPendientes.textContent = data.pendientes.por_cobrar_cantidad;
-        elements.ventasPendientes.style.display = 'block';
+      if (data.porCobrarCant > 0) {
+        elements.ventasPendientes.textContent = data.porCobrarCant;
+        elements.ventasPendientes.style.display = 'flex';
+      } else {
+        elements.ventasPendientes.style.display = 'none';
       }
-      if (data.pendientes?.por_pagar_cantidad > 0) {
-        elements.gastosPendientes.textContent = data.pendientes.por_pagar_cantidad;
-        elements.gastosPendientes.style.display = 'block';
+      
+      if (data.porPagarCant > 0) {
+        elements.gastosPendientes.textContent = data.porPagarCant;
+        elements.gastosPendientes.style.display = 'flex';
+      } else {
+        elements.gastosPendientes.style.display = 'none';
       }
     },
 
@@ -207,11 +201,11 @@
             </svg>
           </div>
           <div class="transaction-info">
-            <div class="transaction-desc">${t.descripcion}</div>
-            <div class="transaction-meta">${t.nombre_cuenta} • ${utils.formatDate(t.fecha)}</div>
+            <div class="transaction-desc">${t.descripcion || 'Sin descripción'}</div>
+            <div class="transaction-meta">${t.nombre_cuenta || '-'} • ${utils.formatDate(t.fecha)}</div>
           </div>
           <div class="transaction-amount ${t.tipo}">
-            ${t.tipo === 'ingreso' ? '+' : '-'}${utils.formatMoney(t.monto)}
+            ${t.tipo === 'ingreso' ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}
           </div>
         </div>
       `).join('');
@@ -231,119 +225,152 @@
         return;
       }
 
-      elements.pendingList.innerHTML = items.map(p => `
-        <div class="pending-item">
-          <div class="pending-icon ${p.tipo}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              ${p.tipo === 'venta' 
-                ? '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
-                : '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'}
-            </svg>
-          </div>
-          <div class="pending-info">
-            <div class="pending-name">${p.descripcion || 'Sin descripción'}</div>
-            <div class="pending-date ${p.fecha_vencimiento && utils.isOverdue(p.fecha_vencimiento) ? 'vencido' : ''}">
-              ${p.fecha_vencimiento ? 'Vence: ' + utils.formatDate(p.fecha_vencimiento) : 'Sin vencimiento'}
+      elements.pendingList.innerHTML = items.slice(0, 5).map(p => {
+        const isVenta = p.tipo === 'venta';
+        const isOverdue = p.fecha_vencimiento && utils.isOverdue(p.fecha_vencimiento);
+        
+        return `
+          <div class="pending-item">
+            <div class="pending-icon ${isVenta ? 'venta' : 'gasto'}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                ${isVenta 
+                  ? '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
+                  : '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'}
+              </svg>
             </div>
+            <div class="pending-info">
+              <div class="pending-name">${p.descripcion || 'Sin descripción'}</div>
+              <div class="pending-date ${isOverdue ? 'vencido' : ''}">
+                ${p.fecha_vencimiento ? (isOverdue ? '⚠️ Vencido: ' : 'Vence: ') + utils.formatDate(p.fecha_vencimiento) : 'Sin vencimiento'}
+              </div>
+            </div>
+            <div class="pending-amount ${isVenta ? 'ingreso' : 'egreso'}">${utils.formatMoney(p.monto)}</div>
           </div>
-          <div class="pending-amount ${p.tipo === 'venta' ? 'ingreso' : 'egreso'}">${utils.formatMoney(p.monto)}</div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
   };
 
-  // ============================================
-  // HANDLERS
-  // ============================================
   const handlers = {
     async loadDashboard() {
       try {
-        // Intentar cargar del endpoint de dashboard primero
-        const data = await api.getDashboard();
-        render.stats(data);
-        render.transactions(data.transacciones_recientes);
-        render.pending(data.pendientes_pago || []);
-      } catch (error) {
-        console.log('Dashboard endpoint failed, loading from individual sources...');
-        // Si falla, cargar de fuentes individuales
-        await this.loadFromSources();
-      }
-    },
-
-    async loadFromSources() {
-      try {
         const [txRes, ventasRes, gastosRes, cuentasRes] = await Promise.all([
-          api.getTransacciones().catch(() => ({ transacciones: [] })),
-          api.getVentas().catch(() => ({ ventas: [] })),
-          api.getGastos().catch(() => ({ gastos: [] })),
-          api.getCuentas().catch(() => ({ cuentas: [] }))
+          api.getTransacciones(),
+          api.getVentas(),
+          api.getGastos(),
+          api.getCuentas()
         ]);
 
-        const transacciones = txRes.transacciones || [];
-        const ventas = ventasRes.ventas || [];
-        const gastos = gastosRes.gastos || [];
-        const cuentas = cuentasRes.cuentas || [];
+        const transacciones = txRes?.transacciones || [];
+        const ventas = ventasRes?.ventas || [];
+        const gastos = gastosRes?.gastos || [];
+        const cuentas = cuentasRes?.cuentas || [];
 
         // Calcular estadísticas
-        const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+        const now = new Date();
+        const m = now.getMonth();
+        const y = now.getFullYear();
+        
         let ingresos = 0, egresos = 0, porCobrar = 0, porPagar = 0;
         let porCobrarCant = 0, porPagarCant = 0;
 
+        // Ingresos y egresos del mes
         transacciones.forEach(t => {
           const f = new Date(t.fecha);
           if (f.getMonth() === m && f.getFullYear() === y) {
-            if (t.tipo === 'ingreso') ingresos += parseFloat(t.monto) || 0;
-            else egresos += parseFloat(t.monto) || 0;
+            const monto = parseFloat(t.monto) || 0;
+            if (t.tipo === 'ingreso') ingresos += monto;
+            else egresos += monto;
           }
         });
 
+        // Ventas por cobrar (saldo > 0)
         ventas.forEach(v => {
-          if (v.estatus_pago !== 'pagado' && v.estatus !== 'cobrada') {
-            porCobrar += (parseFloat(v.total) || 0) - (parseFloat(v.monto_cobrado) || 0);
+          const total = parseFloat(v.total) || 0;
+          const cobrado = parseFloat(v.monto_cobrado) || 0;
+          const saldo = total - cobrado;
+          
+          if (saldo > 0) {
+            porCobrar += saldo;
             porCobrarCant++;
           }
         });
 
+        // Gastos por pagar
         gastos.forEach(g => {
-          if (g.estatus_pago !== 'pagado') {
-            porPagar += parseFloat(g.total) || 0;
+          const total = parseFloat(g.total) || 0;
+          const pagado = parseFloat(g.monto_pagado) || 0;
+          const saldo = total - pagado;
+          
+          if (g.estatus_pago !== 'pagado' && saldo > 0) {
+            porPagar += saldo;
             porPagarCant++;
           }
         });
 
+        // Saldo total de cuentas
         const saldoTotal = cuentas.reduce((sum, c) => sum + (parseFloat(c.saldo_actual) || 0), 0);
 
         // Render stats
-        elements.saldoTotal.textContent = utils.formatMoney(saldoTotal);
-        elements.ingresosMes.textContent = utils.formatMoney(ingresos);
-        elements.egresosMes.textContent = utils.formatMoney(egresos);
-        elements.porCobrar.textContent = utils.formatMoney(porCobrar);
-
-        if (porCobrarCant > 0) {
-          elements.ventasPendientes.textContent = porCobrarCant;
-          elements.ventasPendientes.style.display = 'block';
-        }
-        if (porPagarCant > 0) {
-          elements.gastosPendientes.textContent = porPagarCant;
-          elements.gastosPendientes.style.display = 'block';
-        }
+        render.stats({
+          saldoTotal,
+          ingresos,
+          egresos,
+          porCobrar,
+          porCobrarCant,
+          porPagarCant
+        });
 
         // Render transacciones recientes
         render.transactions(transacciones);
 
-        // Render pendientes
-        const pendientes = [
-          ...ventas.filter(v => v.estatus_pago !== 'pagado' && v.estatus !== 'cobrada').map(v => ({
-            tipo: 'venta', descripcion: v.folio || 'Venta', monto: v.total, fecha_vencimiento: v.fecha_vencimiento
-          })),
-          ...gastos.filter(g => g.estatus_pago !== 'pagado').map(g => ({
-            tipo: 'gasto', descripcion: g.concepto || 'Gasto', monto: g.total, fecha_vencimiento: g.fecha_vencimiento
-          }))
-        ].sort((a, b) => new Date(a.fecha_vencimiento || '2099-12-31') - new Date(b.fecha_vencimiento || '2099-12-31'));
+        // Preparar y ordenar pendientes
+        const pendientes = [];
         
-        render.pending(pendientes.slice(0, 5));
+        // Ventas pendientes
+        ventas.forEach(v => {
+          const total = parseFloat(v.total) || 0;
+          const cobrado = parseFloat(v.monto_cobrado) || 0;
+          const saldo = total - cobrado;
+          
+          if (saldo > 0) {
+            pendientes.push({
+              tipo: 'venta',
+              descripcion: v.nombre_contacto || v.folio || v.concepto || 'Venta',
+              monto: saldo,
+              fecha_vencimiento: v.fecha_vencimiento
+            });
+          }
+        });
+        
+        // Gastos pendientes
+        gastos.forEach(g => {
+          const total = parseFloat(g.total) || 0;
+          const pagado = parseFloat(g.monto_pagado) || 0;
+          const saldo = total - pagado;
+          
+          if (g.estatus_pago !== 'pagado' && saldo > 0) {
+            pendientes.push({
+              tipo: 'gasto',
+              descripcion: g.nombre_proveedor || g.concepto || 'Gasto',
+              monto: saldo,
+              fecha_vencimiento: g.fecha_vencimiento
+            });
+          }
+        });
+
+        // Ordenar: vencidos primero, luego por fecha
+        pendientes.sort((a, b) => {
+          const aDate = a.fecha_vencimiento ? new Date(a.fecha_vencimiento) : new Date('2099-12-31');
+          const bDate = b.fecha_vencimiento ? new Date(b.fecha_vencimiento) : new Date('2099-12-31');
+          return aDate - bDate;
+        });
+        
+        render.pending(pendientes);
+
+        console.log('📊 Dashboard cargado:', { saldoTotal, ingresos, egresos, porCobrar, porPagar });
       } catch (e) {
-        console.error('Error loading from sources:', e);
+        console.error('Error loading dashboard:', e);
       }
     },
 
@@ -362,8 +389,8 @@
     },
 
     closeUserMenu(e) {
-      if (!elements.userMenuBtn.contains(e.target) && !elements.userDropdown.contains(e.target)) {
-        elements.userDropdown.classList.remove('active');
+      if (!elements.userMenuBtn?.contains(e.target) && !elements.userDropdown?.contains(e.target)) {
+        elements.userDropdown?.classList.remove('active');
       }
     },
 
@@ -377,21 +404,16 @@
     },
 
     newTransaction() {
-      utils.redirect('/truno-front/transacciones/nueva.html');
+      utils.redirect('/truno-front/transacciones/index.html');
     }
   };
 
-  // ============================================
-  // INIT
-  // ============================================
   function init() {
-    // Check auth
     if (!utils.getToken()) {
       utils.redirect(CONFIG.REDIRECT.LOGIN);
       return;
     }
 
-    // Check org
     state.org = utils.getOrg();
     if (!state.org) {
       utils.redirect(CONFIG.REDIRECT.SELECT_ORG);
@@ -400,24 +422,22 @@
 
     state.user = utils.getUser();
 
-    // Render initial data
     render.user();
     render.org();
 
     // Event listeners
-    elements.menuToggle.addEventListener('click', handlers.toggleSidebar);
-    elements.sidebarOverlay.addEventListener('click', handlers.closeSidebar);
-    elements.userMenuBtn.addEventListener('click', handlers.toggleUserMenu);
-    elements.logoutBtn.addEventListener('click', handlers.logout);
-    elements.switchOrgBtn.addEventListener('click', handlers.switchOrg);
-    elements.orgSwitcher.addEventListener('click', handlers.switchOrg);
-    elements.fabBtn.addEventListener('click', handlers.newTransaction);
+    elements.menuToggle?.addEventListener('click', handlers.toggleSidebar);
+    elements.sidebarOverlay?.addEventListener('click', handlers.closeSidebar);
+    elements.userMenuBtn?.addEventListener('click', handlers.toggleUserMenu);
+    elements.logoutBtn?.addEventListener('click', handlers.logout);
+    elements.switchOrgBtn?.addEventListener('click', handlers.switchOrg);
+    elements.orgSwitcher?.addEventListener('click', handlers.switchOrg);
+    elements.fabBtn?.addEventListener('click', handlers.newTransaction);
     document.addEventListener('click', handlers.closeUserMenu);
 
-    // Load data
     handlers.loadDashboard();
 
-    console.log('🚀 TRUNO Dashboard initialized');
+    console.log('🚀 TRUNO Dashboard v2');
   }
 
   if (document.readyState === 'loading') {
