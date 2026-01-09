@@ -394,36 +394,32 @@
       elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`;
     },
 
-    stats(data) {
-      elements.saldoTotal.textContent = utils.formatMoney(data.saldoTotal);
-      elements.totalIngresos.textContent = utils.formatMoney(data.ingresos);
-      elements.totalEgresos.textContent = utils.formatMoney(data.egresos);
-      elements.txIngresos.textContent = `${data.txIngresos} transacciones`;
-      elements.txEgresos.textContent = `${data.txEgresos} transacciones`;
-      
-      const balance = data.ingresos - data.egresos;
-      elements.balance.textContent = utils.formatMoney(balance);
-      elements.balance.className = `stat-value ${balance >= 0 ? 'positive' : 'negative'}`;
-      
-      elements.porCobrar.textContent = utils.formatMoney(data.porCobrar);
-      elements.porPagar.textContent = utils.formatMoney(data.porPagar);
-      elements.ventasPend.textContent = `${data.ventasPend} ventas`;
-      elements.gastosPend.textContent = `${data.gastosPend} gastos`;
+   stats(data) {
+  elements.saldoTotal.textContent = utils.formatMoney(data.saldoTotal);
+  elements.totalIngresos.textContent = utils.formatMoney(data.ingresos);
+  elements.totalEgresos.textContent = utils.formatMoney(data.egresos);
+  elements.txIngresos.textContent = `${data.txIngresos} transacciones`;
+  elements.txEgresos.textContent = `${data.txEgresos} transacciones`;
+  
+  const balance = data.ingresos - data.egresos;
+  elements.balance.textContent = utils.formatMoney(balance);
+  elements.balance.className = `stat-value ${balance >= 0 ? 'positive' : 'negative'}`;
+  
+  elements.porCobrar.textContent = utils.formatMoney(data.porCobrar);
+  elements.porPagar.textContent = utils.formatMoney(data.porPagar);
+  elements.ventasPend.textContent = `${data.ventasPend} ventas`;
+  elements.gastosPend.textContent = `${data.gastosPend} gastos`;
 
-      // Badges sidebar
-      if (data.ventasPend > 0) {
-        elements.ventasPendientes.textContent = data.ventasPend;
-        elements.ventasPendientes.style.display = 'flex';
-      } else {
-        elements.ventasPendientes.style.display = 'none';
-      }
-      if (data.gastosPend > 0) {
-        elements.gastosPendientes.textContent = data.gastosPend;
-        elements.gastosPendientes.style.display = 'flex';
-      } else {
-        elements.gastosPendientes.style.display = 'none';
-      }
-    },
+  // Badges sidebar - con optional chaining
+  if (elements.ventasPendientes) {
+    elements.ventasPendientes.textContent = data.ventasPend;
+    elements.ventasPendientes.style.display = data.ventasPend > 0 ? 'flex' : 'none';
+  }
+  if (elements.gastosPendientes) {
+    elements.gastosPendientes.textContent = data.gastosPend;
+    elements.gastosPendientes.style.display = data.gastosPend > 0 ? 'flex' : 'none';
+  }
+},
 
     listPorCobrar(ventas) {
       const pendientes = ventas.filter(v => {
