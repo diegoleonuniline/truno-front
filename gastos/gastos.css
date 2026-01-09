@@ -663,7 +663,7 @@ a { color: inherit; text-decoration: none; }
 .bottom-nav-item.active { color: var(--brand-primary); }
 
 /* ============================================
-   MODALS - CRITICAL SCROLL FIX
+   MODALS - CRITICAL SCROLL FIX v2
    ============================================ */
 .modal-overlay {
   position: fixed;
@@ -679,27 +679,33 @@ a { color: inherit; text-decoration: none; }
   visibility: hidden;
   transition: opacity var(--transition-base), visibility var(--transition-base);
   z-index: 1000;
+  padding: 0;
+  margin: 0;
 }
 .modal-overlay.active { 
   opacity: 1; 
   visibility: visible; 
 }
 
-/* CRITICAL: Modal structure for scroll */
+/* CRITICAL: Fixed height modal with internal scroll */
 .modal {
   position: relative;
   width: 100%;
-  max-height: 92%;
+  height: 90vh;
+  height: 90dvh;
   background: var(--bg-card);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   display: flex;
   flex-direction: column;
   transform: translateY(100%);
   transition: transform var(--transition-base);
+  overflow: hidden;
 }
 
 .modal.modal-sm { 
-  max-height: 80%;
+  height: auto;
+  max-height: 80vh;
+  max-height: 80dvh;
 }
 
 .modal-overlay.active .modal { 
@@ -712,8 +718,9 @@ a { color: inherit; text-decoration: none; }
   justify-content: space-between;
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  flex: 0 0 auto;
   min-height: 60px;
+  position: relative;
 }
 .modal-header::before {
   content: '';
@@ -740,16 +747,18 @@ a { color: inherit; text-decoration: none; }
 }
 .modal-close svg { width: 20px; height: 20px; }
 
-/* CRITICAL: This is where scroll happens */
+/* CRITICAL: Scrollable body */
 .modal-body { 
   flex: 1 1 auto;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
   padding: var(--spacing-md);
-  min-height: 0; /* CRITICAL for flex scroll */
+  min-height: 0;
 }
 
+/* CRITICAL: Fixed footer always visible */
 .modal-footer {
   display: flex;
   flex-direction: column;
@@ -757,10 +766,19 @@ a { color: inherit; text-decoration: none; }
   padding: var(--spacing-md);
   padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
   border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
+  flex: 0 0 auto;
   background: var(--bg-card);
 }
 .modal-footer .btn { width: 100%; }
+
+/* CRITICAL: Form inside modal must be flex */
+.modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
 
 /* ========== FORMS ========== */
 .form-group { margin-bottom: var(--spacing-md); }
@@ -1087,6 +1105,7 @@ a { color: inherit; text-decoration: none; }
   .modal-overlay { align-items: center; padding: var(--spacing-lg); }
   .modal { 
     max-width: 640px; 
+    height: auto;
     max-height: calc(100vh - 48px); 
     border-radius: var(--radius-xl); 
   }
