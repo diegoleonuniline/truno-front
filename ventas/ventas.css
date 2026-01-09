@@ -1100,17 +1100,28 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-top: 1px solid var(--border-color);
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
   background: var(--bg-card);
-  z-index: 10;
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-  flex-wrap: wrap;
 }
 
 .modal-footer .btn {
   flex: 1;
-  min-width: 120px;
+  min-width: 0; /* Permite que se compriman */
+}
+
+/* Mobile: mantener en fila, NO columna */
+@media (max-width: 768px) {
+  .modal-footer {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0));
+    gap: var(--spacing-sm);
+  }
+  
+  .modal-footer .btn {
+    flex: 1;
+    padding: 0 var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
 }
 
 /* Mobile modal adjustments */
@@ -1533,19 +1544,96 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
     grid-template-columns: 1fr 1fr;
   }
   
+ .filters-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+  position: relative;
+}
+
+.filter-select {
+  height: 44px;
+  padding: 0 var(--spacing-xl) 0 var(--spacing-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+/* Grupo de fechas siempre juntas */
+.filter-dates {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filter-date {
+  height: 44px;
+  padding: 0 var(--spacing-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  width: 130px;
+  min-width: 0;
+}
+
+.filter-date:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+@media (max-width: 768px) {
   .filters-bar {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
   }
   
   .search-box {
+    flex: 1 1 100%;
     max-width: none;
+    order: 1;
   }
   
-  .filter-select,
-  .filter-date {
-    width: 100%;
+  .filter-select {
+    flex: 1;
+    min-width: 120px;
+    order: 2;
   }
+  
+  .filter-dates {
+    order: 3;
+    flex: 1;
+  }
+  
+  .filter-date {
+    flex: 1;
+    width: auto;
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-date {
+    min-width: 90px;
+    padding: 0 var(--spacing-xs);
+    font-size: var(--font-size-xs);
+  }
+}
   
   /* Hide more columns */
   .table th:nth-child(3),
