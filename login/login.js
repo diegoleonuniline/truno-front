@@ -85,12 +85,6 @@
       try {
         return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       } catch { return false; }
-    },
-    async isConditionalUIAvailable() {
-      if (!window.PublicKeyCredential) return false;
-      try {
-        return await PublicKeyCredential.isConditionalMediationAvailable();
-      } catch { return false; }
     }
   };
 
@@ -129,6 +123,55 @@
     }
   };
 
+  async function performBiometricLogin(correo, signal) {
+    // 1. Obtener opciones
+    const options = await api.getWebAuthnLoginOptions(correo);
+
+    // 2. Configurar opciones para WebAuthn
+    const publicKeyOptions = {
+      challenge: utils.base64urlToBuffer(options.challenge),
+      timeout: options.timeout || 60000,
+      rpId: options.rpId,
+      userVerification: 'preferred',
+      allowCredentials: options.allowCredentials?.map(cred => ({
+        id: utils.base64urlToBuffer(cred.id),
+        type: 'public-key',
+        transports: ['internal', 'hybrid']
+      }))
+    };
+
+    // 3. Configurar request options
+    const requestOptions = {
+      publicKey: publicKeyOptions,
+      mediation: 'optional'
+    };
+
+    // Solo agregar signal si existe
+    if (signal) {
+      requestOptions.signal = signal;
+    }
+
+    // 4. Solicitar autenticación
+    const credential = await navigator.credentials.get(requestOptions);
+
+    // 5. Preparar respuesta
+    const credentialData = {
+      id: credential.id,
+      rawId: utils.bufferToBase64url(credential.rawId),
+      type: credential.type,
+      response: {
+        authenticatorData: utils.bufferToBase64url(credential.response.authenticatorData),
+        clientDataJSON: utils.bufferToBase64url(credential.response.clientDataJSON),
+        signature: utils.bufferToBase64url(credential.response.signature)
+      }
+    };
+
+    // 6. Enviar al servidor
+    const data = await api.webAuthnLogin(correo, credentialData);
+    utils.saveSession(data.token, data.usuario);
+    utils.redirect(CONFIG.REDIRECT.SUCCESS);
+  }
+
   const handlers = {
     togglePassword() {
       const type = elements.password.type === 'password' ? 'text' : 'password';
@@ -144,7 +187,6 @@
       e.preventDefault();
       if (isSubmitting) return;
 
-      // Cancelar autofill de passkey si está activo
       if (abortController) {
         abortController.abort();
         abortController = null;
@@ -216,76 +258,17 @@
     }
   };
 
-  async function performBiometricLogin(correo, signal = null) {
-    // 1. Obtener opciones
-    const options = await api.getWebAuthnLoginOptions(correo);
-
-    // 2. Configurar opciones para WebAuthn
-    const publicKeyOptions = {
-      challenge: utils.base64urlToBuffer(options.challenge),
-      timeout: options.timeout || 60000,
-      rpId: options.rpId,
-      userVerification: 'preferred', // Menos estricto = menos prompts
-      allowCredentials: options.allowCredentials?.map(cred => ({
-        id: utils.base64urlToBuffer(cred.id),
-        type: 'public-key',
-        transports: ['internal', 'hybrid'] // Permite passkeys sincronizadas
-      }))
-    };
-
-    // 3. Solicitar autenticación
-    const credential = await navigator.credentials.get({
-      publicKey: publicKeyOptions,
-      signal: signal,
-      mediation: 'optional' // No forzar UI del navegador
-    });
-
-    // 4. Preparar respuesta
-    const credentialData = {
-      id: credential.id,
-      rawId: utils.bufferToBase64url(credential.rawId),
-      type: credential.type,
-      response: {
-        authenticatorData: utils.bufferToBase64url(credential.response.authenticatorData),
-        clientDataJSON: utils.bufferToBase64url(credential.response.clientDataJSON),
-        signature: utils.bufferToBase64url(credential.response.signature)
-      }
-    };
-
-    // 5. Enviar al servidor
-    const data = await api.webAuthnLogin(correo, credentialData);
-    utils.saveSession(data.token, data.usuario);
-    utils.redirect(CONFIG.REDIRECT.SUCCESS);
-  }
-
-  async function startConditionalUI() {
-    const savedEmail = localStorage.getItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
-    if (!savedEmail) return;
-
-    try {
-      abortController = new AbortController();
-      await performBiometricLogin(savedEmail, abortController.signal);
-    } catch (error) {
-      // Ignorar errores de abort - es normal cuando el usuario escribe
-      if (error.name !== 'AbortError') {
-        console.log('Conditional UI no disponible:', error.message);
-      }
-    }
-  }
-
   async function init() {
     console.log('🚀 TRUNO Login v3');
     
     if (utils.checkExistingSession()) return;
 
-    // Event listeners
     elements.form.addEventListener('submit', handlers.onSubmit);
     elements.passwordToggle?.addEventListener('click', handlers.togglePassword);
     elements.faceIdBtn?.addEventListener('click', handlers.onFaceId);
     elements.email.addEventListener('focus', handlers.onInputFocus);
     elements.password.addEventListener('focus', handlers.onInputFocus);
 
-    // Verificar soporte
     const biometricAvailable = await utils.isBiometricAvailable();
     const savedEmail = localStorage.getItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
     
@@ -295,16 +278,6 @@
     if (biometricAvailable && savedEmail) {
       elements.faceIdBtn.style.display = 'flex';
       elements.email.value = savedEmail;
-      
-      // Intentar Conditional UI (autofill de passkeys)
-      const conditionalAvailable = await utils.isConditionalUIAvailable();
-      console.log('🔐 Conditional UI:', conditionalAvailable);
-      
-      if (conditionalAvailable) {
-        // Agregar atributo para autofill de passkeys
-        elements.email.setAttribute('autocomplete', 'username webauthn');
-        elements.password.setAttribute('autocomplete', 'current-password webauthn');
-      }
     } else {
       elements.faceIdBtn.style.display = 'none';
     }
