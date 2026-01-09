@@ -1,6 +1,6 @@
 /**
- * TRUNO - Ventas Module v6
- * Con crear cliente, crear impuesto y fix de transacciones
+ * TRUNO - Ventas Module v7
+ * Con crear cliente, crear impuesto, fix transacciones + Monedas dinámicas
  */
 
 (function() {
@@ -125,6 +125,7 @@
     ventas: [], 
     contactos: [], 
     cuentas: [],
+    monedas: [],
     impuestosCatalogo: [],
     impuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0 },
@@ -245,7 +246,8 @@
     getImpuestos() { return this.request('/api/impuestos'); },
     createImpuesto(d) { return this.request('/api/impuestos', { method: 'POST', body: JSON.stringify(d) }); },
     getVentaImpuestos(ventaId) { return this.request(`/api/ventas/${ventaId}/impuestos`); },
-    getTransacciones() { return this.request('/api/transacciones?limite=200'); }
+    getTransacciones() { return this.request('/api/transacciones?limite=200'); },
+    getMonedas() { return this.request('/api/monedas'); }
   };
 
   const render = {
@@ -269,6 +271,27 @@
     tabs() {
       elements.tabTodas?.classList.toggle('active', !state.filters.solo_por_cobrar);
       elements.tabPorCobrar?.classList.toggle('active', state.filters.solo_por_cobrar);
+    },
+    
+    // ========== MONEDAS DINÁMICAS ==========
+    monedas() {
+      const select = elements.moneda;
+      if (!select) return;
+      
+      // Si hay monedas del API, usarlas
+      if (state.monedas.length > 0) {
+        const activas = state.monedas.filter(m => m.activo);
+        select.innerHTML = activas.map(m => 
+          `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`
+        ).join('');
+      } else {
+        // Fallback: monedas hardcodeadas
+        select.innerHTML = `
+          <option value="MXN" selected>MXN - Peso Mexicano</option>
+          <option value="USD">USD - Dólar</option>
+          <option value="EUR">EUR - Euro</option>
+        `;
+      }
     },
     
     // ========== IMPUESTOS DINÁMICOS ==========
@@ -540,21 +563,24 @@
   const handlers = {
     async loadData() {
       try {
-        const [ventasData, contactosData, cuentasData, impuestosData] = await Promise.all([
+        const [ventasData, contactosData, cuentasData, impuestosData, monedasData] = await Promise.all([
           api.getVentas({ ...state.filters, pagina: state.paginacion.pagina }),
           api.getContactos().catch(() => ({ contactos: [] })),
           api.getCuentas().catch(() => ({ cuentas: [] })),
-          api.getImpuestos().catch(() => ({ impuestos: [] }))
+          api.getImpuestos().catch(() => ({ impuestos: [] })),
+          api.getMonedas().catch(() => ({ monedas: [] }))
         ]);
         state.ventas = ventasData.ventas || [];
         state.paginacion = ventasData.paginacion || state.paginacion;
         state.contactos = contactosData.contactos || [];
         state.cuentas = cuentasData.cuentas || [];
         state.impuestosCatalogo = impuestosData.impuestos || [];
+        state.monedas = monedasData.monedas || [];
         render.ventas(); 
         render.stats(); 
         render.contactos(); 
         render.cuentas();
+        render.monedas();
         render.tabs();
       } catch (e) { 
         console.error('Error:', e); 
@@ -722,6 +748,8 @@
       // Reset impuestos
       state.impuestosTemp = [];
       render.impuestos();
+      // Resetear moneda al default
+      render.monedas();
       elements.ventaModal.classList.add('active'); 
       elements.contactoId.focus();
     },
@@ -1152,7 +1180,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Ventas v6 - Crear cliente/impuesto + Fix transacciones');
+    console.log('🚀 TRUNO Ventas v7 - Monedas dinámicas desde API');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
