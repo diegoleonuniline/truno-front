@@ -1,6 +1,6 @@
 /**
- * TRUNO - Login Module v2
- * Con soporte para Face ID / Touch ID
+ * TRUNO - Login Module v3
+ * Con Passkeys / Face ID nativo
  */
 
 (function() {
@@ -31,6 +31,7 @@
   };
 
   let isSubmitting = false;
+  let abortController = null;
 
   const utils = {
     isValidEmail(email) {
@@ -65,8 +66,6 @@
     redirect(url) {
       window.location.href = url;
     },
-    
-    // WebAuthn helpers
     bufferToBase64url(buffer) {
       const bytes = new Uint8Array(buffer);
       let str = '';
@@ -85,6 +84,12 @@
       if (!window.PublicKeyCredential) return false;
       try {
         return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      } catch { return false; }
+    },
+    async isConditionalUIAvailable() {
+      if (!window.PublicKeyCredential) return false;
+      try {
+        return await PublicKeyCredential.isConditionalMediationAvailable();
       } catch { return false; }
     }
   };
@@ -139,6 +144,12 @@
       e.preventDefault();
       if (isSubmitting) return;
 
+      // Cancelar autofill de passkey si está activo
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+
       const correo = elements.email.value.trim();
       const contrasena = elements.password.value;
 
@@ -162,10 +173,7 @@
       try {
         const data = await api.login(correo, contrasena);
         utils.saveSession(data.token, data.usuario);
-        
-        // Guardar email para biometría futura
         localStorage.setItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL, correo);
-        
         utils.redirect(CONFIG.REDIRECT.SUCCESS);
       } catch (error) {
         utils.showError(error.message || 'Error de conexión');
@@ -184,59 +192,22 @@
         return;
       }
 
-      const available = await utils.isBiometricAvailable();
-      if (!available) {
-        utils.showError('Tu dispositivo no soporta autenticación biométrica');
-        return;
-      }
-
       elements.faceIdBtn.classList.add('loading');
       elements.faceIdBtn.disabled = true;
       utils.hideError();
 
       try {
-        // 1. Obtener opciones del servidor
-        const options = await api.getWebAuthnLoginOptions(savedEmail);
-
-        // 2. Convertir challenge y allowCredentials
-        options.challenge = utils.base64urlToBuffer(options.challenge);
-        if (options.allowCredentials) {
-          options.allowCredentials = options.allowCredentials.map(cred => ({
-            ...cred,
-            id: utils.base64urlToBuffer(cred.id)
-          }));
-        }
-
-        // 3. Solicitar autenticación biométrica
-        const credential = await navigator.credentials.get({ publicKey: options });
-
-        // 4. Preparar respuesta
-        const credentialData = {
-          id: credential.id,
-          rawId: utils.bufferToBase64url(credential.rawId),
-          type: credential.type,
-          response: {
-            authenticatorData: utils.bufferToBase64url(credential.response.authenticatorData),
-            clientDataJSON: utils.bufferToBase64url(credential.response.clientDataJSON),
-            signature: utils.bufferToBase64url(credential.response.signature)
-          }
-        };
-
-        // 5. Enviar al servidor
-        const data = await api.webAuthnLogin(savedEmail, credentialData);
-        utils.saveSession(data.token, data.usuario);
-        utils.redirect(CONFIG.REDIRECT.SUCCESS);
-
+        await performBiometricLogin(savedEmail);
       } catch (error) {
         console.error('Face ID error:', error);
         
-        if (error.name === 'NotAllowedError') {
+        if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
           utils.showError('Autenticación cancelada');
         } else if (error.message.includes('No hay biometría')) {
           utils.showError('Configura Face ID desde Configuración');
           localStorage.removeItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
         } else {
-          utils.showError(error.message || 'Error de autenticación biométrica');
+          utils.showError(error.message || 'Error de autenticación');
         }
       } finally {
         elements.faceIdBtn.classList.remove('loading');
@@ -245,8 +216,65 @@
     }
   };
 
+  async function performBiometricLogin(correo, signal = null) {
+    // 1. Obtener opciones
+    const options = await api.getWebAuthnLoginOptions(correo);
+
+    // 2. Configurar opciones para WebAuthn
+    const publicKeyOptions = {
+      challenge: utils.base64urlToBuffer(options.challenge),
+      timeout: options.timeout || 60000,
+      rpId: options.rpId,
+      userVerification: 'preferred', // Menos estricto = menos prompts
+      allowCredentials: options.allowCredentials?.map(cred => ({
+        id: utils.base64urlToBuffer(cred.id),
+        type: 'public-key',
+        transports: ['internal', 'hybrid'] // Permite passkeys sincronizadas
+      }))
+    };
+
+    // 3. Solicitar autenticación
+    const credential = await navigator.credentials.get({
+      publicKey: publicKeyOptions,
+      signal: signal,
+      mediation: 'optional' // No forzar UI del navegador
+    });
+
+    // 4. Preparar respuesta
+    const credentialData = {
+      id: credential.id,
+      rawId: utils.bufferToBase64url(credential.rawId),
+      type: credential.type,
+      response: {
+        authenticatorData: utils.bufferToBase64url(credential.response.authenticatorData),
+        clientDataJSON: utils.bufferToBase64url(credential.response.clientDataJSON),
+        signature: utils.bufferToBase64url(credential.response.signature)
+      }
+    };
+
+    // 5. Enviar al servidor
+    const data = await api.webAuthnLogin(correo, credentialData);
+    utils.saveSession(data.token, data.usuario);
+    utils.redirect(CONFIG.REDIRECT.SUCCESS);
+  }
+
+  async function startConditionalUI() {
+    const savedEmail = localStorage.getItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
+    if (!savedEmail) return;
+
+    try {
+      abortController = new AbortController();
+      await performBiometricLogin(savedEmail, abortController.signal);
+    } catch (error) {
+      // Ignorar errores de abort - es normal cuando el usuario escribe
+      if (error.name !== 'AbortError') {
+        console.log('Conditional UI no disponible:', error.message);
+      }
+    }
+  }
+
   async function init() {
-    console.log('🚀 TRUNO Login v2');
+    console.log('🚀 TRUNO Login v3');
     
     if (utils.checkExistingSession()) return;
 
@@ -257,16 +285,26 @@
     elements.email.addEventListener('focus', handlers.onInputFocus);
     elements.password.addEventListener('focus', handlers.onInputFocus);
 
-    // Verificar soporte biométrico y si hay email guardado
+    // Verificar soporte
     const biometricAvailable = await utils.isBiometricAvailable();
     const savedEmail = localStorage.getItem(CONFIG.STORAGE_KEYS.BIOMETRIC_EMAIL);
     
-    console.log('📱 Biometric available:', biometricAvailable);
-    console.log('📧 Saved email:', savedEmail ? 'SÍ' : 'NO');
+    console.log('📱 Biometric:', biometricAvailable);
+    console.log('📧 Email guardado:', savedEmail ? 'SÍ' : 'NO');
 
     if (biometricAvailable && savedEmail) {
       elements.faceIdBtn.style.display = 'flex';
       elements.email.value = savedEmail;
+      
+      // Intentar Conditional UI (autofill de passkeys)
+      const conditionalAvailable = await utils.isConditionalUIAvailable();
+      console.log('🔐 Conditional UI:', conditionalAvailable);
+      
+      if (conditionalAvailable) {
+        // Agregar atributo para autofill de passkeys
+        elements.email.setAttribute('autocomplete', 'username webauthn');
+        elements.password.setAttribute('autocomplete', 'current-password webauthn');
+      }
     } else {
       elements.faceIdBtn.style.display = 'none';
     }
