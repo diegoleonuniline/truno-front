@@ -620,3 +620,85 @@ a { color: inherit; text-decoration: none; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .table tbody tr { animation: fadeIn 0.2s ease-out both; }
 .mobile-card { animation: fadeIn 0.2s ease-out both; }
+/* ========== TOAST NOTIFICATIONS ========== */
+.toast-container {
+  position: fixed;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 280px;
+  max-width: 400px;
+  pointer-events: auto;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast.hide { transform: translateX(120%); opacity: 0; }
+
+.toast-icon { width: 24px; height: 24px; flex-shrink: 0; }
+.toast-icon svg { width: 100%; height: 100%; }
+.toast-message { flex: 1; font-size: var(--font-size-sm); font-weight: 500; color: var(--text-primary); }
+
+.toast-close {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.toast-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.toast-close svg { width: 14px; height: 14px; }
+
+.toast-success { border-left: 4px solid var(--success); }
+.toast-success .toast-icon { color: var(--success); }
+.toast-error { border-left: 4px solid var(--error); }
+.toast-error .toast-icon { color: var(--error); }
+.toast-warning { border-left: 4px solid var(--warning); }
+.toast-warning .toast-icon { color: var(--warning); }
+.toast-info { border-left: 4px solid var(--info); }
+.toast-info .toast-icon { color: var(--info); }
+
+/* Saldo styles */
+.cell-amount.success { color: var(--success); }
+
+/* Mobile saldo */
+.mobile-card-saldo {
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-sm);
+}
+.saldo-label { color: var(--text-muted); }
+.saldo-amount { color: var(--error); font-weight: 600; }
+.saldo-paid { color: var(--success); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .toast-container {
+    top: auto;
+    bottom: var(--spacing-lg);
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+  }
+  .toast { min-width: auto; max-width: none; transform: translateY(120%); }
+  .toast.show { transform: translateY(0); }
+  .toast.hide { transform: translateY(120%); }
+}
