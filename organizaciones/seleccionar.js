@@ -1,13 +1,10 @@
 /**
- * TRUNO - Selección de Organización
+ * TRUNO - Selección de Organización - DEBUG
  */
 
 (function() {
   'use strict';
 
-  // ============================================
-  // CONFIGURACIÓN
-  // ============================================
   const CONFIG = {
     API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
     STORAGE_KEYS: {
@@ -21,9 +18,6 @@
     }
   };
 
-  // ============================================
-  // DOM ELEMENTS
-  // ============================================
   const elements = {
     loadingState: document.getElementById('loadingState'),
     orgList: document.getElementById('orgList'),
@@ -40,28 +34,23 @@
     userName: document.getElementById('userName'),
     logoutBtn: document.getElementById('logoutBtn'),
     profileBtn: document.getElementById('profileBtn'),
-    // Form fields
     orgName: document.getElementById('orgName'),
     orgType: document.getElementById('orgType'),
     orgRfc: document.getElementById('orgRfc'),
     orgEmail: document.getElementById('orgEmail')
   };
 
-  // ============================================
-  // STATE
-  // ============================================
   let state = {
     user: null,
     organizations: [],
     isLoading: false
   };
 
-  // ============================================
-  // UTILITIES
-  // ============================================
   const utils = {
     getToken() {
-      return localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+      const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+      console.log('🔑 getToken:', token ? `${token.substring(0, 30)}...` : 'NULL');
+      return token;
     },
 
     getUser() {
@@ -74,10 +63,12 @@
     },
 
     redirect(url) {
+      console.log('🚀 Redirigiendo a:', url);
       window.location.href = url;
     },
 
     logout() {
+      console.log('🚪 LOGOUT - Borrando sesión');
       localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
       localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
       localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG);
@@ -101,26 +92,35 @@
     }
   };
 
-  // ============================================
-  // API CALLS
-  // ============================================
   const api = {
     async getOrganizations() {
+      const token = utils.getToken();
+      console.log('📡 Llamando /api/auth/me...');
+      console.log('📡 Token a enviar:', token ? 'SÍ HAY' : 'NO HAY');
+      
       const response = await fetch(`${CONFIG.API_URL}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${utils.getToken()}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('📥 Response status:', response.status);
+
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.log('❌ Error response:', errorData);
+        
         if (response.status === 401) {
-          utils.logout();
-          return;
+          console.log('⚠️ 401 - NO hacemos logout, solo mostramos error');
+          // NO hacer logout automático para debuggear
+          throw new Error('Token inválido - revisa la consola');
         }
         throw new Error('Error al obtener organizaciones');
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('✅ Response data:', data);
+      return data;
     },
 
     async createOrganization(data) {
@@ -142,9 +142,6 @@
     }
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
   const render = {
     showLoading() {
       elements.loadingState.style.display = 'flex';
@@ -162,7 +159,9 @@
     },
 
     organizations(orgs) {
-      if (!orgs.length) {
+      console.log('🏢 Renderizando', orgs.length, 'organizaciones');
+      
+      if (!orgs || !orgs.length) {
         this.showEmpty();
         return;
       }
@@ -183,7 +182,6 @@
             <h3 class="org-name">${org.nombre}</h3>
             <div class="org-meta">
               <span class="org-role ${org.rol}">${utils.getRoleLabel(org.rol)}</span>
-              <span class="org-plan">Plan ${org.plan || 'free'}</span>
             </div>
           </div>
           <svg class="org-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -195,7 +193,6 @@
       elements.orgList.style.display = 'flex';
       elements.emptyState.style.display = 'none';
 
-      // Add click handlers
       document.querySelectorAll('.org-card').forEach(card => {
         card.addEventListener('click', () => handlers.selectOrg(card));
       });
@@ -204,27 +201,40 @@
     user(user) {
       if (!user) return;
       elements.userAvatar.textContent = utils.getInitials(user.nombre, user.apellido);
-      elements.userName.textContent = `${user.nombre} ${user.apellido}`;
+      elements.userName.textContent = `${user.nombre || ''} ${user.apellido || ''}`.trim();
     }
   };
 
-  // ============================================
-  // HANDLERS
-  // ============================================
   const handlers = {
     async loadOrganizations() {
+      console.log('========== CARGANDO ORGANIZACIONES ==========');
       render.showLoading();
 
       try {
         const data = await api.getOrganizations();
         state.user = data.usuario;
-        state.organizations = data.organizaciones;
+        state.organizations = data.organizaciones || [];
+
+        console.log('👤 Usuario:', state.user);
+        console.log('🏢 Organizaciones:', state.organizations);
 
         render.user(state.user);
         render.organizations(state.organizations);
       } catch (error) {
-        console.error('Error:', error);
-        render.showEmpty();
+        console.error('❌ Error cargando organizaciones:', error);
+        // Mostrar el error en la página en vez de redirigir
+        if (elements.emptyState) {
+          elements.emptyState.innerHTML = `
+            <div style="color: #ef4444; padding: 20px; text-align: center;">
+              <h3>Error: ${error.message}</h3>
+              <p>Token actual: ${utils.getToken() ? 'Existe' : 'NO EXISTE'}</p>
+              <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px; cursor: pointer;">
+                Reintentar
+              </button>
+            </div>
+          `;
+          elements.emptyState.style.display = 'block';
+        }
       } finally {
         render.hideLoading();
       }
@@ -232,6 +242,7 @@
 
     selectOrg(card) {
       const org = JSON.parse(card.dataset.org.replace(/&#39;/g, "'"));
+      console.log('✅ Organización seleccionada:', org);
       utils.saveOrg(org);
       utils.redirect(CONFIG.REDIRECT.DASHBOARD);
     },
@@ -251,8 +262,8 @@
     },
 
     closeUserMenu(e) {
-      if (!elements.userMenuBtn.contains(e.target) && !elements.userDropdown.contains(e.target)) {
-        elements.userDropdown.classList.remove('active');
+      if (!elements.userMenuBtn?.contains(e.target) && !elements.userDropdown?.contains(e.target)) {
+        elements.userDropdown?.classList.remove('active');
       }
     },
 
@@ -271,9 +282,9 @@
       try {
         const data = {
           nombre: name,
-          tipo: elements.orgType.value,
-          rfc: elements.orgRfc.value.trim() || null,
-          correo: elements.orgEmail.value.trim() || null
+          tipo: elements.orgType?.value || 'pyme',
+          rfc: elements.orgRfc?.value.trim() || null,
+          correo: elements.orgEmail?.value.trim() || null
         };
 
         await api.createOrganization(data);
@@ -293,44 +304,45 @@
     }
   };
 
-  // ============================================
-  // INITIALIZATION
-  // ============================================
   function init() {
-    // Check auth
-    if (!utils.getToken()) {
+    console.log('========== INIT SELECCIONAR ORG ==========');
+    
+    // Verificar token
+    const token = utils.getToken();
+    console.log('🔐 Token al iniciar:', token ? 'SÍ EXISTE' : 'NO EXISTE');
+    
+    if (!token) {
+      console.log('⚠️ Sin token, redirigiendo a login...');
       utils.redirect(CONFIG.REDIRECT.LOGIN);
       return;
     }
 
     // Event listeners
-    elements.createOrgBtn.addEventListener('click', () => handlers.openModal());
-    elements.closeModalBtn.addEventListener('click', () => handlers.closeModal());
-    elements.cancelModalBtn.addEventListener('click', () => handlers.closeModal());
-    elements.createOrgForm.addEventListener('submit', (e) => handlers.submitOrg(e));
-    elements.userMenuBtn.addEventListener('click', () => handlers.toggleUserMenu());
-    elements.logoutBtn.addEventListener('click', () => handlers.logout());
+    elements.createOrgBtn?.addEventListener('click', () => handlers.openModal());
+    elements.closeModalBtn?.addEventListener('click', () => handlers.closeModal());
+    elements.cancelModalBtn?.addEventListener('click', () => handlers.closeModal());
+    elements.createOrgForm?.addEventListener('submit', (e) => handlers.submitOrg(e));
+    elements.userMenuBtn?.addEventListener('click', () => handlers.toggleUserMenu());
+    elements.logoutBtn?.addEventListener('click', () => handlers.logout());
     document.addEventListener('click', (e) => handlers.closeUserMenu(e));
 
-    // Close modal on overlay click
-    elements.createModal.addEventListener('click', (e) => {
+    elements.createModal?.addEventListener('click', (e) => {
       if (e.target === elements.createModal) {
         handlers.closeModal();
       }
     });
 
-    // Close modal on ESC
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         handlers.closeModal();
-        elements.userDropdown.classList.remove('active');
+        elements.userDropdown?.classList.remove('active');
       }
     });
 
-    // Load data
+    // Cargar organizaciones
     handlers.loadOrganizations();
 
-    console.log('🚀 TRUNO Organizaciones initialized');
+    console.log('🚀 TRUNO Organizaciones DEBUG initialized');
   }
 
   if (document.readyState === 'loading') {
