@@ -1,6 +1,6 @@
 /**
- * TRUNO - Transacciones v7
- * FIX: Guardar txId antes de cerrar modal
+ * TRUNO - Transacciones v8
+ * Con toast notifications y texto "Saldo por conciliar"
  */
 (function() {
   'use strict';
@@ -57,9 +57,62 @@
     gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, deletingId: null, viewingTx: null,
-    gastoFromTxId: null,  // ← NUEVO: guardar ID para gasto
-    ventaFromTxId: null,  // ← NUEVO: guardar ID para venta
+    gastoFromTxId: null,
+    ventaFromTxId: null,
     filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
+  };
+
+  // ========== TOAST SYSTEM ==========
+  const toast = {
+    container: null,
+    init() {
+      if (this.container) return;
+      this.container = document.createElement('div');
+      this.container.className = 'toast-container';
+      document.body.appendChild(this.container);
+    },
+    show(message, type = 'success', duration = 3000) {
+      this.init();
+      const toastEl = document.createElement('div');
+      toastEl.className = `toast toast-${type}`;
+      
+      const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+      
+      toastEl.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      `;
+      
+      this.container.appendChild(toastEl);
+      
+      // Trigger animation
+      requestAnimationFrame(() => toastEl.classList.add('show'));
+      
+      // Close button
+      toastEl.querySelector('.toast-close').addEventListener('click', () => this.hide(toastEl));
+      
+      // Auto hide
+      if (duration > 0) {
+        setTimeout(() => this.hide(toastEl), duration);
+      }
+      
+      return toastEl;
+    },
+    hide(toastEl) {
+      toastEl.classList.remove('show');
+      toastEl.classList.add('hide');
+      setTimeout(() => toastEl.remove(), 300);
+    },
+    success(msg, duration) { return this.show(msg, 'success', duration); },
+    error(msg, duration) { return this.show(msg, 'error', duration); },
+    warning(msg, duration) { return this.show(msg, 'warning', duration); },
+    info(msg, duration) { return this.show(msg, 'info', duration); }
   };
 
   const utils = {
@@ -260,7 +313,7 @@
           <td>${t.nombre_contacto || '-'}</td>
           <td><div class="badges-group">
             <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
-            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Pendiente</span>'}
+            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
           </div></td>
           <td style="text-align:right;"><div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div></td>
           <td><div class="table-actions">
@@ -285,7 +338,7 @@
           </div>
           <div class="mobile-card-badges">
             <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
-            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Pendiente</span>'}
+            ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
           </div>
         </div>`;
       }).join('');
@@ -393,7 +446,7 @@
         const btnLabel = isIncome ? 'Registrar Venta' : 'Registrar Gasto';
         const btnAction = isIncome ? 'openVentaFromTx' : 'openGastoFromTx';
         elements.detailConciliacion.innerHTML = `
-          <div class="conciliacion-header"><span class="badge pendiente">⏳ Sin conciliar</span></div>
+          <div class="conciliacion-header"><span class="badge pendiente">⏳ Saldo por conciliar</span></div>
           <div class="conciliacion-actions">
             <p>Este movimiento no está vinculado a ningún documento.</p>
             <button type="button" class="btn btn-primary" id="createFromTxBtn">
@@ -411,7 +464,6 @@
     },
     closeDetailModal() { 
       elements.detailModal.classList.remove('active'); 
-      // NO limpiar viewingTx aquí si estamos abriendo gasto/venta
     },
     editFromDetail() {
       if (state.viewingTx) { this.closeDetailModal(); this.openEditModal(state.viewingTx); }
@@ -453,17 +505,15 @@
         else await api.createTransaccion(d);
         this.closeTxModal();
         await this.loadData();
-      } catch (e) { alert(e.message); }
+        toast.success(state.editingId ? 'Movimiento actualizado' : 'Movimiento registrado');
+      } catch (e) { toast.error(e.message); }
       finally { elements.submitModal.disabled = false; }
     },
-    // ========== GASTO FROM TX - CORREGIDO ==========
     openGastoFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
       
-      // ✅ GUARDAR EL ID ANTES DE CERRAR
       state.gastoFromTxId = tx.id;
-      console.log('🔗 Guardando gastoFromTxId:', state.gastoFromTxId);
       
       this.closeDetailModal();
       
@@ -487,7 +537,7 @@
     },
     closeGastoModal() { 
       elements.gastoModal.classList.remove('active'); 
-      state.gastoFromTxId = null;  // Limpiar al cerrar
+      state.gastoFromTxId = null;
       state.viewingTx = null;
     },
     addGastoImpuesto() {
@@ -519,9 +569,7 @@
     async submitGasto(e) {
       e.preventDefault();
       
-      // ✅ USAR gastoFromTxId EN LUGAR DE viewingTx
       const txId = state.gastoFromTxId;
-      console.log('📤 Enviando gasto con transaccion_id:', txId);
       
       let totalImpuesto = 0;
       state.gastoImpuestosTemp.forEach(imp => {
@@ -545,7 +593,7 @@
         uuid_cfdi: elements.gastoUuid.value.trim() || null,
         folio_cfdi: elements.gastoFolio.value.trim() || null,
         notas: elements.gastoNotas.value.trim() || null,
-        transaccion_id: txId,  // ✅ AQUÍ USA EL ID GUARDADO
+        transaccion_id: txId,
         estatus_pago: 'pagado',
         impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({
           impuesto_id: i.impuesto_id,
@@ -554,26 +602,20 @@
         }))
       };
       
-      console.log('📦 gastoData:', gastoData);
-      
       elements.submitGastoModal.disabled = true;
       try {
-        const result = await api.createGasto(gastoData);
-        console.log('✅ Gasto creado:', result);
+        await api.createGasto(gastoData);
         this.closeGastoModal();
         await this.loadData();
-        alert('✅ Gasto registrado y conciliado');
-      } catch (e) { alert(e.message); }
+        toast.success('Gasto registrado y conciliado');
+      } catch (e) { toast.error(e.message); }
       finally { elements.submitGastoModal.disabled = false; }
     },
-    // ========== VENTA FROM TX - CORREGIDO ==========
     openVentaFromTx() {
       const tx = state.viewingTx;
       if (!tx) return;
       
-      // ✅ GUARDAR EL ID ANTES DE CERRAR
       state.ventaFromTxId = tx.id;
-      console.log('🔗 Guardando ventaFromTxId:', state.ventaFromTxId);
       
       this.closeDetailModal();
       
@@ -597,9 +639,7 @@
     async submitVenta(e) {
       e.preventDefault();
       
-      // ✅ USAR ventaFromTxId
       const txId = state.ventaFromTxId;
-      console.log('📤 Enviando venta, vinculando a transaccion:', txId);
       
       const ventaData = {
         folio: elements.ventaFolio.value.trim() || null,
@@ -616,16 +656,14 @@
         const result = await api.createVenta(ventaData);
         const ventaId = result.venta?.id || result.id;
         
-        // Vincular transacción con la venta
         if (txId && ventaId) {
-          console.log('🔗 Vinculando tx', txId, 'con venta', ventaId);
           await api.updateTransaccion(txId, { venta_id: ventaId });
         }
         
         this.closeVentaModal();
         await this.loadData();
-        alert('✅ Venta registrada y conciliada');
-      } catch (e) { alert(e.message); }
+        toast.success('Venta registrada y conciliada');
+      } catch (e) { toast.error(e.message); }
       finally { elements.submitVentaModal.disabled = false; }
     },
     openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); },
@@ -642,14 +680,20 @@
         render.cuentas();
         elements.cuentaId.value = data.cuenta?.id || data.id;
         this.closeCuentaModal();
-      } catch (e) { alert(e.message); }
+        toast.success('Cuenta creada');
+      } catch (e) { toast.error(e.message); }
     },
     openDeleteModal(t) { state.deletingId = t.id; elements.deleteModal.classList.add('active'); },
     closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
       elements.confirmDelete.disabled = true;
-      try { await api.deleteTransaccion(state.deletingId); this.closeDeleteModal(); await this.loadData(); }
-      catch (e) { alert(e.message); }
+      try { 
+        await api.deleteTransaccion(state.deletingId); 
+        this.closeDeleteModal(); 
+        await this.loadData(); 
+        toast.success('Movimiento eliminado');
+      }
+      catch (e) { toast.error(e.message); }
       finally { elements.confirmDelete.disabled = false; }
     },
     applyFilters() {
@@ -735,7 +779,7 @@
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v7 - Fix vinculación');
+    console.log('🚀 TRUNO Transacciones v8');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
