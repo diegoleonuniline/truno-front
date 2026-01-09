@@ -20,7 +20,6 @@
           </svg>
         </div>
         <span class="sidebar-brand">TRUNO</span>
-        <!-- Botón cerrar sidebar en móvil -->
         <button class="sidebar-close" id="sidebarClose">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -116,7 +115,6 @@
           </a>
         </div>
 
-        <!-- Cerrar sesión en sidebar móvil -->
         <div class="nav-section nav-section-mobile-only">
           <div class="nav-section-title">Sesión</div>
           <button class="nav-item nav-item-logout" id="sidebarLogoutBtn">
@@ -223,7 +221,6 @@
             <option value="vencido">Vencida</option>
             <option value="cancelado">Cancelada</option>
           </select>
-          <!-- MODIFICADO: Fechas envueltas para que queden lado a lado -->
           <div class="filter-dates">
             <input type="date" class="filter-date" id="filterFechaDesde" title="Fecha desde">
             <input type="date" class="filter-date" id="filterFechaHasta" title="Fecha hasta">
@@ -306,7 +303,7 @@
       </svg>
     </button>
 
-    <!-- Bottom Navigation (Solo móvil) -->
+    <!-- Bottom Navigation -->
     <nav class="bottom-nav" id="bottomNav">
       <a href="../dashboard/index.html" class="bottom-nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -348,138 +345,144 @@
   </div>
 
   <!-- Modal: Nueva/Editar Venta -->
-<div class="modal-overlay" id="ventaModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modalTitle">Nueva Venta</h2>
-      <button class="modal-close" id="closeModal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <form id="ventaForm">
-      <div class="modal-body">
-        <div class="form-section">
-          <div class="form-section-title">Información de la Venta</div>
-          <div class="form-row">
+  <div class="modal-overlay" id="ventaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Nueva Venta</h2>
+        <button class="modal-close" id="closeModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="ventaForm">
+        <div class="modal-body">
+          <div class="form-section">
+            <div class="form-section-title">Información de la Venta</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Cliente</label>
+                <div class="select-with-add">
+                  <select class="form-input" id="contactoId">
+                    <option value="">-- Sin cliente --</option>
+                  </select>
+                  <button type="button" class="btn-add" id="addClienteBtn" title="Crear cliente">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Folio</label>
+                <input type="text" class="form-input" id="folio" placeholder="V-0001">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required">Fecha</label>
+                <input type="date" class="form-input" id="fecha" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Vencimiento</label>
+                <input type="date" class="form-input" id="fechaVencimiento">
+              </div>
+            </div>
             <div class="form-group">
-              <label class="form-label">Cliente</label>
-              <div class="select-with-add">
-                <select class="form-input" id="contactoId">
-                  <option value="">-- Sin cliente --</option>
-                </select>
-                <button type="button" class="btn-add" id="addClienteBtn" title="Crear cliente">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <label class="form-label">Descripción</label>
+              <input type="text" class="form-input" id="descripcion" placeholder="Descripción del servicio o producto">
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Montos</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Subtotal</label>
+                <input type="number" class="form-input" id="subtotal" placeholder="0.00" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Total</label>
+                <input type="number" class="form-input" id="total" placeholder="0.00" step="0.01" min="0" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Impuestos</label>
+              <div class="impuestos-container" id="impuestosContainer"></div>
+              <div class="impuestos-actions">
+                <button type="button" class="btn btn-xs btn-secondary" id="addImpuestoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
+                  Agregar
+                </button>
+                <button type="button" class="btn btn-xs btn-outline" id="createImpuestoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                  Crear nuevo
                 </button>
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Folio</label>
-              <input type="text" class="form-input" id="folio" placeholder="V-0001">
+              <label class="form-label">Descuento</label>
+              <input type="number" class="form-input" id="descuento" placeholder="0.00" step="0.01" min="0">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Moneda</label>
+                <div class="select-with-add">
+                  <select class="form-input" id="moneda">
+                    <option value="MXN">MXN - Peso Mexicano</option>
+                  </select>
+                  <button type="button" class="btn-add" id="addMonedaBtn" title="Crear moneda">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de Cambio</label>
+                <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Fecha</label>
-              <input type="date" class="form-input" id="fecha" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Vencimiento</label>
-              <input type="date" class="form-input" id="fechaVencimiento">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Descripción</label>
-            <input type="text" class="form-input" id="descripcion" placeholder="Descripción del servicio o producto">
-          </div>
-        </div>
 
-        <div class="form-section">
-          <div class="form-section-title">Montos</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Subtotal</label>
-              <input type="number" class="form-input" id="subtotal" placeholder="0.00" step="0.01" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label required">Total</label>
-              <input type="number" class="form-input" id="total" placeholder="0.00" step="0.01" min="0" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Impuestos</label>
-            <div class="impuestos-container" id="impuestosContainer"></div>
-            <div class="impuestos-actions">
-              <button type="button" class="btn btn-xs btn-secondary" id="addImpuestoBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Agregar
-              </button>
-              <button type="button" class="btn btn-xs btn-outline" id="createImpuestoBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="16"/>
-                  <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-                Crear nuevo
-              </button>
+          <div class="form-section" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+            <div class="form-section-title">CFDI (Opcional)</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">UUID CFDI</label>
+                <input type="text" class="form-input" id="uuidCfdi" placeholder="UUID de factura">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Folio CFDI</label>
+                <input type="text" class="form-input" id="folioCfdi" placeholder="Folio fiscal">
+              </div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Descuento</label>
-            <input type="number" class="form-input" id="descuento" placeholder="0.00" step="0.01" min="0">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Moneda</label>
-              <select class="form-input" id="moneda">
-                <option value="MXN">MXN - Peso Mexicano</option>
-                <option value="USD">USD - Dólar</option>
-                <option value="EUR">EUR - Euro</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tipo de Cambio</label>
-              <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
-            </div>
-          </div>
-        </div>
 
-        <div class="form-section" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
-          <div class="form-section-title">CFDI (Opcional)</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">UUID CFDI</label>
-              <input type="text" class="form-input" id="uuidCfdi" placeholder="UUID de factura">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Folio CFDI</label>
-              <input type="text" class="form-input" id="folioCfdi" placeholder="Folio fiscal">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Notas</label>
+            <textarea class="form-textarea" id="notas" placeholder="Notas adicionales..."></textarea>
           </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Notas</label>
-          <textarea class="form-textarea" id="notas" placeholder="Notas adicionales..."></textarea>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitModal">
+            <span class="btn-text">Guardar</span>
+          </button>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="submitModal">
-          <span class="btn-text">Guardar</span>
-        </button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
   <!-- Modal: Detalle Venta -->
   <div class="modal-overlay" id="detailModal">
@@ -610,12 +613,18 @@
       </div>
     </div>
   </div>
-<!-- Modal: Crear Cliente Rápido -->
+
+  <!-- Modal: Crear Cliente Rápido -->
   <div class="modal-overlay" id="clienteModal">
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nuevo Cliente</h2>
-        <button class="modal-close" id="closeClienteModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeClienteModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="clienteForm">
         <div class="modal-body">
@@ -651,7 +660,12 @@
     <div class="modal modal-sm">
       <div class="modal-header">
         <h2 class="modal-title">Nuevo Impuesto</h2>
-        <button class="modal-close" id="closeImpuestoModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="modal-close" id="closeImpuestoModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <form id="impuestoForm">
         <div class="modal-body">
@@ -684,6 +698,48 @@
       </form>
     </div>
   </div>
+
+  <!-- Modal: Crear Moneda -->
+  <div class="modal-overlay" id="monedaModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva Moneda</h2>
+        <button class="modal-close" id="closeMonedaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="monedaForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Código</label>
+              <input type="text" class="form-input" id="monedaCodigo" placeholder="MXN" maxlength="3" required style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Símbolo</label>
+              <input type="text" class="form-input" id="monedaSimbolo" placeholder="$" maxlength="5">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="monedaNombre" placeholder="Peso Mexicano" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Decimales</label>
+            <input type="number" class="form-input" id="monedaDecimales" value="2" min="0" max="6">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelMonedaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Moneda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
