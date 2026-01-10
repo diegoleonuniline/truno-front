@@ -249,11 +249,17 @@
 
     openModal() {
       elements.createModal.classList.add('active');
+      // Bloquea el scroll del fondo mientras el modal está visible
+      // Relación: `organizaciones/seleccionar.css` -> regla `body.modal-open`
+      document.body.classList.add('modal-open');
       elements.orgName.focus();
     },
 
     closeModal() {
       elements.createModal.classList.remove('active');
+      // Restaura el scroll del fondo al cerrar el modal
+      // Relación: `organizaciones/seleccionar.css` -> regla `body.modal-open`
+      document.body.classList.remove('modal-open');
       elements.createOrgForm.reset();
     },
 
