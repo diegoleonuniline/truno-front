@@ -1,148 +1,360 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0e14">
-  <title>Seleccionar Empresa | TRUNO</title>
-  <link rel="stylesheet" href="seleccionar.css">
-</head>
-<body>
-  <div class="org-container">
-    <!-- Header -->
-    <header class="org-header">
-      <div class="org-header-left">
-        <div class="org-logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/>
-            <path d="M4 10v11"/><path d="M20 10v11"/>
-            <path d="M8 14v3"/><path d="M12 14v3"/><path d="M16 14v3"/>
-          </svg>
-        </div>
-        <span class="org-brand">TRUNO</span>
-      </div>
+/**
+ * TRUNO - Selección de Organización - DEBUG
+ */
+
+(function() {
+  'use strict';
+
+  const CONFIG = {
+    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
+    STORAGE_KEYS: {
+      TOKEN: 'truno_token',
+      USER: 'truno_user',
+      ORG: 'truno_org'
+    },
+    REDIRECT: {
+      LOGIN: '/truno-front/login/login.html',
+      DASHBOARD: '/truno-front/dashboard/index.html'
+    }
+  };
+
+  const elements = {
+    loadingState: document.getElementById('loadingState'),
+    orgList: document.getElementById('orgList'),
+    emptyState: document.getElementById('emptyState'),
+    createOrgBtn: document.getElementById('createOrgBtn'),
+    createModal: document.getElementById('createModal'),
+    createOrgForm: document.getElementById('createOrgForm'),
+    closeModalBtn: document.getElementById('closeModalBtn'),
+    cancelModalBtn: document.getElementById('cancelModalBtn'),
+    submitOrgBtn: document.getElementById('submitOrgBtn'),
+    userMenuBtn: document.getElementById('userMenuBtn'),
+    userDropdown: document.getElementById('userDropdown'),
+    userAvatar: document.getElementById('userAvatar'),
+    userName: document.getElementById('userName'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    profileBtn: document.getElementById('profileBtn'),
+    orgName: document.getElementById('orgName'),
+    orgType: document.getElementById('orgType'),
+    orgRfc: document.getElementById('orgRfc'),
+    orgEmail: document.getElementById('orgEmail')
+  };
+
+  let state = {
+    user: null,
+    organizations: [],
+    isLoading: false
+  };
+
+  const utils = {
+    getToken() {
+      const token = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+      console.log('🔑 getToken:', token ? `${token.substring(0, 30)}...` : 'NULL');
+      return token;
+    },
+
+    getUser() {
+      const user = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
+      return user ? JSON.parse(user) : null;
+    },
+
+    saveOrg(org) {
+      localStorage.setItem(CONFIG.STORAGE_KEYS.ORG, JSON.stringify(org));
+    },
+
+    redirect(url) {
+      console.log('🚀 Redirigiendo a:', url);
+      window.location.href = url;
+    },
+
+    logout() {
+      console.log('🚪 LOGOUT - Borrando sesión');
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
+      localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG);
+      this.redirect(CONFIG.REDIRECT.LOGIN);
+    },
+
+    getInitials(nombre, apellido) {
+      const n = nombre ? nombre.charAt(0).toUpperCase() : '';
+      const a = apellido ? apellido.charAt(0).toUpperCase() : '';
+      return n + a || '??';
+    },
+
+    getRoleLabel(rol) {
+      const roles = {
+        'propietario': 'Propietario',
+        'administrador': 'Administrador',
+        'usuario': 'Usuario',
+        'visualizador': 'Visualizador'
+      };
+      return roles[rol] || rol;
+    }
+  };
+
+  const api = {
+    async getOrganizations() {
+      const token = utils.getToken();
+      console.log('📡 Llamando /api/auth/me...');
+      console.log('📡 Token a enviar:', token ? 'SÍ HAY' : 'NO HAY');
       
-      <div class="user-menu">
-        <button class="user-btn" id="userMenuBtn">
-          <div class="user-avatar" id="userAvatar">DL</div>
-          <span class="user-name" id="userName">Diego León</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 9l6 6 6-6"/>
-          </svg>
-        </button>
+      const response = await fetch(`${CONFIG.API_URL}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('📥 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.log('❌ Error response:', errorData);
         
-        <div class="user-dropdown" id="userDropdown">
-          <button class="dropdown-item" id="profileBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            Mi Perfil
-          </button>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item danger" id="logoutBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Cerrar Sesión
-          </button>
-        </div>
-      </div>
-    </header>
+        if (response.status === 401) {
+          console.log('⚠️ 401 - NO hacemos logout, solo mostramos error');
+          // NO hacer logout automático para debuggear
+          throw new Error('Token inválido - revisa la consola');
+        }
+        throw new Error('Error al obtener organizaciones');
+      }
 
-    <!-- Main Content -->
-    <main class="org-main">
-      <div class="org-content">
-        <h1 class="org-title">Selecciona una Empresa</h1>
-        <p class="org-subtitle">Elige la empresa con la que deseas trabajar</p>
+      const data = await response.json();
+      console.log('✅ Response data:', data);
+      return data;
+    },
 
-        <!-- Loading State -->
-        <div class="org-loading" id="loadingState">
-          <div class="spinner"></div>
-          <span class="org-loading-text">Cargando empresas...</span>
-        </div>
+    async createOrganization(data) {
+      const response = await fetch(`${CONFIG.API_URL}/api/organizaciones`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${utils.getToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
 
-        <!-- Organizations List -->
-        <div class="org-list" id="orgList" style="display: none;"></div>
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear organización');
+      }
 
-        <!-- Empty State -->
-        <div class="org-empty" id="emptyState" style="display: none;">
-          <div class="org-empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
-              <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
-              <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
-            </svg>
-          </div>
-          <h3 class="org-empty-title">Sin empresas</h3>
-          <p class="org-empty-text">Crea tu primera empresa para comenzar a gestionar tus finanzas</p>
-        </div>
+      return response.json();
+    }
+  };
 
-        <!-- Create New Button -->
-        <button class="org-create" id="createOrgBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Crear Nueva Empresa
-        </button>
-      </div>
-    </main>
-  </div>
+  const render = {
+    showLoading() {
+      elements.loadingState.style.display = 'flex';
+      elements.orgList.style.display = 'none';
+      elements.emptyState.style.display = 'none';
+    },
 
-  <!-- Modal: Create Organization -->
-  <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createOrgTitle">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title" id="createOrgTitle">Nueva Empresa</h2>
-        <button class="modal-close" id="closeModalBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
+    hideLoading() {
+      elements.loadingState.style.display = 'none';
+    },
+
+    showEmpty() {
+      elements.emptyState.style.display = 'block';
+      elements.orgList.style.display = 'none';
+    },
+
+    organizations(orgs) {
+      console.log('🏢 Renderizando', orgs.length, 'organizaciones');
       
-      <form id="createOrgForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label" for="orgName">Nombre de la Empresa *</label>
-            <input type="text" id="orgName" class="form-input" placeholder="Ej. Mi Empresa S.A." required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="orgType">Tipo de Persona</label>
-            <select id="orgType" class="form-input form-select">
-              <option value="pyme">Persona Moral (PyME)</option>
-              <option value="persona_fisica">Persona Física</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="orgRfc">RFC (Opcional)</label>
-            <input type="text" id="orgRfc" class="form-input" placeholder="Ej. XAXX010101000" maxlength="13">
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="orgEmail">Correo Empresarial (Opcional)</label>
-            <input type="email" id="orgEmail" class="form-input" placeholder="Ej. contacto@empresa.com">
-          </div>
-        </div>
-        
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="cancelModalBtn">
-            <span class="btn-text">Cancelar</span>
-          </button>
-          <button type="submit" class="btn btn-primary" id="submitOrgBtn">
-            <span class="btn-text">Crear Empresa</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+      if (!orgs || !orgs.length) {
+        this.showEmpty();
+        return;
+      }
 
-  <script src="seleccionar.js"></script>
-</body>
-</html>
+      elements.orgList.innerHTML = orgs.map(org => `
+        <div class="org-card" data-org-id="${org.id}" data-org='${JSON.stringify(org).replace(/'/g, "&#39;")}'>
+          <div class="org-icon">
+            ${org.url_logo 
+              ? `<img src="${org.url_logo}" alt="${org.nombre}">`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
+                  <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
+                  <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+                </svg>`
+            }
+          </div>
+          <div class="org-info">
+            <h3 class="org-name">${org.nombre}</h3>
+            <div class="org-meta">
+              <span class="org-role ${org.rol}">${utils.getRoleLabel(org.rol)}</span>
+            </div>
+          </div>
+          <svg class="org-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </div>
+      `).join('');
+
+      elements.orgList.style.display = 'flex';
+      elements.emptyState.style.display = 'none';
+
+      document.querySelectorAll('.org-card').forEach(card => {
+        card.addEventListener('click', () => handlers.selectOrg(card));
+      });
+    },
+
+    user(user) {
+      if (!user) return;
+      elements.userAvatar.textContent = utils.getInitials(user.nombre, user.apellido);
+      elements.userName.textContent = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+    }
+  };
+
+  const handlers = {
+    async loadOrganizations() {
+      console.log('========== CARGANDO ORGANIZACIONES ==========');
+      render.showLoading();
+
+      try {
+        const data = await api.getOrganizations();
+        state.user = data.usuario;
+        state.organizations = data.organizaciones || [];
+
+        console.log('👤 Usuario:', state.user);
+        console.log('🏢 Organizaciones:', state.organizations);
+
+        render.user(state.user);
+        render.organizations(state.organizations);
+      } catch (error) {
+        console.error('❌ Error cargando organizaciones:', error);
+        // Mostrar el error en la página en vez de redirigir
+        if (elements.emptyState) {
+          elements.emptyState.innerHTML = `
+            <div style="color: #ef4444; padding: 20px; text-align: center;">
+              <h3>Error: ${error.message}</h3>
+              <p>Token actual: ${utils.getToken() ? 'Existe' : 'NO EXISTE'}</p>
+              <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px; cursor: pointer;">
+                Reintentar
+              </button>
+            </div>
+          `;
+          elements.emptyState.style.display = 'block';
+        }
+      } finally {
+        render.hideLoading();
+      }
+    },
+
+    selectOrg(card) {
+      const org = JSON.parse(card.dataset.org.replace(/&#39;/g, "'"));
+      console.log('✅ Organización seleccionada:', org);
+      utils.saveOrg(org);
+      utils.redirect(CONFIG.REDIRECT.DASHBOARD);
+    },
+
+    openModal() {
+      elements.createModal.classList.add('active');
+      // Bloquea el scroll del fondo mientras el modal está visible
+      // Relación: `organizaciones/seleccionar.css` -> regla `body.modal-open`
+      document.body.classList.add('modal-open');
+      elements.orgName.focus();
+    },
+
+    closeModal() {
+      elements.createModal.classList.remove('active');
+      // Restaura el scroll del fondo al cerrar el modal
+      // Relación: `organizaciones/seleccionar.css` -> regla `body.modal-open`
+      document.body.classList.remove('modal-open');
+      elements.createOrgForm.reset();
+    },
+
+    toggleUserMenu() {
+      elements.userDropdown.classList.toggle('active');
+    },
+
+    closeUserMenu(e) {
+      if (!elements.userMenuBtn?.contains(e.target) && !elements.userDropdown?.contains(e.target)) {
+        elements.userDropdown?.classList.remove('active');
+      }
+    },
+
+    async submitOrg(e) {
+      e.preventDefault();
+
+      const name = elements.orgName.value.trim();
+      if (!name) {
+        elements.orgName.focus();
+        return;
+      }
+
+      elements.submitOrgBtn.classList.add('loading');
+      elements.submitOrgBtn.disabled = true;
+
+      try {
+        const data = {
+          nombre: name,
+          tipo: elements.orgType?.value || 'pyme',
+          rfc: elements.orgRfc?.value.trim() || null,
+          correo: elements.orgEmail?.value.trim() || null
+        };
+
+        await api.createOrganization(data);
+        this.closeModal();
+        await this.loadOrganizations();
+      } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+      } finally {
+        elements.submitOrgBtn.classList.remove('loading');
+        elements.submitOrgBtn.disabled = false;
+      }
+    },
+
+    logout() {
+      utils.logout();
+    }
+  };
+
+  function init() {
+    console.log('========== INIT SELECCIONAR ORG ==========');
+    
+    // Verificar token
+    const token = utils.getToken();
+    console.log('🔐 Token al iniciar:', token ? 'SÍ EXISTE' : 'NO EXISTE');
+    
+    if (!token) {
+      console.log('⚠️ Sin token, redirigiendo a login...');
+      utils.redirect(CONFIG.REDIRECT.LOGIN);
+      return;
+    }
+
+    // Event listeners
+    elements.createOrgBtn?.addEventListener('click', () => handlers.openModal());
+    elements.closeModalBtn?.addEventListener('click', () => handlers.closeModal());
+    elements.cancelModalBtn?.addEventListener('click', () => handlers.closeModal());
+    elements.createOrgForm?.addEventListener('submit', (e) => handlers.submitOrg(e));
+    elements.userMenuBtn?.addEventListener('click', () => handlers.toggleUserMenu());
+    elements.logoutBtn?.addEventListener('click', () => handlers.logout());
+    document.addEventListener('click', (e) => handlers.closeUserMenu(e));
+
+    elements.createModal?.addEventListener('click', (e) => {
+      if (e.target === elements.createModal) {
+        handlers.closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        handlers.closeModal();
+        elements.userDropdown?.classList.remove('active');
+      }
+    });
+
+    // Cargar organizaciones
+    handlers.loadOrganizations();
+
+    console.log('🚀 TRUNO Organizaciones DEBUG initialized');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
