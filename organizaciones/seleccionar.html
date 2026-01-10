@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a0e14">
   <title>Seleccionar Empresa | TRUNO</title>
-  <!-- Bootstrap 5 (última versión estable) - Utilidades responsive.
-       Este módulo sigue usando estilos propios en seleccionar.css. -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="seleccionar.css">
 </head>
 <body>
@@ -26,8 +23,7 @@
       </div>
       
       <div class="user-menu">
-        <!-- Menú de usuario (dropdown custom controlado por seleccionar.js) -->
-        <button class="user-btn" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="userDropdown" type="button">
+        <button class="user-btn" id="userMenuBtn">
           <div class="user-avatar" id="userAvatar">DL</div>
           <span class="user-name" id="userName">Diego León</span>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,8 +31,8 @@
           </svg>
         </button>
         
-        <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Menú de usuario">
-          <button class="dropdown-item" id="profileBtn" role="menuitem" type="button">
+        <div class="user-dropdown" id="userDropdown">
+          <button class="dropdown-item" id="profileBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
@@ -44,7 +40,7 @@
             Mi Perfil
           </button>
           <div class="dropdown-divider"></div>
-          <button class="dropdown-item danger" id="logoutBtn" role="menuitem" type="button">
+          <button class="dropdown-item danger" id="logoutBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
@@ -69,7 +65,7 @@
         </div>
 
         <!-- Organizations List -->
-        <div class="org-list" id="orgList" style="display: none;" aria-live="polite"></div>
+        <div class="org-list" id="orgList" style="display: none;"></div>
 
         <!-- Empty State -->
         <div class="org-empty" id="emptyState" style="display: none;">
@@ -85,7 +81,7 @@
         </div>
 
         <!-- Create New Button -->
-        <button class="org-create" id="createOrgBtn" type="button" aria-haspopup="dialog" aria-controls="createModal">
+        <button class="org-create" id="createOrgBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -97,14 +93,11 @@
   </div>
 
   <!-- Modal: Create Organization -->
-  <!-- Modal custom (no Bootstrap Modal). Controlado por seleccionar.js -->
-  <div class="modal-overlay truno-modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createOrgTitle" aria-hidden="true" tabindex="-1">
-    <!-- NOTA: Bootstrap también usa la clase .modal.
-         Agregamos .truno-modal para evitar conflictos sin romper tu HTML existente. -->
-    <div class="modal truno-modal">
+  <div class="modal-overlay" id="createModal">
+    <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title" id="createOrgTitle">Nueva Empresa</h2>
-        <button class="modal-close" id="closeModalBtn" type="button" aria-label="Cerrar modal">
+        <h2 class="modal-title">Nueva Empresa</h2>
+        <button class="modal-close" id="closeModalBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -114,12 +107,9 @@
       
       <form id="createOrgForm">
         <div class="modal-body">
-          <!-- Contenedor de errores (se muestra desde seleccionar.js en vez de alert()) -->
-          <div class="form-alert" id="createOrgError" role="alert" aria-live="assertive" style="display:none;"></div>
-
           <div class="form-group">
             <label class="form-label" for="orgName">Nombre de la Empresa *</label>
-            <input type="text" id="orgName" name="orgName" class="form-input" placeholder="Ej. Mi Empresa S.A." required autocomplete="organization" autocapitalize="words" spellcheck="false">
+            <input type="text" id="orgName" class="form-input" placeholder="Ej. Mi Empresa S.A." required>
           </div>
           
           <div class="form-group">
@@ -132,14 +122,12 @@
           
           <div class="form-group">
             <label class="form-label" for="orgRfc">RFC (Opcional)</label>
-            <input type="text" id="orgRfc" name="orgRfc" class="form-input" placeholder="Ej. XAXX010101000" maxlength="13" autocapitalize="characters" spellcheck="false" aria-describedby="orgRfcHelp">
-            <div class="form-hint" id="orgRfcHelp">Si lo tienes, ingrésalo en mayúsculas (12–13 caracteres).</div>
+            <input type="text" id="orgRfc" class="form-input" placeholder="Ej. XAXX010101000" maxlength="13">
           </div>
           
           <div class="form-group">
             <label class="form-label" for="orgEmail">Correo Empresarial (Opcional)</label>
-            <input type="email" id="orgEmail" name="orgEmail" class="form-input" placeholder="Ej. contacto@empresa.com" autocomplete="email" inputmode="email" aria-describedby="orgEmailHelp">
-            <div class="form-hint" id="orgEmailHelp">Útil para notificaciones y acceso a reportes.</div>
+            <input type="email" id="orgEmail" class="form-input" placeholder="Ej. contacto@empresa.com">
           </div>
         </div>
         
@@ -155,11 +143,6 @@
     </div>
   </div>
 
-  <!-- Toast container (feedback no bloqueante: éxito/error) - controlado por seleccionar.js -->
-  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
-  <!-- Bootstrap bundle (opcional: utilidades/componentes). Este módulo usa modal custom. -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="seleccionar.js"></script>
 </body>
 </html>
