@@ -497,6 +497,49 @@ button {
   transform: scale(1);
 }
 
+/* HARDENING:
+   Bootstrap define estilos para .modal (incluyendo display:none).
+   Para evitar que se "coma" nuestro modal custom, usamos clases propias
+   agregadas en seleccionar.html: .truno-modal-overlay / .truno-modal */
+.truno-modal-overlay {
+  /* Mismas reglas base que .modal-overlay, pero con nombre único */
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+  z-index: 1000;
+}
+
+.truno-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.truno-modal {
+  /* Forzamos display para ganarle a Bootstrap */
+  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  max-width: 480px;
+  max-height: min(90vh, 90dvh);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform var(--transition-base);
+}
+
+.truno-modal-overlay.active .truno-modal {
+  transform: scale(1);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -741,6 +784,19 @@ button {
     width: 100%;
     border-radius: 16px 16px 0 0;
     /* 92dvh evita el bug de barras del navegador móvil */
+    max-height: min(92vh, 92dvh);
+  }
+
+  /* Versión endurecida (clase única, por si Bootstrap pisa .modal) */
+  .truno-modal-overlay {
+    align-items: flex-end;
+    padding: var(--spacing-md);
+  }
+
+  .truno-modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
     max-height: min(92vh, 92dvh);
   }
 
