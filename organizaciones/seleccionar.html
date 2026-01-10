@@ -98,8 +98,10 @@
 
   <!-- Modal: Create Organization -->
   <!-- Modal custom (no Bootstrap Modal). Controlado por seleccionar.js -->
-  <div class="modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createOrgTitle" aria-hidden="true" tabindex="-1">
-    <div class="modal">
+  <div class="modal-overlay truno-modal-overlay" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createOrgTitle" aria-hidden="true" tabindex="-1">
+    <!-- NOTA: Bootstrap también usa la clase .modal.
+         Agregamos .truno-modal para evitar conflictos sin romper tu HTML existente. -->
+    <div class="modal truno-modal">
       <div class="modal-header">
         <h2 class="modal-title" id="createOrgTitle">Nueva Empresa</h2>
         <button class="modal-close" id="closeModalBtn" type="button" aria-label="Cerrar modal">
