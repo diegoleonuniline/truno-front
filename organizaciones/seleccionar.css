@@ -543,6 +543,27 @@ button {
   margin-bottom: var(--spacing-lg);
 }
 
+.form-hint {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Alert inline para errores del modal (renderizado por seleccionar.js) */
+.form-alert {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: var(--radius-md);
+  color: #fecaca;
+}
+
+.form-input.invalid {
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
 .form-label {
   display: block;
   font-size: var(--font-size-sm);
@@ -645,10 +666,25 @@ button {
 @media (max-width: 480px) {
   .org-header {
     padding: var(--spacing-sm) var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
   }
   
+  .org-header-left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .user-btn {
+    max-width: 100%;
+  }
+
   .user-name {
     display: none;
+  }
+
+  .user-dropdown {
+    max-width: calc(100vw - 24px);
   }
   
   .org-main {
@@ -681,11 +717,105 @@ button {
   .modal-footer {
     flex-direction: column;
   }
+
+  /* Modal más cómodo en móvil: tipo bottom-sheet */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: var(--spacing-md);
+  }
+
+  .modal {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+  }
 }
 
 @media (min-width: 768px) {
   .org-main {
     padding: var(--spacing-2xl);
+  }
+}
+
+/* Desktop: más ancho y lista en 2 columnas.
+   Nota: se usa !important para sobreescribir el inline display:flex que setea seleccionar.js. */
+@media (min-width: 992px) {
+  .org-content {
+    max-width: 920px;
+  }
+
+  .org-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .org-card {
+    height: 100%;
+  }
+}
+
+/* === TOASTS (feedback) ===
+   Contenedor definido en seleccionar.html y controlado por seleccionar.js */
+.toast-container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--spacing-md);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1100;
+}
+
+.toast {
+  pointer-events: auto;
+  width: min(520px, calc(100vw - 32px));
+  background: rgba(17, 24, 39, 0.92);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-md);
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  transform: translateY(10px);
+  opacity: 0;
+  animation: toastIn 180ms ease forwards;
+}
+
+.toast--success {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.toast--error {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.toast-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.toast-message {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+@keyframes toastIn {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastOut {
+  to {
+    transform: translateY(10px);
+    opacity: 0;
   }
 }
 
