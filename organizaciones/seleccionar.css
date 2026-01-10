@@ -709,10 +709,31 @@ body.modal-open {
   flex-direction: column;
 }
 
+/* Importante: el contenido real del modal está dentro del <form>.
+   Si el form no es flex, el .modal-body NO puede crecer/encogerse y el footer
+   puede quedar fuera del viewport sin scroll. */
+.modal > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* habilita overflow en descendientes dentro de flex */
+}
+
 .modal-body {
   flex: 1;
   min-height: 0; /* Necesario para que overflow funcione en flex children */
   -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+}
+
+.modal-header,
+.modal-footer {
+  flex: 0 0 auto;
+}
+
+/* Fallback: si el modal aún excede el alto disponible (teclado/viewport raro),
+   permite scrollear el overlay para alcanzar el footer. */
+.modal-overlay.active {
+  overflow-y: auto;
 }
 
 /* Breakpoint tipo Bootstrap: <= 576px */
@@ -739,6 +760,11 @@ body.modal-open {
     max-width: 100%;
     max-height: 92dvh; /* Alto dinámico (mejor con teclado en móviles modernos) */
     border-radius: 18px;
+  }
+
+  /* En móviles, alinea arriba para que el scroll (overlay/body) sea más natural */
+  .modal-overlay {
+    align-items: flex-start;
   }
 
   .modal-header,
