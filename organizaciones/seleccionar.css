@@ -479,11 +479,16 @@ button {
 .modal {
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
+  /* IMPORTANTE (responsive):
+     - Convertimos el modal en contenedor flex para que el footer NO se corte
+     - El scroll vive en .modal-body (no en toda la página) */
+  max-height: min(90vh, 90dvh);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   transform: scale(0.95);
   transition: transform var(--transition-base);
 }
@@ -528,14 +533,21 @@ button {
 
 .modal-body {
   padding: var(--spacing-lg);
+  /* El body del modal es el área scrolleable */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
 }
 
 .modal-footer {
   display: flex;
   gap: var(--spacing-md);
+  /* Footer siempre visible (incluye safe-area para móviles) */
   padding: var(--spacing-lg);
+  padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border-color);
+  flex: 0 0 auto;
+  background: var(--bg-card);
 }
 
 /* === FORM === */
@@ -728,7 +740,14 @@ button {
     max-width: 100%;
     width: 100%;
     border-radius: 16px 16px 0 0;
-    max-height: 92vh;
+    /* 92dvh evita el bug de barras del navegador móvil */
+    max-height: min(92vh, 92dvh);
+  }
+
+  /* Botones del footer: cómodos para touch */
+  .modal-footer .btn {
+    height: 52px;
+    border-radius: 14px;
   }
 }
 
