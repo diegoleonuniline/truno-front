@@ -689,6 +689,85 @@ button {
   }
 }
 
+/* ============================================
+   RESPONSIVE (Mejoras) - Organizaciones
+   - Relación: `organizaciones/seleccionar.html` (modal #createModal)
+   - Relación: `organizaciones/seleccionar.js` (agrega/quita .modal-open en <body>)
+   - Objetivo: evitar overflow horizontal, mejorar modal en móviles (teclado, alto dinámico)
+   ============================================ */
+
+/* Evita scroll del fondo cuando el modal está abierto (se activa desde seleccionar.js) */
+body.modal-open {
+  overflow: hidden;
+  /* Evita "jump" por scrollbar en algunos navegadores */
+  overscroll-behavior: contain;
+}
+
+/* Modal: usa layout flex para que el body sea el área scrolleable dentro del alto máximo */
+.modal {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  flex: 1;
+  min-height: 0; /* Necesario para que overflow funcione en flex children */
+  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+}
+
+/* Breakpoint tipo Bootstrap: <= 576px */
+@media (max-width: 576px) {
+  /* Header: permite wrap para evitar que se salga en pantallas pequeñas */
+  .org-header {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  /* Evita padding excesivo que reduce el área útil */
+  .org-main {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  /* Overlay con padding reducido + respeta safe-areas en móviles */
+  .modal-overlay {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
+  }
+
+  /* Modal más ancho y anclado visualmente para móviles */
+  .modal {
+    max-width: 100%;
+    max-height: 92dvh; /* Alto dinámico (mejor con teclado en móviles modernos) */
+    border-radius: 18px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--spacing-md);
+  }
+
+  /* Botones siempre a ancho completo cuando el footer está en columna */
+  .modal-footer .btn {
+    width: 100%;
+  }
+}
+
+/* Breakpoint pequeño: <= 360px (muy compacto) */
+@media (max-width: 360px) {
+  /* Reduce aún más padding para que quepa todo */
+  .modal-overlay {
+    padding: var(--spacing-sm);
+    padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--spacing-sm);
+  }
+}
+
 /* === ANIMATIONS === */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
