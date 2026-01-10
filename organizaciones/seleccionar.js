@@ -309,12 +309,18 @@
     },
 
     openModal() {
+      // DEBUG/Robustez: asegura que el overlay sea visible aunque otro CSS lo esconda.
+      // Relacionado con seleccionar.html: #createModal
       // Cierra menú de usuario si estaba abierto (evita overlays simultáneos)
       elements.userDropdown?.classList.remove('active');
       elements.userMenuBtn?.setAttribute?.('aria-expanded', 'false');
 
       elements.createModal.classList.add('active');
       elements.createModal.setAttribute('aria-hidden', 'false');
+      // Fuerza visibilidad por inline styles (se limpia en closeModal)
+      elements.createModal.style.opacity = '1';
+      elements.createModal.style.visibility = 'visible';
+      elements.createModal.style.display = 'flex';
       document.body.style.overflow = 'hidden'; // evita scroll de fondo (móvil)
       ui.clearCreateError();
       elements.orgName.focus();
@@ -323,6 +329,10 @@
     closeModal() {
       elements.createModal.classList.remove('active');
       elements.createModal.setAttribute('aria-hidden', 'true');
+      // Limpia forzados de openModal
+      elements.createModal.style.opacity = '';
+      elements.createModal.style.visibility = '';
+      elements.createModal.style.display = '';
       elements.createOrgForm.reset();
       document.body.style.overflow = ''; // restaura scroll
       ui.clearCreateError();
