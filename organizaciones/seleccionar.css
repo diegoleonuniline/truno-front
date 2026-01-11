@@ -529,6 +529,15 @@ button {
 .modal-body {
   padding: var(--spacing-lg);
   overflow-y: auto;
+  /* Oculta la barra de scroll pero mantiene la funcionalidad de scroll */
+  /* Relación: `organizaciones/seleccionar.html` (contenido scrolleable del modal) */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge */
+}
+
+/* Oculta scrollbar en navegadores WebKit (Chrome, Safari, Edge) */
+.modal-body::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-footer {
@@ -536,6 +545,8 @@ button {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-top: 1px solid var(--border-color);
+  /* Relación: `organizaciones/seleccionar.html` (contenedor de botones Cancelar y Crear Empresa) */
+  background: var(--bg-card);
 }
 
 /* === FORM === */
@@ -582,43 +593,68 @@ button {
 }
 
 /* === BUTTONS === */
+/* Estilos base para botones - Relación: `organizaciones/seleccionar.html` (botones del modal-footer) */
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  height: 48px;
+  height: 44px;
   padding: 0 var(--spacing-lg);
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);
   font-weight: 600;
   transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  position: relative;
   flex: 1;
+  min-width: 0;
 }
 
 .btn-primary {
   background: var(--brand-primary);
   color: var(--text-primary);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
 .btn-primary:hover {
   background: var(--brand-primary-hover);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
 }
 
 .btn-primary:disabled {
   background: var(--bg-tertiary);
   color: var(--text-muted);
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .btn-secondary {
   background: var(--bg-input);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn-secondary:hover {
   background: var(--bg-hover);
+  border-color: var(--border-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn.loading {
@@ -723,6 +759,15 @@ body.modal-open {
   flex: 1;
   min-height: 0; /* Necesario para que overflow funcione en flex children */
   -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+  /* Oculta la barra de scroll pero mantiene la funcionalidad de scroll */
+  /* Relación: `organizaciones/seleccionar.html` (contenido scrolleable del modal) */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge */
+}
+
+/* Oculta scrollbar en navegadores WebKit (Chrome, Safari, Edge) */
+.modal-body::-webkit-scrollbar {
+  display: none;
 }
 
 .modal-header,
