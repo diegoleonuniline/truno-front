@@ -1,5 +1,6 @@
 /**
- * TRUNO - Contactos Module
+ * TRUNO - Contactos Module v2
+ * Mobile-First optimizado
  */
 
 (function() {
@@ -13,48 +14,52 @@
     REDIRECT: { LOGIN: '/login/login.html', SELECT_ORG: '/organizaciones/seleccionar.html' }
   };
 
+  const $ = id => document.getElementById(id);
+
   const elements = {
-    sidebar: document.getElementById('sidebar'),
-    sidebarOverlay: document.getElementById('sidebarOverlay'),
-    menuToggle: document.getElementById('menuToggle'),
-    orgSwitcher: document.getElementById('orgSwitcher'),
-    orgName: document.getElementById('orgName'),
-    orgPlan: document.getElementById('orgPlan'),
-    userAvatar: document.getElementById('userAvatar'),
-    totalContactos: document.getElementById('totalContactos'),
-    totalClientes: document.getElementById('totalClientes'),
-    totalProveedores: document.getElementById('totalProveedores'),
-    totalAmbos: document.getElementById('totalAmbos'),
-    searchInput: document.getElementById('searchInput'),
-    filterType: document.getElementById('filterType'),
-    contactsGrid: document.getElementById('contactsGrid'),
-    tableContainer: document.getElementById('tableContainer'),
-    tableBody: document.getElementById('tableBody'),
-    viewToggle: document.getElementById('viewToggle'),
-    emptyState: document.getElementById('emptyState'),
-    addContactBtn: document.getElementById('addContactBtn'),
-    addFirstContactBtn: document.getElementById('addFirstContactBtn'),
-    fabBtn: document.getElementById('fabBtn'),
-    contactModal: document.getElementById('contactModal'),
-    contactForm: document.getElementById('contactForm'),
-    modalTitle: document.getElementById('modalTitle'),
-    closeModal: document.getElementById('closeModal'),
-    cancelModal: document.getElementById('cancelModal'),
-    submitModal: document.getElementById('submitModal'),
-    nombre: document.getElementById('nombre'),
-    tipo: document.getElementById('tipo'),
-    email: document.getElementById('email'),
-    telefono: document.getElementById('telefono'),
-    empresa: document.getElementById('empresa'),
-    rfc: document.getElementById('rfc'),
-    codigoPostal: document.getElementById('codigoPostal'),
-    direccion: document.getElementById('direccion'),
-    notas: document.getElementById('notas'),
-    deleteModal: document.getElementById('deleteModal'),
-    closeDeleteModal: document.getElementById('closeDeleteModal'),
-    cancelDeleteModal: document.getElementById('cancelDeleteModal'),
-    confirmDelete: document.getElementById('confirmDelete'),
-    deleteContactName: document.getElementById('deleteContactName')
+    sidebar: $('sidebar'),
+    sidebarOverlay: $('sidebarOverlay'),
+    sidebarClose: $('sidebarClose'),
+    menuToggle: $('menuToggle'),
+    orgSwitcher: $('orgSwitcher'),
+    orgName: $('orgName'),
+    orgPlan: $('orgPlan'),
+    userAvatar: $('userAvatar'),
+    totalContactos: $('totalContactos'),
+    totalClientes: $('totalClientes'),
+    totalProveedores: $('totalProveedores'),
+    totalAmbos: $('totalAmbos'),
+    searchInput: $('searchInput'),
+    filterType: $('filterType'),
+    contactsGrid: $('contactsGrid'),
+    tableContainer: $('tableContainer'),
+    tableBody: $('tableBody'),
+    viewToggle: $('viewToggle'),
+    emptyState: $('emptyState'),
+    addContactBtn: $('addContactBtn'),
+    addFirstContactBtn: $('addFirstContactBtn'),
+    fabBtn: $('fabBtn'),
+    contactModal: $('contactModal'),
+    contactForm: $('contactForm'),
+    modalTitle: $('modalTitle'),
+    closeModal: $('closeModal'),
+    cancelModal: $('cancelModal'),
+    submitModal: $('submitModal'),
+    nombre: $('nombre'),
+    tipo: $('tipo'),
+    email: $('email'),
+    telefono: $('telefono'),
+    empresa: $('empresa'),
+    rfc: $('rfc'),
+    codigoPostal: $('codigoPostal'),
+    direccion: $('direccion'),
+    notas: $('notas'),
+    deleteModal: $('deleteModal'),
+    closeDeleteModal: $('closeDeleteModal'),
+    cancelDeleteModal: $('cancelDeleteModal'),
+    confirmDelete: $('confirmDelete'),
+    deleteContactName: $('deleteContactName'),
+    toastContainer: $('toastContainer')
   };
 
   let state = {
@@ -70,6 +75,27 @@
     redirect: (url) => window.location.href = url,
     getInitials(n, a) { return (n?.charAt(0).toUpperCase() || '') + (a?.charAt(0).toUpperCase() || n?.charAt(1)?.toUpperCase() || '') || '??'; },
     debounce(fn, delay) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+  };
+
+  const toast = {
+    show(message, type = 'info') {
+      const container = elements.toastContainer;
+      if (!container) return;
+      const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="toast-message">${message}</div><button class="toast-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      container.appendChild(t);
+      setTimeout(() => t.classList.add('show'), 10);
+      const close = () => { t.classList.remove('show'); t.classList.add('hide'); setTimeout(() => t.remove(), 300); };
+      t.querySelector('.toast-close').addEventListener('click', close);
+      setTimeout(close, 4000);
+    }
   };
 
   const api = {
@@ -117,7 +143,7 @@
         elements.tableContainer.style.display = 'block';
         this.contactosTable();
       } else {
-        elements.contactsGrid.style.display = 'grid';
+        elements.contactsGrid.style.display = '';
         elements.tableContainer.style.display = 'none';
         this.contactosCards();
       }
@@ -185,7 +211,7 @@
         state.allContactos = data.contactos || [];
         this.applyLocalFilters();
         render.stats();
-      } catch (e) { console.error('Error:', e); }
+      } catch (e) { console.error('Error:', e); toast.show('Error cargando datos', 'error'); }
     },
     applyLocalFilters() {
       let filtered = [...state.allContactos];
@@ -211,11 +237,16 @@
       else if (action === 'delete') this.openDeleteModal(c);
     },
     openCreateModal() {
-      state.editingId = null; elements.modalTitle.textContent = 'Nuevo Contacto'; elements.contactForm.reset();
-      elements.tipo.value = 'cliente'; elements.contactModal.classList.add('active'); elements.nombre.focus();
+      state.editingId = null;
+      elements.modalTitle.textContent = 'Nuevo Contacto';
+      elements.contactForm.reset();
+      elements.tipo.value = 'cliente';
+      elements.contactModal.classList.add('active');
+      setTimeout(() => elements.nombre.focus(), 100);
     },
     openEditModal(c) {
-      state.editingId = c.id; elements.modalTitle.textContent = 'Editar Contacto';
+      state.editingId = c.id;
+      elements.modalTitle.textContent = 'Editar Contacto';
       elements.nombre.value = c.nombre || '';
       elements.tipo.value = c.tipo || 'cliente';
       elements.email.value = c.email || '';
@@ -245,15 +276,16 @@
       try {
         if (state.editingId) await api.updateContacto(state.editingId, d); else await api.createContacto(d);
         this.closeContactModal(); await this.loadData();
-      } catch (e) { alert(e.message); }
+        toast.show(state.editingId ? 'Contacto actualizado' : 'Contacto creado', 'success');
+      } catch (e) { toast.show(e.message, 'error'); }
       finally { elements.submitModal.classList.remove('loading'); elements.submitModal.disabled = false; }
     },
     openDeleteModal(c) { state.deletingId = c.id; elements.deleteContactName.textContent = c.nombre; elements.deleteModal.classList.add('active'); },
     closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
     async confirmDelete() {
       elements.confirmDelete.classList.add('loading'); elements.confirmDelete.disabled = true;
-      try { await api.deleteContacto(state.deletingId); this.closeDeleteModal(); await this.loadData(); }
-      catch (e) { alert(e.message); }
+      try { await api.deleteContacto(state.deletingId); this.closeDeleteModal(); await this.loadData(); toast.show('Contacto eliminado', 'success'); }
+      catch (e) { toast.show(e.message, 'error'); }
       finally { elements.confirmDelete.classList.remove('loading'); elements.confirmDelete.disabled = false; }
     },
     applyFilters() {
@@ -264,7 +296,7 @@
     switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect(CONFIG.REDIRECT.SELECT_ORG); },
     switchView(view) {
       state.currentView = view;
-      elements.viewToggle.querySelectorAll('.view-btn').forEach(btn => {
+      elements.viewToggle?.querySelectorAll('.view-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
       });
       render.contactos();
@@ -276,33 +308,49 @@
     state.org = utils.getOrg(); if (!state.org) { utils.redirect(CONFIG.REDIRECT.SELECT_ORG); return; }
     state.user = utils.getUser(); render.user(); render.org();
 
-    elements.menuToggle.addEventListener('click', () => handlers.toggleSidebar());
-    elements.sidebarOverlay.addEventListener('click', () => handlers.closeSidebar());
-    elements.orgSwitcher.addEventListener('click', () => handlers.switchOrg());
-    elements.addContactBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.addFirstContactBtn.addEventListener('click', () => handlers.openCreateModal());
-    elements.fabBtn.addEventListener('click', () => handlers.openCreateModal());
+    // Sidebar
+    elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
+    elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
+
+    // Add buttons
+    elements.addContactBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstContactBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn?.addEventListener('click', () => handlers.openCreateModal());
 
     // View toggle
     elements.viewToggle?.querySelectorAll('.view-btn').forEach(btn => {
       btn.addEventListener('click', () => handlers.switchView(btn.dataset.view));
     });
 
-    elements.closeModal.addEventListener('click', () => handlers.closeContactModal());
-    elements.cancelModal.addEventListener('click', () => handlers.closeContactModal());
-    elements.contactForm.addEventListener('submit', e => handlers.submitContact(e));
-    elements.contactModal.addEventListener('click', e => { if (e.target === elements.contactModal) handlers.closeContactModal(); });
-    elements.closeDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.cancelDeleteModal.addEventListener('click', () => handlers.closeDeleteModal());
-    elements.confirmDelete.addEventListener('click', () => handlers.confirmDelete());
-    elements.deleteModal.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
+    // Contact modal
+    elements.closeModal?.addEventListener('click', () => handlers.closeContactModal());
+    elements.cancelModal?.addEventListener('click', () => handlers.closeContactModal());
+    elements.contactForm?.addEventListener('submit', e => handlers.submitContact(e));
+    elements.contactModal?.addEventListener('click', e => { if (e.target === elements.contactModal) handlers.closeContactModal(); });
+
+    // Delete modal
+    elements.closeDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
+
+    // Filters
     const df = utils.debounce(() => handlers.applyFilters(), 300);
-    elements.searchInput.addEventListener('input', df);
-    elements.filterType.addEventListener('change', () => handlers.applyFilters());
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { handlers.closeContactModal(); handlers.closeDeleteModal(); } });
+    elements.searchInput?.addEventListener('input', df);
+    elements.filterType?.addEventListener('change', () => handlers.applyFilters());
+
+    // ESC key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        handlers.closeContactModal();
+        handlers.closeDeleteModal();
+      }
+    });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Contactos initialized');
+    console.log('🚀 TRUNO Contactos v2 - Mobile First');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
