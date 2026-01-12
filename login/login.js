@@ -6,18 +6,27 @@
 (function() {
   'use strict';
 
-  const CONFIG = {
-    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
+  // Usar configuración centralizada desde config.js
+  // Relacionado con: config.js (configuración global)
+  const CONFIG = window.TRUNO_CONFIG || {
+    API_URL: 'http://localhost:3000',
     STORAGE_KEYS: {
       TOKEN: 'truno_token',
       USER: 'truno_user',
       BIOMETRIC_EMAIL: 'truno_biometric_email'
     },
     REDIRECT: {
-      SUCCESS: '/truno-front/organizaciones/seleccionar.html',
-      DASHBOARD: '/truno-front/dashboard/index.html'
+      SUCCESS: '/organizaciones/seleccionar.html',
+      DASHBOARD: '/dashboard/index.html'
     }
   };
+
+  // Validar que CONFIG.REDIRECT.SUCCESS existe
+  if (!CONFIG.REDIRECT || !CONFIG.REDIRECT.SUCCESS) {
+    console.warn('⚠️ CONFIG.REDIRECT.SUCCESS no está definido, usando valor por defecto');
+    CONFIG.REDIRECT = CONFIG.REDIRECT || {};
+    CONFIG.REDIRECT.SUCCESS = CONFIG.REDIRECT.SUCCESS || '/organizaciones/seleccionar.html';
+  }
 
   const elements = {
     form: document.getElementById('loginForm'),
@@ -64,6 +73,15 @@
       return false;
     },
     redirect(url) {
+      // Validar que la URL existe antes de redirigir
+      // Relacionado con: config.js (configuración de rutas)
+      if (!url || url === 'undefined' || url.includes('undefined')) {
+        console.error('❌ Error: URL de redirección inválida:', url);
+        console.error('   CONFIG.REDIRECT:', CONFIG.REDIRECT);
+        // Fallback a la ruta por defecto
+        url = '/organizaciones/seleccionar.html';
+      }
+      console.log('🔄 Redirigiendo a:', url);
       window.location.href = url;
     },
     bufferToBase64url(buffer) {

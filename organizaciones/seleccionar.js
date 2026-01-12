@@ -5,16 +5,18 @@
 (function() {
   'use strict';
 
-  const CONFIG = {
-    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
+  // Usar configuración centralizada desde config.js
+  // Relacionado con: config.js (configuración global)
+  const CONFIG = window.TRUNO_CONFIG || {
+    API_URL: 'http://localhost:3000',
     STORAGE_KEYS: {
       TOKEN: 'truno_token',
       USER: 'truno_user',
       ORG: 'truno_org'
     },
     REDIRECT: {
-      LOGIN: '/truno-front/login/login.html',
-      DASHBOARD: '/truno-front/dashboard/index.html'
+      LOGIN: '/login/login.html',
+      DASHBOARD: '/dashboard/index.html'
     }
   };
 

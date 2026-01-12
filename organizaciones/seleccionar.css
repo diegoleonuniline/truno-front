@@ -543,7 +543,7 @@ button {
 .modal-footer {
   display: flex;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg); /* Padding más generoso en todas las direcciones */
   border-top: 1px solid var(--border-color);
   /* Relación: `organizaciones/seleccionar.html` (contenedor de botones Cancelar y Crear Empresa) */
   background: var(--bg-card);
@@ -599,35 +599,48 @@ button {
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  height: 44px;
-  padding: 0 var(--spacing-lg);
+  min-height: 56px; /* Altura mínima más robusta */
+  height: auto; /* Permite que el botón crezca según el contenido */
+  padding: 14px 28px; /* Padding vertical y horizontal más generoso */
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);
   font-weight: 600;
-  transition: all var(--transition-fast);
+  line-height: 1.5;
+  transition: all var(--transition-base);
   cursor: pointer;
   border: none;
   outline: none;
   position: relative;
   flex: 1;
-  min-width: 0;
+  min-width: 120px; /* Ancho mínimo para evitar botones demasiado estrechos */
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: nowrap; /* Evita que el texto se divida en múltiples líneas */
 }
 
+/* Botón primario - Estilo sólido y prominente */
 .btn-primary {
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%); /* Gradiente para más profundidad */
   color: var(--text-primary);
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.3); /* Borde sutil para definición */
 }
 
 .btn-primary:hover {
-  background: var(--brand-primary-hover);
-  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--brand-primary-hover) 0%, var(--brand-primary) 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.5);
 }
 
 .btn-primary:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .btn-primary:disabled {
@@ -636,25 +649,33 @@ button {
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+  border-color: var(--border-color);
+  opacity: 0.6;
 }
 
+/* Botón secundario - Estilo sólido con borde definido */
 .btn-secondary {
-  background: var(--bg-input);
+  background: var(--bg-tertiary); /* Fondo más sólido que bg-input */
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--border-color); /* Borde más grueso para mejor definición */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:hover {
   background: var(--bg-hover);
   border-color: var(--border-light);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
 }
 
 .btn-secondary:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: 2px;
 }
 
 .btn.loading {
@@ -716,12 +737,49 @@ button {
   
   .modal-footer {
     flex-direction: column;
+    gap: var(--spacing-sm); /* Espacio reducido entre botones en móviles */
+  }
+
+  /* Botones en móviles pequeños */
+  .modal-footer .btn {
+    width: 100%;
+    min-height: 50px;
+    padding: 13px 18px;
   }
 }
 
 @media (min-width: 768px) {
   .org-main {
     padding: var(--spacing-2xl);
+  }
+
+  /* Botones más grandes en tablets y desktop */
+  .modal-footer .btn {
+    min-height: 56px;
+    padding: 16px 32px;
+    font-size: var(--font-size-md);
+  }
+}
+
+/* Pantallas medianas: tablets en landscape */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .modal-footer .btn {
+    min-height: 54px;
+    padding: 15px 28px;
+  }
+}
+
+/* Pantallas grandes: desktop */
+@media (min-width: 1024px) {
+  .modal-footer {
+    gap: var(--spacing-lg); /* Más espacio entre botones en desktop */
+  }
+
+  .modal-footer .btn {
+    min-height: 58px;
+    padding: 16px 36px;
+    font-size: var(--font-size-md);
+    min-width: 140px; /* Ancho mínimo más generoso en desktop */
   }
 }
 
@@ -821,6 +879,9 @@ body.modal-open {
   /* Botones siempre a ancho completo cuando el footer está en columna */
   .modal-footer .btn {
     width: 100%;
+    min-height: 52px; /* Altura mínima robusta en móviles */
+    padding: 14px 20px; /* Padding ajustado para móviles */
+    font-size: var(--font-size-md);
   }
 }
 
@@ -836,6 +897,13 @@ body.modal-open {
   .modal-body,
   .modal-footer {
     padding: var(--spacing-sm);
+  }
+
+  /* Botones en pantallas muy pequeñas */
+  .modal-footer .btn {
+    min-height: 50px;
+    padding: 12px 16px;
+    font-size: var(--font-size-sm);
   }
 }
 

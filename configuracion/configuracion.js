@@ -6,10 +6,12 @@
 (function() {
   'use strict';
 
-  const CONFIG = {
-    API_URL: 'https://truno-9bbbe9cf4d78.herokuapp.com',
+  // Usar configuración centralizada desde config.js
+  // Relacionado con: config.js (configuración global)
+  const CONFIG = window.TRUNO_CONFIG || {
+    API_URL: 'http://localhost:3000',
     STORAGE_KEYS: { TOKEN: 'truno_token', USER: 'truno_user', ORG: 'truno_org', BIOMETRIC_EMAIL: 'truno_biometric_email' },
-    REDIRECT: { LOGIN: '/truno-front/login/login.html', SELECT_ORG: '/truno-front/organizaciones/seleccionar.html' }
+    REDIRECT: { LOGIN: '/login/login.html', SELECT_ORG: '/organizaciones/seleccionar.html' }
   };
 
   const $ = id => document.getElementById(id);
