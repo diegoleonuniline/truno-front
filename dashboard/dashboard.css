@@ -473,6 +473,12 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   color: var(--text-primary);
 }
 
+/* Danger (Cerrar Sesión) debe verse rojo siempre */
+/* Relacionado con: dropdown de usuario en dashboard/index.html (id logoutBtn) */
+.dropdown-item.danger {
+  color: var(--error);
+}
+
 .dropdown-item.danger:hover {
   background: var(--error-bg);
   color: var(--error);
