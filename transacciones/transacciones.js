@@ -69,6 +69,15 @@
     contactoId: $('contactoId'), 
     descripcion: $('descripcion'), 
     referencia: $('referencia'),
+    // Agregar en elements (después de referencia)
+plataformaOrigen: $('plataformaOrigen'),
+montoBruto: $('montoBruto'),
+tipoComision: $('tipoComision'),
+comisionValor: $('comisionValor'),
+monedaOrigen: $('monedaOrigen'),
+tipoCambio: $('tipoCambio'),
+montoNetoDisplay: $('montoNetoDisplay'),
+comisionSection: $('comisionSection'),
     addCuentaBtn: $('addCuentaBtn'),
     addContactoBtn: $('addContactoBtn'),
     addMetodoPagoBtn: $('addMetodoPagoBtn'),
@@ -727,20 +736,48 @@
       elements.txModal.classList.remove('active'); 
       state.editingId = null; 
     },
-    
-    async submitTx(e) {
-      e.preventDefault();
-      const d = {
-        tipo: elements.tipo.value,
-        cuenta_bancaria_id: elements.cuentaId.value,
-        monto: parseFloat(elements.monto.value),
-        fecha: elements.fecha.value,
-        moneda: elements.moneda.value || 'MXN',
-        metodo_pago: elements.metodoPago.value || null,
-        contacto_id: elements.contactoId.value || null,
-        descripcion: elements.descripcion.value.trim() || null,
-        referencia: elements.referencia.value.trim() || null
-      };
+    calcMontoNeto() {
+  const bruto = parseFloat(elements.montoBruto?.value) || 0;
+  const tipoComision = elements.tipoComision?.value || 'monto';
+  const valorComision = parseFloat(elements.comisionValor?.value) || 0;
+  const tc = parseFloat(elements.tipoCambio?.value) || 1;
+  
+  if (bruto > 0) {
+    let comision = tipoComision === 'porcentaje' ? bruto * valorComision / 100 : valorComision;
+    const neto = (bruto - comision) * tc;
+    elements.monto.value = neto.toFixed(2);
+    if (elements.montoNetoDisplay) {
+      elements.montoNetoDisplay.textContent = utils.formatMoney(neto);
+    }
+  }
+},
+
+toggleComisionSection() {
+  const show = elements.plataformaOrigen?.value?.trim();
+  if (elements.comisionSection) {
+    elements.comisionSection.style.display = show ? 'block' : 'none';
+  }
+},
+async submitTx(e) {
+  e.preventDefault();
+  const d = {
+    tipo: elements.tipo.value,
+    cuenta_bancaria_id: elements.cuentaId.value,
+    monto: parseFloat(elements.monto.value),
+    fecha: elements.fecha.value,
+    moneda: elements.moneda.value || 'MXN',
+    metodo_pago: elements.metodoPago.value || null,
+    contacto_id: elements.contactoId.value || null,
+    descripcion: elements.descripcion.value.trim() || null,
+    referencia: elements.referencia.value.trim() || null,
+    // Nuevos campos
+    plataforma_origen: elements.plataformaOrigen?.value?.trim() || null,
+    monto_bruto: parseFloat(elements.montoBruto?.value) || null,
+    tipo_comision: elements.tipoComision?.value || 'monto',
+    comision_valor: parseFloat(elements.comisionValor?.value) || 0,
+    moneda_origen: elements.monedaOrigen?.value || 'MXN',
+    tipo_cambio: parseFloat(elements.tipoCambio?.value) || 1
+  };
       elements.submitModal.disabled = true;
       try {
         if (state.editingId) await api.updateTransaccion(state.editingId, d);
@@ -1088,6 +1125,8 @@
     elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
     elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
+    
+
     // Botones crear
     elements.addTxBtn?.addEventListener('click', () => handlers.openCreateModal());
     elements.addFirstTxBtn?.addEventListener('click', () => handlers.openCreateModal());
@@ -1108,6 +1147,13 @@
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
 
+    // Después de los otros listeners del modal transacción
+elements.plataformaOrigen?.addEventListener('input', () => handlers.toggleComisionSection());
+elements.montoBruto?.addEventListener('input', () => handlers.calcMontoNeto());
+elements.tipoComision?.addEventListener('change', () => handlers.calcMontoNeto());
+elements.comisionValor?.addEventListener('input', () => handlers.calcMontoNeto());
+elements.tipoCambio?.addEventListener('input', () => handlers.calcMontoNeto());
+    
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
     elements.cancelContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
