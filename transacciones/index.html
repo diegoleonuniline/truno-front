@@ -116,17 +116,6 @@
             Catálogos
           </a>
         </div>
-        <div class="nav-section nav-section-mobile-only">
-          <div class="nav-section-title">Sesión</div>
-          <button class="nav-item nav-item-logout" id="sidebarLogoutBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Cerrar Sesión
-          </button>
-        </div>
       </nav>
       <div class="sidebar-org">
         <button class="org-switcher" id="orgSwitcher">
@@ -163,27 +152,6 @@
             <button class="user-btn" id="userMenuBtn">
               <div class="user-avatar" id="userAvatar">DL</div>
             </button>
-            <div class="user-dropdown" id="userDropdown">
-              <div class="dropdown-item" style="pointer-events:none; opacity:0.7;">
-                <span id="userFullName">Usuario</span>
-              </div>
-              <div class="dropdown-divider"></div>
-              <button class="dropdown-item" id="switchOrgBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 3h5v5"/><path d="M8 21H3v-5"/>
-                  <path d="M21 3l-9 9"/><path d="M3 21l9-9"/>
-                </svg>
-                Cambiar Empresa
-              </button>
-              <button class="dropdown-item danger" id="logoutBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Cerrar Sesión
-              </button>
-            </div>
           </div>
         </div>
       </header>
@@ -382,151 +350,156 @@
   </div>
 
   <!-- Modal: Nuevo/Editar Movimiento -->
-<!-- Modal: Nuevo/Editar Movimiento -->
-<div class="modal-overlay" id="txModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 class="modal-title" id="modalTitle">Nuevo Movimiento</h2>
-      <button class="modal-close" id="closeModal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    <form id="txForm">
-      <div class="modal-body">
-        <div class="form-section">
-          <div class="form-section-title">Información del Movimiento</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Tipo</label>
-              <select class="form-select" id="tipo" required>
-                <option value="egreso">💸 Egreso</option>
-                <option value="ingreso">💰 Ingreso</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label required">Cuenta Destino</label>
-              <div class="select-with-add">
-                <select class="form-select" id="cuentaId" required></select>
-                <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Monto Neto</label>
-              <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label required">Fecha</label>
-              <input type="date" class="form-input" id="fecha" required>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Moneda</label>
-              <div class="select-with-add">
-                <select class="form-select" id="moneda"></select>
-                <button type="button" class="btn-add" id="addMonedaBtn" title="Crear moneda">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Método de Pago</label>
-              <div class="select-with-add">
-                <select class="form-select" id="metodoPago"></select>
-                <button type="button" class="btn-add" id="addMetodoPagoBtn" title="Crear método">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Contacto</label>
-            <div class="select-with-add">
-              <select class="form-select" id="contactoId">
-                <option value="">-- Sin contacto --</option>
-              </select>
-              <button type="button" class="btn-add" id="addContactoBtn" title="Crear contacto">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Descripción</label>
-            <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Referencia</label>
-            <input type="text" class="form-input" id="referencia" placeholder="Número de referencia bancaria">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Plataforma Origen</label>
-            <input type="text" class="form-input" id="plataformaOrigen" placeholder="Ej: Stripe, PayPal, Binance">
-            <span class="form-hint">Si el dinero pasó por otra plataforma antes de llegar a la cuenta</span>
-          </div>
-        </div>
-
-        <div id="comisionSection" style="display:none;">
+  <div class="modal-overlay" id="txModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Nuevo Movimiento</h2>
+        <button class="modal-close" id="closeModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="txForm">
+        <div class="modal-body">
           <div class="form-section">
-            <div class="form-section-title">Comisión y Conversión</div>
+            <div class="form-section-title">Información del Movimiento</div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Monto Bruto</label>
-                <input type="number" class="form-input" id="montoBruto" placeholder="0.00" step="0.01" min="0">
+                <label class="form-label required">Tipo</label>
+                <select class="form-select" id="tipo" required>
+                  <option value="egreso">💸 Egreso</option>
+                  <option value="ingreso">💰 Ingreso</option>
+                </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Moneda Origen</label>
-                <select class="form-select" id="monedaOrigen">
-                  <option value="MXN">MXN</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
+                <label class="form-label required">Cuenta Destino</label>
+                <div class="select-with-add">
+                  <select class="form-select" id="cuentaId" required></select>
+                  <button type="button" class="btn-add" id="addCuentaBtn" title="Crear cuenta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Tipo Comisión</label>
-                <select class="form-select" id="tipoComision">
-                  <option value="monto">Monto fijo</option>
-                  <option value="porcentaje">Porcentaje</option>
-                </select>
+                <label class="form-label required">Monto Recibido</label>
+                <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
+                <span class="form-hint">Lo que realmente entró a tu cuenta</span>
               </div>
               <div class="form-group">
-                <label class="form-label">Valor Comisión</label>
-                <input type="number" class="form-input" id="comisionValor" placeholder="0" step="0.01" min="0">
+                <label class="form-label required">Fecha</label>
+                <input type="date" class="form-input" id="fecha" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Moneda</label>
+                <select class="form-select" id="moneda"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Método de Pago</label>
+                <div class="select-with-add">
+                  <select class="form-select" id="metodoPago"></select>
+                  <button type="button" class="btn-add" id="addMetodoPagoBtn" title="Crear método">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">Tipo de Cambio</label>
-              <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
-              <span class="form-hint">Cuántos pesos por cada unidad de moneda origen</span>
+              <label class="form-label">Contacto</label>
+              <div class="select-with-add">
+                <select class="form-select" id="contactoId">
+                  <option value="">-- Sin contacto --</option>
+                </select>
+                <button type="button" class="btn-add" id="addContactoBtn" title="Crear contacto">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div class="form-info-box">
-              <strong>Monto Neto Calculado:</strong> <span id="montoNetoDisplay">$0.00</span>
+            <div class="form-group">
+              <label class="form-label">Descripción</label>
+              <input type="text" class="form-input" id="descripcion" placeholder="¿Qué fue este movimiento?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Referencia</label>
+              <input type="text" class="form-input" id="referencia" placeholder="Número de referencia bancaria">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Plataforma de Pago</label>
+              <div class="select-with-add">
+                <select class="form-select" id="plataformaId">
+                  <option value="">-- Sin plataforma (pago directo) --</option>
+                </select>
+                <button type="button" class="btn-add" id="addPlataformaBtn" title="Crear plataforma">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
+              <span class="form-hint">Stripe, PayPal, MercadoPago, etc. (si cobra comisión)</span>
+            </div>
+          </div>
+
+          <!-- Sección Comisión - Solo aparece si selecciona plataforma -->
+          <div id="comisionSection" style="display:none;">
+            <div class="form-section">
+              <div class="form-section-title">💳 Desglose de Comisión</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Monto Total Pagado</label>
+                  <input type="number" class="form-input" id="montoTotal" placeholder="0.00" step="0.01" min="0">
+                  <span class="form-hint">Lo que pagó el cliente</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Monto Recibido</label>
+                  <input type="number" class="form-input" id="montoRecibido" placeholder="0.00" step="0.01" min="0">
+                  <span class="form-hint">Lo que llegó a ti</span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Moneda Origen</label>
+                  <select class="form-select" id="monedaOrigen">
+                    <option value="MXN">MXN</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tipo de Cambio</label>
+                  <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
+                  <span class="form-hint">Si aplica conversión</span>
+                </div>
+              </div>
+              <div class="form-info-box comision-result">
+                <div class="comision-row">
+                  <span>Comisión cobrada:</span>
+                  <strong id="comisionCalculada">$0.00</strong>
+                </div>
+                <div class="comision-row">
+                  <span>Porcentaje:</span>
+                  <strong id="porcentajeCalculado">0%</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
-        <button type="submit" class="btn btn-primary" id="submitModal">Guardar</button>
-      </div>
-    </form>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitModal">Guardar</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
   <!-- Modal: Crear Contacto -->
   <div class="modal-overlay" id="contactoModal">
@@ -613,49 +586,32 @@
     </div>
   </div>
 
-  <!-- Modal: Crear Moneda -->
-  <div class="modal-overlay" id="monedaModal">
+  <!-- Modal: Crear Plataforma -->
+  <div class="modal-overlay" id="plataformaModal">
     <div class="modal modal-sm">
       <div class="modal-header">
-        <h2 class="modal-title">Nueva Moneda</h2>
-        <button class="modal-close" id="closeMonedaModal">
+        <h2 class="modal-title">Nueva Plataforma</h2>
+        <button class="modal-close" id="closePlataformaModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
-      <form id="monedaForm">
+      <form id="plataformaForm">
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label required">Código</label>
-              <input type="text" class="form-input" id="monedaCodigo" placeholder="MXN" maxlength="3" style="text-transform:uppercase" required>
-              <span class="form-hint">3 letras (ISO 4217)</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Símbolo</label>
-              <input type="text" class="form-input" id="monedaSimbolo" placeholder="$" maxlength="5">
-            </div>
-          </div>
           <div class="form-group">
             <label class="form-label required">Nombre</label>
-            <input type="text" class="form-input" id="monedaNombre" placeholder="Peso Mexicano" required>
+            <input type="text" class="form-input" id="plataformaNombre" placeholder="Ej: Stripe, PayPal, MercadoPago" required>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Decimales</label>
-              <input type="number" class="form-input" id="monedaDecimales" value="2" min="0" max="4">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tipo de Cambio</label>
-              <input type="number" class="form-input" id="monedaTipoCambio" value="1" step="0.0001" min="0">
-            </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-input" id="plataformaDescripcion" placeholder="Descripción opcional">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="cancelMonedaModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Crear Moneda</button>
+          <button type="button" class="btn btn-secondary" id="cancelPlataformaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Plataforma</button>
         </div>
       </form>
     </div>
@@ -911,11 +867,8 @@
     </div>
   </div>
 
-  <!-- Configuración centralizada - debe cargarse primero -->
   <script src="../config.js"></script>
-  <!-- Módulo compartido de menú y perfil -->
   <script src="../menu.js"></script>
-  <!-- Módulo de transacciones -->
   <script src="transacciones.js"></script>
 </body>
 </html>
