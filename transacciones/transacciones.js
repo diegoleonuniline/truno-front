@@ -1,12 +1,10 @@
 /**
- * TRUNO - Transacciones v10
- * Con crear contacto, crear método de pago, moneda dinámica
+ * TRUNO - Transacciones v11
+ * Con comisiones, plataforma origen y tipo de cambio
  */
 (function() {
   'use strict';
 
-  // Usar configuración centralizada desde config.js
-  // Relacionado con: config.js (configuración global)
   const CONFIG = window.TRUNO_CONFIG || {
     API_URL: 'http://localhost:3000',
     STORAGE_KEYS: { TOKEN: 'truno_token', USER: 'truno_user', ORG: 'truno_org' },
@@ -69,18 +67,18 @@
     contactoId: $('contactoId'), 
     descripcion: $('descripcion'), 
     referencia: $('referencia'),
-    // Agregar en elements (después de referencia)
-plataformaOrigen: $('plataformaOrigen'),
-montoBruto: $('montoBruto'),
-tipoComision: $('tipoComision'),
-comisionValor: $('comisionValor'),
-monedaOrigen: $('monedaOrigen'),
-tipoCambio: $('tipoCambio'),
-montoNetoDisplay: $('montoNetoDisplay'),
-comisionSection: $('comisionSection'),
     addCuentaBtn: $('addCuentaBtn'),
     addContactoBtn: $('addContactoBtn'),
     addMetodoPagoBtn: $('addMetodoPagoBtn'),
+    // Campos comisión
+    plataformaOrigen: $('plataformaOrigen'),
+    comisionSection: $('comisionSection'),
+    montoBruto: $('montoBruto'),
+    monedaOrigen: $('monedaOrigen'),
+    tipoComision: $('tipoComision'),
+    comisionValor: $('comisionValor'),
+    tipoCambio: $('tipoCambio'),
+    montoNetoDisplay: $('montoNetoDisplay'),
     // Modal crear contacto
     contactoModal: $('contactoModal'),
     contactoForm: $('contactoForm'),
@@ -312,18 +310,31 @@ comisionSection: $('comisionSection'),
         elements.moneda.innerHTML = activas.map(m => 
           `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`
         ).join('');
+        // También para moneda origen
+        if (elements.monedaOrigen) {
+          elements.monedaOrigen.innerHTML = activas.map(m => 
+            `<option value="${m.codigo}">${m.codigo}</option>`
+          ).join('');
+        }
       } else {
-        elements.moneda.innerHTML = `
+        const defaultOpts = `
           <option value="MXN" selected>MXN - Peso Mexicano</option>
           <option value="USD">USD - Dólar</option>
           <option value="EUR">EUR - Euro</option>
         `;
+        elements.moneda.innerHTML = defaultOpts;
+        if (elements.monedaOrigen) {
+          elements.monedaOrigen.innerHTML = `
+            <option value="MXN">MXN</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          `;
+        }
       }
     },
     metodosPago() {
       if (!elements.metodoPago) return;
       
-      // Métodos por defecto si no hay en BD
       const defaultMetodos = [
         { id: 'transferencia', nombre: 'Transferencia' },
         { id: 'efectivo', nombre: 'Efectivo' },
@@ -342,7 +353,6 @@ comisionSection: $('comisionSection'),
       
       elements.metodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       
-      // También actualizar el del modal de gasto si existe
       if (elements.gastoMetodoPago) {
         elements.gastoMetodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       }
@@ -448,12 +458,10 @@ comisionSection: $('comisionSection'),
       elements.prevPage.disabled = paginacion.pagina <= 1; 
       elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
-      // Función para obtener label del método
       const getMetodoLabel = (metodo) => {
         if (!metodo) return '-';
         const found = state.metodosPago.find(m => m.id === metodo || m.clave === metodo || m.nombre === metodo);
         if (found) return found.nombre;
-        // Fallback a labels estáticos
         const labels = {
           transferencia: 'Transferencia',
           efectivo: 'Efectivo',
@@ -469,11 +477,12 @@ comisionSection: $('comisionSection'),
         const conciliado = t.gasto_id || t.venta_id;
         const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
+        const tieneComision = t.plataforma_origen && t.monto_bruto;
         
         return `<tr data-id="${t.id}" class="clickable-row">
           <td>
             <div class="cell-main">${t.descripcion || 'Sin descripción'}</div>
-            <div class="cell-sub">${t.referencia || ''}</div>
+            <div class="cell-sub">${t.plataforma_origen ? `📍 ${t.plataforma_origen}` : ''} ${t.referencia || ''}</div>
           </td>
           <td>${utils.formatDate(t.fecha)}</td>
           <td>${t.nombre_cuenta || '-'}</td>
@@ -483,11 +492,12 @@ comisionSection: $('comisionSection'),
             <div class="badges-group">
               <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
               ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
+              ${tieneComision ? '<span class="badge warning">Comisión</span>' : ''}
             </div>
           </td>
           <td style="text-align:right;">
             <div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto), moneda)}</div>
-            <div class="cell-sub">${moneda}</div>
+            <div class="cell-sub">${tieneComision ? `Bruto: ${utils.formatMoney(t.monto_bruto, t.moneda_origen || moneda)}` : moneda}</div>
           </td>
           <td>
             <div class="table-actions">
@@ -504,6 +514,7 @@ comisionSection: $('comisionSection'),
         const conciliado = t.gasto_id || t.venta_id;
         const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
+        const tieneComision = t.plataforma_origen && t.monto_bruto;
         
         return `<div class="mobile-card" data-id="${t.id}">
           <div class="mobile-card-header">
@@ -513,9 +524,10 @@ comisionSection: $('comisionSection'),
           <div class="mobile-card-meta">
             <span>${utils.formatDate(t.fecha)}</span>
             <span>${t.nombre_cuenta || '-'}</span>
+            ${t.plataforma_origen ? `<span>📍 ${t.plataforma_origen}</span>` : ''}
             ${metodoLabel !== '-' ? `<span>${metodoLabel}</span>` : ''}
-            <span>${moneda}</span>
           </div>
+          ${tieneComision ? `<div class="mobile-card-meta"><span>Bruto: ${utils.formatMoney(t.monto_bruto, t.moneda_origen || moneda)}</span><span>Comisión: ${t.tipo_comision === 'porcentaje' ? t.comision_valor + '%' : utils.formatMoney(t.comision_valor)}</span></div>` : ''}
           <div class="mobile-card-footer">
             <div class="mobile-card-badges">
               <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
@@ -623,6 +635,36 @@ comisionSection: $('comisionSection'),
         render.subcategorias(res.subcategorias || []);
       } catch (e) { render.subcategorias([]); }
     },
+
+    // ========== COMISIÓN HANDLERS ==========
+    toggleComisionSection() {
+      const show = elements.plataformaOrigen?.value?.trim();
+      if (elements.comisionSection) {
+        elements.comisionSection.style.display = show ? 'block' : 'none';
+        if (!show) {
+          // Limpiar campos si se oculta
+          if (elements.montoBruto) elements.montoBruto.value = '';
+          if (elements.comisionValor) elements.comisionValor.value = '';
+          if (elements.tipoCambio) elements.tipoCambio.value = '1';
+        }
+      }
+    },
+
+    calcMontoNeto() {
+      const bruto = parseFloat(elements.montoBruto?.value) || 0;
+      const tipoComision = elements.tipoComision?.value || 'monto';
+      const valorComision = parseFloat(elements.comisionValor?.value) || 0;
+      const tc = parseFloat(elements.tipoCambio?.value) || 1;
+      
+      if (bruto > 0) {
+        let comision = tipoComision === 'porcentaje' ? bruto * valorComision / 100 : valorComision;
+        const neto = (bruto - comision) * tc;
+        elements.monto.value = neto.toFixed(2);
+        if (elements.montoNetoDisplay) {
+          elements.montoNetoDisplay.textContent = utils.formatMoney(neto);
+        }
+      }
+    },
     
     async openDetailModal(tx) {
       if (!tx) return;
@@ -630,8 +672,8 @@ comisionSection: $('comisionSection'),
       const isIncome = tx.tipo === 'ingreso';
       const conciliado = tx.gasto_id || tx.venta_id;
       const moneda = tx.moneda || 'MXN';
+      const tieneComision = tx.plataforma_origen && tx.monto_bruto;
       
-      // Obtener label del método
       const getMetodoLabel = (metodo) => {
         if (!metodo) return '-';
         const found = state.metodosPago.find(m => m.id === metodo || m.clave === metodo || m.nombre === metodo);
@@ -644,10 +686,11 @@ comisionSection: $('comisionSection'),
       elements.detailAmount.innerHTML = `
         <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), moneda)}</div>
         <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'} • ${moneda}</div>
+        ${tieneComision ? `<div class="detail-amount-label" style="margin-top:8px;">Bruto: ${utils.formatMoney(tx.monto_bruto, tx.moneda_origen || moneda)} → Comisión: ${tx.tipo_comision === 'porcentaje' ? tx.comision_valor + '%' : utils.formatMoney(tx.comision_valor)}</div>` : ''}
       `;
 
       const contacto = state.contactos.find(c => c.id === tx.contacto_id);
-      elements.detailGrid.innerHTML = `
+      let gridHTML = `
         <div class="detail-item"><label>Fecha</label><span>${utils.formatDate(tx.fecha)}</span></div>
         <div class="detail-item"><label>Cuenta</label><span>${tx.nombre_cuenta || '-'}</span></div>
         <div class="detail-item"><label>Contacto</label><span>${contacto?.nombre || tx.nombre_contacto || '-'}</span></div>
@@ -656,6 +699,16 @@ comisionSection: $('comisionSection'),
         <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
       `;
+      
+      if (tieneComision) {
+        gridHTML += `
+          <div class="detail-item"><label>Plataforma Origen</label><span>${tx.plataforma_origen}</span></div>
+          <div class="detail-item"><label>Moneda Origen</label><span>${tx.moneda_origen || moneda}</span></div>
+          <div class="detail-item"><label>Tipo de Cambio</label><span>${tx.tipo_cambio || 1}</span></div>
+        `;
+      }
+      
+      elements.detailGrid.innerHTML = gridHTML;
 
       if (conciliado) {
         let infoHtml = '<div class="conciliacion-header"><span class="badge conciliado">✓ Conciliado</span></div>';
@@ -712,6 +765,8 @@ comisionSection: $('comisionSection'),
       elements.modalTitle.textContent = 'Nuevo Movimiento';
       elements.txForm.reset();
       elements.fecha.value = utils.today();
+      if (elements.tipoCambio) elements.tipoCambio.value = '1';
+      if (elements.comisionSection) elements.comisionSection.style.display = 'none';
       render.monedas();
       render.metodosPago();
       elements.txModal.classList.add('active');
@@ -729,6 +784,18 @@ comisionSection: $('comisionSection'),
       elements.contactoId.value = tx.contacto_id || '';
       elements.descripcion.value = tx.descripcion || '';
       elements.referencia.value = tx.referencia || '';
+      
+      // Campos comisión
+      if (elements.plataformaOrigen) elements.plataformaOrigen.value = tx.plataforma_origen || '';
+      if (elements.montoBruto) elements.montoBruto.value = tx.monto_bruto || '';
+      if (elements.monedaOrigen) elements.monedaOrigen.value = tx.moneda_origen || 'MXN';
+      if (elements.tipoComision) elements.tipoComision.value = tx.tipo_comision || 'monto';
+      if (elements.comisionValor) elements.comisionValor.value = tx.comision_valor || '';
+      if (elements.tipoCambio) elements.tipoCambio.value = tx.tipo_cambio || '1';
+      
+      this.toggleComisionSection();
+      if (tx.monto_bruto) this.calcMontoNeto();
+      
       elements.txModal.classList.add('active');
     },
     
@@ -736,48 +803,27 @@ comisionSection: $('comisionSection'),
       elements.txModal.classList.remove('active'); 
       state.editingId = null; 
     },
-    calcMontoNeto() {
-  const bruto = parseFloat(elements.montoBruto?.value) || 0;
-  const tipoComision = elements.tipoComision?.value || 'monto';
-  const valorComision = parseFloat(elements.comisionValor?.value) || 0;
-  const tc = parseFloat(elements.tipoCambio?.value) || 1;
-  
-  if (bruto > 0) {
-    let comision = tipoComision === 'porcentaje' ? bruto * valorComision / 100 : valorComision;
-    const neto = (bruto - comision) * tc;
-    elements.monto.value = neto.toFixed(2);
-    if (elements.montoNetoDisplay) {
-      elements.montoNetoDisplay.textContent = utils.formatMoney(neto);
-    }
-  }
-},
-
-toggleComisionSection() {
-  const show = elements.plataformaOrigen?.value?.trim();
-  if (elements.comisionSection) {
-    elements.comisionSection.style.display = show ? 'block' : 'none';
-  }
-},
-async submitTx(e) {
-  e.preventDefault();
-  const d = {
-    tipo: elements.tipo.value,
-    cuenta_bancaria_id: elements.cuentaId.value,
-    monto: parseFloat(elements.monto.value),
-    fecha: elements.fecha.value,
-    moneda: elements.moneda.value || 'MXN',
-    metodo_pago: elements.metodoPago.value || null,
-    contacto_id: elements.contactoId.value || null,
-    descripcion: elements.descripcion.value.trim() || null,
-    referencia: elements.referencia.value.trim() || null,
-    // Nuevos campos
-    plataforma_origen: elements.plataformaOrigen?.value?.trim() || null,
-    monto_bruto: parseFloat(elements.montoBruto?.value) || null,
-    tipo_comision: elements.tipoComision?.value || 'monto',
-    comision_valor: parseFloat(elements.comisionValor?.value) || 0,
-    moneda_origen: elements.monedaOrigen?.value || 'MXN',
-    tipo_cambio: parseFloat(elements.tipoCambio?.value) || 1
-  };
+    
+    async submitTx(e) {
+      e.preventDefault();
+      const d = {
+        tipo: elements.tipo.value,
+        cuenta_bancaria_id: elements.cuentaId.value,
+        monto: parseFloat(elements.monto.value),
+        fecha: elements.fecha.value,
+        moneda: elements.moneda.value || 'MXN',
+        metodo_pago: elements.metodoPago.value || null,
+        contacto_id: elements.contactoId.value || null,
+        descripcion: elements.descripcion.value.trim() || null,
+        referencia: elements.referencia.value.trim() || null,
+        // Campos comisión
+        plataforma_origen: elements.plataformaOrigen?.value?.trim() || null,
+        monto_bruto: parseFloat(elements.montoBruto?.value) || null,
+        tipo_comision: elements.tipoComision?.value || 'monto',
+        comision_valor: parseFloat(elements.comisionValor?.value) || 0,
+        moneda_origen: elements.monedaOrigen?.value || 'MXN',
+        tipo_cambio: parseFloat(elements.tipoCambio?.value) || 1
+      };
       elements.submitModal.disabled = true;
       try {
         if (state.editingId) await api.updateTransaccion(state.editingId, d);
@@ -853,7 +899,6 @@ async submitTx(e) {
         state.metodosPago.push(nuevoMetodo);
         render.metodosPago();
         
-        // Seleccionar el nuevo método
         elements.metodoPago.value = nuevoMetodo.id || nuevoMetodo.clave || nuevoMetodo.nombre;
         
         this.closeMetodoPagoModal();
@@ -1125,8 +1170,6 @@ async submitTx(e) {
     elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
     elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
-    
-
     // Botones crear
     elements.addTxBtn?.addEventListener('click', () => handlers.openCreateModal());
     elements.addFirstTxBtn?.addEventListener('click', () => handlers.openCreateModal());
@@ -1146,14 +1189,14 @@ async submitTx(e) {
     elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
-
-    // Después de los otros listeners del modal transacción
-elements.plataformaOrigen?.addEventListener('input', () => handlers.toggleComisionSection());
-elements.montoBruto?.addEventListener('input', () => handlers.calcMontoNeto());
-elements.tipoComision?.addEventListener('change', () => handlers.calcMontoNeto());
-elements.comisionValor?.addEventListener('input', () => handlers.calcMontoNeto());
-elements.tipoCambio?.addEventListener('input', () => handlers.calcMontoNeto());
     
+    // Comisión listeners
+    elements.plataformaOrigen?.addEventListener('input', () => handlers.toggleComisionSection());
+    elements.montoBruto?.addEventListener('input', () => handlers.calcMontoNeto());
+    elements.tipoComision?.addEventListener('change', () => handlers.calcMontoNeto());
+    elements.comisionValor?.addEventListener('input', () => handlers.calcMontoNeto());
+    elements.tipoCambio?.addEventListener('input', () => handlers.calcMontoNeto());
+
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
     elements.cancelContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
@@ -1221,7 +1264,7 @@ elements.tipoCambio?.addEventListener('input', () => handlers.calcMontoNeto());
     });
 
     handlers.loadData();
-    console.log('🚀 TRUNO Transacciones v10 - Crear contacto, método pago, moneda dinámica');
+    console.log('🚀 TRUNO Transacciones v11 - Comisiones y tipo de cambio');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
