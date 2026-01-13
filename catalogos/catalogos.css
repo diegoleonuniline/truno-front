@@ -800,6 +800,11 @@ a {
   transform: scale(0.95);
   transition: transform var(--transition-base);
   margin: var(--spacing-lg) auto;
+  /* UX: el modal completo scrollea (botones no fijos) */
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Mantiene el modal dentro del viewport (overlay ya aporta padding) */
+  max-height: calc(100dvh - 48px);
 }
 
 .modal-overlay.active .modal {
@@ -853,6 +858,25 @@ a {
 
 .modal-footer .btn {
   flex: 1;
+}
+
+/* =========================================================
+   Botones del modal-footer (mismo tamaño que Organizaciones)
+   Relación:
+   - truno-front/organizaciones/seleccionar.css -> `.modal-footer .btn`
+   - truno-front/catalogos/index.html -> modales por pestaña
+   Nota: se limita a `.modal-footer .btn` para no afectar botones generales.
+   ========================================================= */
+.modal-footer .btn {
+  min-height: 56px;
+  height: auto;
+  padding: 14px 28px;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  min-width: 120px;
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* ========== FORMS ========== */
@@ -1210,17 +1234,29 @@ input:checked + .toggle-slider {
     margin: 0;
     max-width: 100%;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    max-height: 95vh;
+    max-height: 95dvh;
+    /* UX: scroll del modal completo */
+    overflow-x: hidden;
+    overflow-y: auto;
   }
   
   .modal-body {
-    max-height: calc(95vh - 140px);
-    overflow-y: auto;
+    /* No scroll interno -> footer no queda fijo */
+    max-height: none;
+    overflow: visible;
   }
   
   .modal-footer {
     padding: var(--spacing-md);
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0));
+  }
+
+  /* Botones en móvil: cómodos y consistentes */
+  .modal-footer .btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 14px 20px;
+    font-size: var(--font-size-md);
   }
   
   .toast-container {
