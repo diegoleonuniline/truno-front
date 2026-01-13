@@ -833,6 +833,32 @@ body.modal-open {
   flex: 0 0 auto;
 }
 
+/* =========================================================
+   AJUSTE UX: Botones NO "fijos" (más espacio al formulario)
+   Relación:
+   - truno-front/organizaciones/seleccionar.html -> modal #createModal
+   - Este archivo -> anteriormente el scroll estaba solo en `.modal-body`
+
+   Nuevo comportamiento:
+   - El modal completo scrollea (header + body + footer)
+   - Los botones quedan al final del contenido y NO ocupan espacio fijo
+   ========================================================= */
+.modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal > form {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
+.modal-body {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
 /* Fallback: si el modal aún excede el alto disponible (teclado/viewport raro),
    permite scrollear el overlay para alcanzar el footer. */
 .modal-overlay.active {

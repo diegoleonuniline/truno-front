@@ -1157,6 +1157,25 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   min-width: 0;
 }
 
+/* =========================================================
+   Botones del modal-footer (mismo tamaño que Organizaciones)
+   Relación:
+   - truno-front/organizaciones/seleccionar.css -> `.modal-footer .btn`
+   - truno-front/ventas/index.html -> múltiples modales
+   Nota: se limita a `.modal-footer .btn` para no afectar otros botones.
+   ========================================================= */
+.modal-footer .btn {
+  min-height: 56px;
+  height: auto;
+  padding: 14px 28px;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  min-width: 120px;
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* ========== FORMS ========== */
 .form-group {
   margin-bottom: var(--spacing-lg);
@@ -1697,10 +1716,9 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   }
   
   .modal-body {
-    overflow-y: auto;
-    max-height: calc(95vh - 140px);
-    max-height: calc(95dvh - 140px);
-    -webkit-overflow-scrolling: touch;
+    /* UX: no scroll interno -> el modal completo scrollea (botones NO fijos) */
+    overflow: visible;
+    max-height: none;
   }
   
   /* Modal footer: botones lado a lado, NO columna */
@@ -1713,8 +1731,16 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   
   .modal-footer .btn {
     flex: 1;
-    padding: 0 var(--spacing-md);
-    font-size: var(--font-size-sm);
+    /* Match con Organizaciones en móvil */
+    min-height: 52px;
+    padding: 14px 20px;
+    font-size: var(--font-size-md);
+  }
+
+  /* UX: el scroll lo hace el modal completo (incluye footer) */
+  .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
   }
   
   /* Impuestos responsive */
@@ -1849,8 +1875,12 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
   
   .modal-body {
     padding: var(--spacing-md);
-    max-height: calc(95vh - 130px);
-    max-height: calc(95dvh - 130px);
+    /* Importante:
+       En <=480px NO limitamos el body con max-height, porque eso
+       deja espacio libre abajo y el footer puede quedar "a media altura". 
+       El scroll lo hace el modal completo (ver @media max-width:768px). */
+    max-height: none;
+    overflow: visible;
   }
   
   .modal-header,

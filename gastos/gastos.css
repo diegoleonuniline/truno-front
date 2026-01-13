@@ -780,6 +780,51 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
 }
 
+/* =========================================================
+   AJUSTE UX (como Bancos/Transacciones/Organizaciones)
+   Objetivo:
+   - Botones NO "fijos" (para dar más visibilidad al formulario)
+   - El scroll lo hace el modal completo (incluye footer)
+   - Botones del footer con el mismo tamaño que Organizaciones
+   Relación:
+   - truno-front/gastos/index.html (múltiples modales)
+   - truno-front/organizaciones/seleccionar.css (tamaño de botones)
+   ========================================================= */
+
+/* El scroll del modal incluye header + body + footer */
+.modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* El form deja de ser "layout fijo" para que el footer no quede pegado */
+.modal form {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+
+/* Sin scroll interno del body (el modal completo scrollea) */
+.modal-body {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible !important;
+}
+
+/* Botones del footer: tamaño consistente */
+.modal-footer .btn {
+  width: 100%;
+  min-height: 52px;
+  height: auto;
+  padding: 14px 20px;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  min-width: 120px;
+  letter-spacing: 0.2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 /* ========== FORMS ========== */
 .form-group { margin-bottom: var(--spacing-md); }
 .form-label {
@@ -1119,7 +1164,14 @@ a { color: inherit; text-decoration: none; }
     padding: var(--spacing-lg);
     padding-bottom: var(--spacing-lg); 
   }
-  .modal-footer .btn { width: auto; flex: 1; }
+  .modal-footer .btn {
+    width: auto;
+    flex: 1;
+    /* Match con Organizaciones en desktop */
+    min-height: 56px;
+    padding: 16px 32px;
+    font-size: var(--font-size-md);
+  }
   
   .form-input, .form-select { height: 44px; font-size: var(--font-size-sm); }
   .select-with-add .btn-add { width: 44px; height: 44px; }
