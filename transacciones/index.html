@@ -386,9 +386,9 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label required">Monto Recibido</label>
+                <label class="form-label required">Monto Neto</label>
                 <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
-                <span class="form-hint">Lo que realmente entró a tu cuenta</span>
+                <span class="form-hint">Lo que realmente entró/salió de tu cuenta</span>
               </div>
               <div class="form-group">
                 <label class="form-label required">Fecha</label>
@@ -449,42 +449,43 @@
             </div>
           </div>
 
-       <!-- Sección Comisión - Solo aparece si selecciona plataforma -->
-<div id="comisionSection" style="display:none;">
-  <div class="form-section">
-    <div class="form-section-title">💳 Desglose de Comisión</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Monto Total Pagado</label>
-        <input type="number" class="form-input" id="montoTotal" placeholder="0.00" step="0.01" min="0">
-        <span class="form-hint">Lo que pagó el cliente</span>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Moneda Origen</label>
-        <select class="form-select" id="monedaOrigen">
-          <option value="MXN">MXN</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Tipo de Cambio</label>
-      <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
-      <span class="form-hint">Si aplica conversión a MXN</span>
-    </div>
-    <div class="form-info-box comision-result">
-      <div class="comision-row">
-        <span>Comisión cobrada:</span>
-        <strong id="comisionCalculada">$0.00</strong>
-      </div>
-      <div class="comision-row">
-        <span>Porcentaje:</span>
-        <strong id="porcentajeCalculado">0%</strong>
-      </div>
-    </div>
-  </div>
-</div>
+          <!-- Sección Comisión - Solo aparece si selecciona plataforma -->
+          <div id="comisionSection" style="display:none;">
+            <div class="form-section">
+              <div class="form-section-title">💳 Desglose de Comisión</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Monto Total (cliente pagó)</label>
+                  <input type="number" class="form-input" id="montoTotal" placeholder="0.00" step="0.01" min="0">
+                  <span class="form-hint">Lo que pagó el cliente antes de comisión</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Moneda Origen</label>
+                  <select class="form-select" id="monedaOrigen">
+                    <option value="MXN">MXN</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de Cambio</label>
+                <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
+                <span class="form-hint">Si aplica conversión a MXN</span>
+              </div>
+              <div class="form-info-box comision-result">
+                <div class="comision-row">
+                  <span>Comisión cobrada:</span>
+                  <strong id="comisionCalculada">$0.00</strong>
+                </div>
+                <div class="comision-row">
+                  <span>Porcentaje:</span>
+                  <strong id="porcentajeCalculado">0%</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="submitModal">Guardar</button>
@@ -500,8 +501,7 @@
         <h2 class="modal-title">Nuevo Contacto</h2>
         <button class="modal-close" id="closeContactoModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -549,8 +549,7 @@
         <h2 class="modal-title">Nuevo Método de Pago</h2>
         <button class="modal-close" id="closeMetodoPagoModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -585,8 +584,7 @@
         <h2 class="modal-title">Nueva Plataforma</h2>
         <button class="modal-close" id="closePlataformaModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -616,8 +614,7 @@
         <h2 class="modal-title">Registrar Gasto</h2>
         <button class="modal-close" id="closeGastoModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -634,9 +631,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Proveedor</label>
-              <select class="form-select" id="gastoProveedor">
-                <option value="">-- Seleccionar --</option>
-              </select>
+              <select class="form-select" id="gastoProveedor"><option value="">-- Seleccionar --</option></select>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -651,15 +646,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Categoría</label>
-                <select class="form-select" id="gastoCategoria">
-                  <option value="">-- Seleccionar --</option>
-                </select>
+                <select class="form-select" id="gastoCategoria"><option value="">-- Seleccionar --</option></select>
               </div>
               <div class="form-group">
                 <label class="form-label">Subcategoría</label>
-                <select class="form-select" id="gastoSubcategoria">
-                  <option value="">-- Seleccionar --</option>
-                </select>
+                <select class="form-select" id="gastoSubcategoria"><option value="">-- Seleccionar --</option></select>
               </div>
             </div>
           </div>
@@ -679,10 +670,7 @@
               <label class="form-label">Impuestos</label>
               <div class="impuestos-container" id="gastoImpuestosContainer"></div>
               <button type="button" class="btn btn-xs btn-secondary" id="addGastoImpuestoBtn" style="margin-top:8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Agregar impuesto
               </button>
             </div>
@@ -744,8 +732,7 @@
         <h2 class="modal-title">Registrar Venta</h2>
         <button class="modal-close" id="closeVentaModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -768,9 +755,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Cliente</label>
-              <select class="form-select" id="ventaCliente">
-                <option value="">-- Seleccionar --</option>
-              </select>
+              <select class="form-select" id="ventaCliente"><option value="">-- Seleccionar --</option></select>
             </div>
             <div class="form-group">
               <label class="form-label">Concepto</label>
@@ -806,8 +791,7 @@
         <h2 class="modal-title">Nueva Cuenta</h2>
         <button class="modal-close" id="closeCuentaModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
@@ -843,8 +827,7 @@
         <h2 class="modal-title">Eliminar Movimiento</h2>
         <button class="modal-close" id="closeDeleteModal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
