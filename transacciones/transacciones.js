@@ -671,29 +671,23 @@
       }
     },
 
-    calcComision() {
-      const montoTotal = parseFloat(elements.montoTotal?.value) || 0;
-      const montoRecibido = parseFloat(elements.montoRecibido?.value) || 0;
-      const tc = parseFloat(elements.tipoCambio?.value) || 1;
-      
-      if (montoTotal > 0 && montoRecibido >= 0) {
-        const comision = montoTotal - montoRecibido;
-        const porcentaje = montoTotal > 0 ? (comision / montoTotal) : 0;
-        const montoFinal = montoRecibido * tc;
-        
-        // Actualizar displays
-        if (elements.comisionCalculada) {
-          elements.comisionCalculada.textContent = utils.formatMoney(comision);
-        }
-        if (elements.porcentajeCalculado) {
-          elements.porcentajeCalculado.textContent = `${(porcentaje * 100).toFixed(2)}%`;
-        }
-        // Actualizar monto neto (el que se guarda)
-        if (elements.monto) {
-          elements.monto.value = montoFinal.toFixed(2);
-        }
-      }
-    },
+ calcComision() {
+  const montoTotal = parseFloat(elements.montoTotal?.value) || 0;
+  const montoRecibido = parseFloat(elements.monto?.value) || 0; // Usa el campo de arriba
+  const tc = parseFloat(elements.tipoCambio?.value) || 1;
+  
+  if (montoTotal > 0 && montoRecibido >= 0) {
+    const comision = montoTotal - montoRecibido;
+    const porcentaje = montoTotal > 0 ? (comision / montoTotal) : 0;
+    
+    if (elements.comisionCalculada) {
+      elements.comisionCalculada.textContent = utils.formatMoney(comision);
+    }
+    if (elements.porcentajeCalculado) {
+      elements.porcentajeCalculado.textContent = `${(porcentaje * 100).toFixed(2)}%`;
+    }
+  }
+},
     
     async openDetailModal(tx) {
       if (!tx) return;
@@ -1261,11 +1255,11 @@
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
     elements.addPlataformaBtn?.addEventListener('click', () => handlers.openPlataformaModal());
     
-    // Plataforma y comisión listeners
-    elements.plataformaId?.addEventListener('change', () => handlers.toggleComisionSection());
-    elements.montoTotal?.addEventListener('input', () => handlers.calcComision());
-    elements.montoRecibido?.addEventListener('input', () => handlers.calcComision());
-    elements.tipoCambio?.addEventListener('input', () => handlers.calcComision());
+   // Plataforma y comisión listeners
+elements.plataformaId?.addEventListener('change', () => handlers.toggleComisionSection());
+elements.montoTotal?.addEventListener('input', () => handlers.calcComision());
+elements.monto?.addEventListener('input', () => handlers.calcComision()); // El campo de arriba
+elements.tipoCambio?.addEventListener('input', () => handlers.calcComision());
 
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
