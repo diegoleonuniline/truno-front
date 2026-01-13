@@ -56,6 +56,20 @@
     accountCurrency: document.getElementById('accountCurrency'),
     accountBalance: document.getElementById('accountBalance'),
     accountNotes: document.getElementById('accountNotes'),
+    // Moneda (creación rápida desde el modal de Cuenta)
+    // Relacionado con: truno-front/bancos/index.html (#addCurrencyQuickBtn y #quickMonedaModal)
+    addCurrencyQuickBtn: document.getElementById('addCurrencyQuickBtn'),
+    quickMonedaModal: document.getElementById('quickMonedaModal'),
+    quickMonedaForm: document.getElementById('quickMonedaForm'),
+    closeQuickMonedaModal: document.getElementById('closeQuickMonedaModal'),
+    cancelQuickMonedaModal: document.getElementById('cancelQuickMonedaModal'),
+    submitQuickMoneda: document.getElementById('submitQuickMoneda'),
+    quickMonCodigo: document.getElementById('quickMonCodigo'),
+    quickMonNombre: document.getElementById('quickMonNombre'),
+    quickMonSimbolo: document.getElementById('quickMonSimbolo'),
+    quickMonDecimales: document.getElementById('quickMonDecimales'),
+    quickMonDefault: document.getElementById('quickMonDefault'),
+    quickMonActivo: document.getElementById('quickMonActivo'),
     // Adjust Modal
     adjustModal: document.getElementById('adjustModal'),
     adjustForm: document.getElementById('adjustForm'),
@@ -76,6 +90,8 @@
     user: null,
     org: null,
     accounts: [],
+    monedas: [],
+    monedasLoaded: false,
     editingId: null,
     deletingId: null,
     adjustingId: null,
@@ -160,6 +176,19 @@
 
     adjustBalance(id, data) {
       return this.request(`/api/cuentas-bancarias/${id}/ajustar`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    },
+
+    // Monedas (Catálogos)
+    // Relacionado con: truno-back/src/routes/monedas.routes.js
+    getMonedas() {
+      return this.request('/api/monedas');
+    },
+
+    createMoneda(data) {
+      return this.request('/api/monedas', {
         method: 'POST',
         body: JSON.stringify(data)
       });
@@ -351,12 +380,75 @@
         });
       });
     }
+    ,
+
+    /**
+     * Renderiza el select de monedas en el modal de Cuenta.
+     * Relacionado con:
+     * - truno-front/bancos/index.html (#accountCurrency)
+     * - truno-front/catalogos/catalogos.js (misma fuente /api/monedas)
+     */
+    currencies(keepValue = null) {
+      if (!elements.accountCurrency) return;
+
+      const previous = keepValue ?? elements.accountCurrency.value;
+      const monedas = Array.isArray(state.monedas) ? state.monedas : [];
+
+      // Fallback si no hay monedas cargadas o el API falló
+      if (!state.monedasLoaded || !monedas.length) {
+        // No sobrescribir si el usuario ya tiene opciones manuales (defensivo)
+        if (!elements.accountCurrency.options.length || elements.accountCurrency.options[0]?.value === '') {
+          elements.accountCurrency.innerHTML = `
+            <option value="MXN">MXN - Peso Mexicano</option>
+            <option value="USD">USD - Dólar</option>
+            <option value="EUR">EUR - Euro</option>
+          `;
+        }
+        if (previous) elements.accountCurrency.value = previous;
+        return;
+      }
+
+      elements.accountCurrency.innerHTML = monedas.map(m => {
+        const codigo = (m.codigo || '').toUpperCase();
+        const nombre = m.nombre || '';
+        return `<option value="${codigo}">${codigo} - ${nombre}</option>`;
+      }).join('');
+
+      // Mantener selección previa si existe
+      if (previous && monedas.some(m => (m.codigo || '').toUpperCase() === previous)) {
+        elements.accountCurrency.value = previous;
+        return;
+      }
+
+      // Si no hay selección previa, intentar elegir default del catálogo
+      const def = monedas.find(m => m.es_default);
+      elements.accountCurrency.value = def ? (def.codigo || 'MXN') : (monedas[0]?.codigo || 'MXN');
+    }
   };
 
   // ============================================
   // HANDLERS
   // ============================================
   const handlers = {
+    /**
+     * Carga monedas del catálogo para poblar el select en Bancos.
+     * Relacionado con:
+     * - truno-front/catalogos/catalogos.js (CRUD de monedas)
+     * - truno-front/bancos/index.html (#accountCurrency)
+     */
+    async loadMonedas() {
+      try {
+        const data = await api.getMonedas();
+        state.monedas = data.monedas || [];
+        state.monedasLoaded = true;
+        render.currencies();
+      } catch (error) {
+        console.error('Error loading monedas:', error);
+        state.monedasLoaded = true; // evita quedar “cargando” para siempre
+        render.currencies(); // aplica fallback
+      }
+    },
+
     async loadAccounts() {
       try {
         const data = await api.getAccounts();
@@ -432,6 +524,8 @@
       elements.accountBalance.disabled = false;
       elements.accountBalance.parentElement.style.display = 'block';
       elements.accountModal.classList.add('active');
+      // Asegurar que el select tenga las monedas del catálogo si ya se cargaron
+      render.currencies();
       elements.accountName.focus();
     },
 
@@ -442,7 +536,9 @@
       elements.accountBank.value = account.nombre_banco || '';
       elements.accountNumber.value = account.numero_cuenta || '';
       elements.accountClabe.value = account.clabe || '';
-      elements.accountCurrency.value = account.moneda || 'MXN';
+      // Renderizar y luego seleccionar la moneda de la cuenta
+      render.currencies(account.moneda || 'MXN');
+      elements.accountCurrency.value = account.moneda || elements.accountCurrency.value || 'MXN';
       elements.accountBalance.value = '';
       elements.accountBalance.disabled = true;
       elements.accountBalance.parentElement.style.display = 'none';
@@ -455,6 +551,59 @@
       elements.accountModal.classList.remove('active');
       elements.accountForm.reset();
       state.editingId = null;
+    },
+
+    // ==========================
+    // Moneda (creación rápida)
+    // ==========================
+    openQuickMonedaModal() {
+      if (!elements.quickMonedaModal) return;
+      elements.quickMonedaForm?.reset();
+      // Defaults alineados con Catálogos
+      if (elements.quickMonActivo) elements.quickMonActivo.checked = true;
+      if (elements.quickMonDefault) elements.quickMonDefault.checked = false;
+      if (elements.quickMonDecimales) elements.quickMonDecimales.value = 2;
+      elements.quickMonedaModal.classList.add('active');
+      elements.quickMonCodigo?.focus();
+    },
+
+    closeQuickMonedaModal() {
+      elements.quickMonedaModal?.classList.remove('active');
+      elements.quickMonedaForm?.reset();
+    },
+
+    async submitQuickMoneda(e) {
+      e.preventDefault();
+
+      const payload = {
+        codigo: elements.quickMonCodigo.value.trim().toUpperCase(),
+        nombre: elements.quickMonNombre.value.trim(),
+        simbolo: elements.quickMonSimbolo.value.trim() || '$',
+        decimales: parseInt(elements.quickMonDecimales.value, 10) || 2,
+        es_default: !!elements.quickMonDefault.checked,
+        activo: !!elements.quickMonActivo.checked
+      };
+
+      elements.submitQuickMoneda.classList.add('loading');
+      elements.submitQuickMoneda.disabled = true;
+
+      try {
+        const res = await api.createMoneda(payload);
+        const createdCode = res?.moneda?.codigo || payload.codigo;
+
+        // Refrescar el catálogo local y seleccionar la nueva moneda
+        await this.loadMonedas();
+        if (elements.accountCurrency) {
+          elements.accountCurrency.value = createdCode;
+        }
+
+        this.closeQuickMonedaModal();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        elements.submitQuickMoneda.classList.remove('loading');
+        elements.submitQuickMoneda.disabled = false;
+      }
     },
 
     async submitAccount(e) {
@@ -618,6 +767,15 @@
       if (e.target === elements.accountModal) handlers.closeAccountModal();
     });
 
+    // Moneda rápida (desde el modal de cuenta)
+    elements.addCurrencyQuickBtn?.addEventListener('click', handlers.openQuickMonedaModal.bind(handlers));
+    elements.closeQuickMonedaModal?.addEventListener('click', handlers.closeQuickMonedaModal.bind(handlers));
+    elements.cancelQuickMonedaModal?.addEventListener('click', handlers.closeQuickMonedaModal.bind(handlers));
+    elements.quickMonedaForm?.addEventListener('submit', handlers.submitQuickMoneda.bind(handlers));
+    elements.quickMonedaModal?.addEventListener('click', (e) => {
+      if (e.target === elements.quickMonedaModal) handlers.closeQuickMonedaModal();
+    });
+
     // Adjust modal
     elements.closeAdjustModal.addEventListener('click', handlers.closeAdjustModal.bind(handlers));
     elements.cancelAdjustModal.addEventListener('click', handlers.closeAdjustModal.bind(handlers));
@@ -645,6 +803,7 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         handlers.closeAccountModal();
+        handlers.closeQuickMonedaModal();
         handlers.closeAdjustModal();
         handlers.closeDeleteModal();
         handlers.closeAllMenus();
@@ -653,6 +812,7 @@
 
     // Load data
     handlers.loadAccounts();
+    handlers.loadMonedas();
 
     console.log('🚀 TRUNO Bancos initialized');
   }

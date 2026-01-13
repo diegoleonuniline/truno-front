@@ -335,11 +335,27 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Moneda</label>
-              <select class="form-input" id="accountCurrency">
-                <option value="MXN">MXN - Peso Mexicano</option>
-                <option value="USD">USD - Dólar</option>
-                <option value="EUR">EUR - Euro</option>
-              </select>
+              <!--
+                Input Moneda + Acción rápida "Crear moneda"
+                Relacionado con:
+                - truno-front/catalogos/index.html (modal de Moneda)
+                - truno-front/catalogos/catalogos.js (POST /api/monedas)
+                - truno-front/bancos/bancos.js (carga y creación rápida de monedas)
+              -->
+              <div class="form-input-action">
+                <select class="form-input" id="accountCurrency" required>
+                  <!-- Se llena dinámicamente desde /api/monedas -->
+                  <option value="">Cargando monedas...</option>
+                </select>
+
+                <!-- Botón de crear moneda rápidamente sin salir del flujo de "Nueva Cuenta" -->
+                <button type="button" class="btn btn-secondary btn-icon-square" id="addCurrencyQuickBtn" title="Crear moneda">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Saldo Inicial</label>
@@ -356,6 +372,75 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="submitModal">
+            <span class="btn-text">Guardar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Moneda (rápido desde Bancos) -->
+  <div class="modal-overlay" id="quickMonedaModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="quickMonedaTitle">Nueva Moneda</h2>
+        <button class="modal-close" id="closeQuickMonedaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="quickMonedaForm">
+        <div class="modal-body">
+          <!--
+            Formulario basado en el modal de Monedas en Catálogos
+            Relacionado con: truno-front/catalogos/index.html (#monedaModal)
+          -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">Código</label>
+              <input type="text" class="form-input" id="quickMonCodigo" placeholder="MXN" maxlength="3" required style="text-transform:uppercase;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Símbolo</label>
+              <input type="text" class="form-input" id="quickMonSimbolo" placeholder="$" maxlength="5">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="quickMonNombre" placeholder="Peso Mexicano" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Decimales</label>
+            <input type="number" class="form-input" id="quickMonDecimales" value="2" min="0" max="6">
+          </div>
+
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Moneda por defecto</label>
+              <label class="toggle">
+                <input type="checkbox" id="quickMonDefault">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="toggle-wrapper">
+              <label class="form-label">Activo</label>
+              <label class="toggle">
+                <input type="checkbox" id="quickMonActivo" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelQuickMonedaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitQuickMoneda">
             <span class="btn-text">Guardar</span>
           </button>
         </div>

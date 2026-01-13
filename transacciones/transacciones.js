@@ -72,6 +72,7 @@
     addCuentaBtn: $('addCuentaBtn'),
     addContactoBtn: $('addContactoBtn'),
     addMetodoPagoBtn: $('addMetodoPagoBtn'),
+    addMonedaBtn: $('addMonedaBtn'),
     // Modal crear contacto
     contactoModal: $('contactoModal'),
     contactoForm: $('contactoForm'),
@@ -90,6 +91,19 @@
     metodoNombre: $('metodoNombre'),
     metodoClave: $('metodoClave'),
     metodoDescripcion: $('metodoDescripcion'),
+    // Modal crear moneda
+    // Relacionado con:
+    // - truno-front/transacciones/index.html (#monedaModal)
+    // - truno-back/src/routes/monedas.routes.js (POST /api/monedas)
+    monedaModal: $('monedaModal'),
+    monedaForm: $('monedaForm'),
+    closeMonedaModal: $('closeMonedaModal'),
+    cancelMonedaModal: $('cancelMonedaModal'),
+    monedaCodigo: $('monedaCodigo'),
+    monedaNombre: $('monedaNombre'),
+    monedaSimbolo: $('monedaSimbolo'),
+    monedaDecimales: $('monedaDecimales'),
+    monedaTipoCambio: $('monedaTipoCambio'),
     // Modal gasto
     gastoModal: $('gastoModal'), 
     gastoForm: $('gastoForm'), 
@@ -264,6 +278,7 @@
     getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
     getImpuestos: () => api.request('/api/impuestos'),
     getMonedas: () => api.request('/api/monedas'),
+    createMoneda: d => api.request('/api/monedas', { method: 'POST', body: JSON.stringify(d) }),
     getMetodosPago: () => api.request('/api/metodos-pago'),
     createMetodoPago: d => api.request('/api/metodos-pago', { method: 'POST', body: JSON.stringify(d) }),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
@@ -297,18 +312,25 @@
       elements.filterCuenta.innerHTML = '<option value="">Cuenta</option>' + opts;
     },
     monedas() {
-      if (!elements.moneda) return;
+      // Relacionado con:
+      // - truno-front/transacciones/index.html (#moneda, #gastoMoneda)
+      // - truno-front/catalogos/catalogos.js (fuente: /api/monedas)
+      const targets = [elements.moneda, elements.gastoMoneda].filter(Boolean);
+      if (!targets.length) return;
+
       if (state.monedas.length > 0) {
         const activas = state.monedas.filter(m => m.activo);
-        elements.moneda.innerHTML = activas.map(m => 
+        const html = activas.map(m =>
           `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`
         ).join('');
+        targets.forEach(sel => { sel.innerHTML = html; });
       } else {
-        elements.moneda.innerHTML = `
+        const fallback = `
           <option value="MXN" selected>MXN - Peso Mexicano</option>
           <option value="USD">USD - Dólar</option>
           <option value="EUR">EUR - Euro</option>
         `;
+        targets.forEach(sel => { sel.innerHTML = fallback; });
       }
     },
     metodosPago() {
@@ -825,6 +847,53 @@
         toast.error(e.message);
       }
     },
+
+    // ========== CREAR MONEDA (rápido desde Transacciones) ==========
+    openMonedaModal() {
+      elements.monedaForm?.reset();
+      // Defaults (alineado con el backend)
+      if (elements.monedaDecimales) elements.monedaDecimales.value = 2;
+      if (elements.monedaTipoCambio) elements.monedaTipoCambio.value = 1;
+      elements.monedaModal?.classList.add('active');
+      elements.monedaCodigo?.focus();
+    },
+
+    closeMonedaModal() {
+      elements.monedaModal?.classList.remove('active');
+    },
+
+    async submitMoneda(e) {
+      e.preventDefault();
+
+      // Nota: `monedaTipoCambio` existe en UI, pero el backend de /api/monedas no lo maneja.
+      // Lo ignoramos para no romper el flujo y mantener compatibilidad.
+      const data = {
+        codigo: elements.monedaCodigo.value.trim().toUpperCase(),
+        nombre: elements.monedaNombre.value.trim(),
+        simbolo: elements.monedaSimbolo.value.trim() || '$',
+        decimales: parseInt(elements.monedaDecimales.value, 10) || 2,
+        es_default: false,
+        activo: true
+      };
+
+      try {
+        const result = await api.createMoneda(data);
+        const monedaNueva = result.moneda || data;
+
+        // Actualizar state local y re-renderizar selects
+        state.monedas.push(monedaNueva);
+        render.monedas();
+
+        // Seleccionar la moneda recién creada en el movimiento y en el gasto (si aplica)
+        if (elements.moneda) elements.moneda.value = monedaNueva.codigo;
+        if (elements.gastoMoneda) elements.gastoMoneda.value = monedaNueva.codigo;
+
+        this.closeMonedaModal();
+        toast.success('Moneda creada');
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
     
     // ========== GASTO DESDE TRANSACCIÓN ==========
     openGastoFromTx() {
@@ -1107,6 +1176,7 @@
     elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
+    elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
 
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
@@ -1119,6 +1189,12 @@
     elements.cancelMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
     elements.metodoPagoForm?.addEventListener('submit', e => handlers.submitMetodoPago(e));
     elements.metodoPagoModal?.addEventListener('click', e => { if (e.target === elements.metodoPagoModal) handlers.closeMetodoPagoModal(); });
+
+    // Modal crear moneda
+    elements.closeMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.cancelMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
+    elements.monedaForm?.addEventListener('submit', e => handlers.submitMoneda(e));
+    elements.monedaModal?.addEventListener('click', e => { if (e.target === elements.monedaModal) handlers.closeMonedaModal(); });
 
     // Modal gasto
     elements.closeGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
@@ -1167,6 +1243,7 @@
         handlers.closeTxModal(); 
         handlers.closeContactoModal();
         handlers.closeMetodoPagoModal();
+        handlers.closeMonedaModal();
         handlers.closeGastoModal();
         handlers.closeVentaModal(); 
         handlers.closeCuentaModal(); 
