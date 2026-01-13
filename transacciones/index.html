@@ -449,50 +449,42 @@
             </div>
           </div>
 
-          <!-- Sección Comisión - Solo aparece si selecciona plataforma -->
-          <div id="comisionSection" style="display:none;">
-            <div class="form-section">
-              <div class="form-section-title">💳 Desglose de Comisión</div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Monto Total Pagado</label>
-                  <input type="number" class="form-input" id="montoTotal" placeholder="0.00" step="0.01" min="0">
-                  <span class="form-hint">Lo que pagó el cliente</span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Monto Recibido</label>
-                  <input type="number" class="form-input" id="montoRecibido" placeholder="0.00" step="0.01" min="0">
-                  <span class="form-hint">Lo que llegó a ti</span>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Moneda Origen</label>
-                  <select class="form-select" id="monedaOrigen">
-                    <option value="MXN">MXN</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Tipo de Cambio</label>
-                  <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
-                  <span class="form-hint">Si aplica conversión</span>
-                </div>
-              </div>
-              <div class="form-info-box comision-result">
-                <div class="comision-row">
-                  <span>Comisión cobrada:</span>
-                  <strong id="comisionCalculada">$0.00</strong>
-                </div>
-                <div class="comision-row">
-                  <span>Porcentaje:</span>
-                  <strong id="porcentajeCalculado">0%</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+       <!-- Sección Comisión - Solo aparece si selecciona plataforma -->
+<div id="comisionSection" style="display:none;">
+  <div class="form-section">
+    <div class="form-section-title">💳 Desglose de Comisión</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monto Total Pagado</label>
+        <input type="number" class="form-input" id="montoTotal" placeholder="0.00" step="0.01" min="0">
+        <span class="form-hint">Lo que pagó el cliente</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Moneda Origen</label>
+        <select class="form-select" id="monedaOrigen">
+          <option value="MXN">MXN</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo de Cambio</label>
+      <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
+      <span class="form-hint">Si aplica conversión a MXN</span>
+    </div>
+    <div class="form-info-box comision-result">
+      <div class="comision-row">
+        <span>Comisión cobrada:</span>
+        <strong id="comisionCalculada">$0.00</strong>
+      </div>
+      <div class="comision-row">
+        <span>Porcentaje:</span>
+        <strong id="porcentajeCalculado">0%</strong>
+      </div>
+    </div>
+  </div>
+</div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="submitModal">Guardar</button>
