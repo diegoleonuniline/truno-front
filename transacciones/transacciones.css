@@ -1,969 +1,745 @@
-/* ============================================
-   TRUNO - Transacciones CSS v3 FIXED
-   ============================================ */
+/**
+ * TRUNO - Transacciones v13
+ * Lógica: Monto Neto (arriba) = lo que llegó
+ *         Monto Total (comisión) = lo que pagó cliente
+ *         Comisión = Total - Neto
+ */
+(function() {
+  'use strict';
 
-:root {
-  --bg-primary: #0a0e14;
-  --bg-secondary: #111820;
-  --bg-tertiary: #1a2332;
-  --bg-card: #151c28;
-  --bg-input: #1e2738;
-  --bg-hover: #252f3f;
-  --brand-primary: #2563eb;
-  --brand-primary-hover: #1d4ed8;
-  --brand-primary-light: #3b82f6;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.1);
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.1);
-  --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.1);
-  --info: #3b82f6;
-  --info-bg: rgba(59, 130, 246, 0.1);
-  --border-color: #2d3748;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 24px;
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --sidebar-width: 260px;
-  --header-height: 64px;
-  --bottom-nav-height: 64px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
+  const CONFIG = window.TRUNO_CONFIG || {
+    API_URL: 'http://localhost:3000',
+    STORAGE_KEYS: { TOKEN: 'truno_token', USER: 'truno_user', ORG: 'truno_org' }
+  };
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  const $ = id => document.getElementById(id);
 
-html {
-  font-family: var(--font-family);
-  font-size: var(--font-size-md);
-  line-height: 1.5;
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: transparent;
-}
+  const elements = {
+    sidebar: $('sidebar'), sidebarOverlay: $('sidebarOverlay'), sidebarClose: $('sidebarClose'),
+    menuToggle: $('menuToggle'), orgSwitcher: $('orgSwitcher'), orgName: $('orgName'), 
+    orgPlan: $('orgPlan'), userAvatar: $('userAvatar'),
+    ingresosMes: $('ingresosMes'), egresosMes: $('egresosMes'), sinConciliar: $('sinConciliar'), balance: $('balance'),
+    searchInput: $('searchInput'), filterType: $('filterType'), filterCuenta: $('filterCuenta'), filterConciliado: $('filterConciliado'),
+    tableContainer: $('tableContainer'), tableBody: $('tableBody'), mobileCards: $('mobileCards'), emptyState: $('emptyState'),
+    pagination: $('pagination'), showingStart: $('showingStart'), showingEnd: $('showingEnd'), totalRecords: $('totalRecords'),
+    prevPage: $('prevPage'), nextPage: $('nextPage'),
+    addTxBtn: $('addTxBtn'), addFirstTxBtn: $('addFirstTxBtn'), fabBtn: $('fabBtn'),
+    detailModal: $('detailModal'), closeDetailModal: $('closeDetailModal'), closeDetailBtn: $('closeDetailBtn'),
+    detailAmount: $('detailAmount'), detailGrid: $('detailGrid'), detailConciliacion: $('detailConciliacion'),
+    editFromDetailBtn: $('editFromDetailBtn'),
+    txModal: $('txModal'), txForm: $('txForm'), modalTitle: $('modalTitle'),
+    closeModal: $('closeModal'), cancelModal: $('cancelModal'), submitModal: $('submitModal'),
+    tipo: $('tipo'), cuentaId: $('cuentaId'), monto: $('monto'), fecha: $('fecha'),
+    moneda: $('moneda'), metodoPago: $('metodoPago'), contactoId: $('contactoId'), 
+    descripcion: $('descripcion'), referencia: $('referencia'),
+    addCuentaBtn: $('addCuentaBtn'), addContactoBtn: $('addContactoBtn'), addMetodoPagoBtn: $('addMetodoPagoBtn'),
+    plataformaId: $('plataformaId'), addPlataformaBtn: $('addPlataformaBtn'),
+    comisionSection: $('comisionSection'), montoTotal: $('montoTotal'),
+    monedaOrigen: $('monedaOrigen'), tipoCambio: $('tipoCambio'),
+    comisionCalculada: $('comisionCalculada'), porcentajeCalculado: $('porcentajeCalculado'),
+    contactoModal: $('contactoModal'), contactoForm: $('contactoForm'), closeContactoModal: $('closeContactoModal'),
+    cancelContactoModal: $('cancelContactoModal'), contactoNombre: $('contactoNombre'), contactoTipo: $('contactoTipo'),
+    contactoEmail: $('contactoEmail'), contactoTelefono: $('contactoTelefono'), contactoRfc: $('contactoRfc'),
+    metodoPagoModal: $('metodoPagoModal'), metodoPagoForm: $('metodoPagoForm'), closeMetodoPagoModal: $('closeMetodoPagoModal'),
+    cancelMetodoPagoModal: $('cancelMetodoPagoModal'), metodoNombre: $('metodoNombre'), metodoClave: $('metodoClave'), metodoDescripcion: $('metodoDescripcion'),
+    plataformaModal: $('plataformaModal'), plataformaForm: $('plataformaForm'), closePlataformaModal: $('closePlataformaModal'),
+    cancelPlataformaModal: $('cancelPlataformaModal'), plataformaNombre: $('plataformaNombre'), plataformaDescripcion: $('plataformaDescripcion'),
+    gastoModal: $('gastoModal'), gastoForm: $('gastoForm'), closeGastoModal: $('closeGastoModal'),
+    cancelGastoModal: $('cancelGastoModal'), submitGastoModal: $('submitGastoModal'),
+    gastoFromTxInfo: $('gastoFromTxInfo'), gastoFromTxBox: $('gastoFromTxBox'),
+    gastoConcepto: $('gastoConcepto'), gastoProveedor: $('gastoProveedor'),
+    gastoFecha: $('gastoFecha'), gastoFechaVencimiento: $('gastoFechaVencimiento'),
+    gastoCategoria: $('gastoCategoria'), gastoSubcategoria: $('gastoSubcategoria'),
+    gastoSubtotal: $('gastoSubtotal'), gastoTotal: $('gastoTotal'),
+    gastoImpuestosContainer: $('gastoImpuestosContainer'),
+    gastoMoneda: $('gastoMoneda'), gastoMetodoPago: $('gastoMetodoPago'),
+    gastoEsFiscal: $('gastoEsFiscal'), gastoFiscalFields: $('gastoFiscalFields'),
+    gastoUuid: $('gastoUuid'), gastoFolio: $('gastoFolio'), gastoNotas: $('gastoNotas'),
+    ventaModal: $('ventaModal'), ventaForm: $('ventaForm'), closeVentaModal: $('closeVentaModal'),
+    cancelVentaModal: $('cancelVentaModal'), submitVentaModal: $('submitVentaModal'),
+    ventaFromTxInfo: $('ventaFromTxInfo'), ventaFromTxBox: $('ventaFromTxBox'),
+    ventaFolio: $('ventaFolio'), ventaCliente: $('ventaCliente'), ventaFecha: $('ventaFecha'),
+    ventaSubtotal: $('ventaSubtotal'), ventaTotal: $('ventaTotal'), ventaConcepto: $('ventaConcepto'),
+    cuentaModal: $('cuentaModal'), cuentaForm: $('cuentaForm'), closeCuentaModal: $('closeCuentaModal'),
+    cancelCuentaModal: $('cancelCuentaModal'), cuentaNombre: $('cuentaNombre'), cuentaBanco: $('cuentaBanco'), cuentaSaldo: $('cuentaSaldo'),
+    deleteModal: $('deleteModal'), closeDeleteModal: $('closeDeleteModal'), cancelDeleteModal: $('cancelDeleteModal'), confirmDelete: $('confirmDelete')
+  };
 
-body { min-height: 100dvh; overscroll-behavior: none; }
-button { cursor: pointer; border: none; background: none; font-family: inherit; }
-a { color: inherit; text-decoration: none; }
-.app { display: flex; min-height: 100dvh; }
+  let state = {
+    user: null, org: null, transacciones: [], cuentas: [], contactos: [], categorias: [], impuestosCatalogo: [],
+    monedas: [], metodosPago: [], plataformas: [], gastoImpuestosTemp: [],
+    paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
+    editingId: null, deletingId: null, viewingTx: null, gastoFromTxId: null, ventaFromTxId: null,
+    filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
+  };
 
-/* ========== SIDEBAR ========== */
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--bg-card);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  z-index: 200;
-  transform: translateX(-100%);
-  transition: transform var(--transition-base);
-}
-.sidebar.open { transform: translateX(0); }
+  const toast = {
+    container: null,
+    init() {
+      if (this.container) return;
+      this.container = document.createElement('div');
+      this.container.className = 'toast-container';
+      document.body.appendChild(this.container);
+    },
+    show(message, type = 'success', duration = 3000) {
+      this.init();
+      const toastEl = document.createElement('div');
+      toastEl.className = `toast toast-${type}`;
+      toastEl.innerHTML = `<div class="toast-message">${message}</div><button class="toast-close">×</button>`;
+      this.container.appendChild(toastEl);
+      requestAnimationFrame(() => toastEl.classList.add('show'));
+      toastEl.querySelector('.toast-close').addEventListener('click', () => this.hide(toastEl));
+      if (duration > 0) setTimeout(() => this.hide(toastEl), duration);
+    },
+    hide(toastEl) {
+      if (!toastEl?.parentNode) return;
+      toastEl.classList.remove('show');
+      setTimeout(() => toastEl.remove(), 300);
+    },
+    success(msg) { this.show(msg, 'success'); },
+    error(msg) { this.show(msg, 'error'); },
+    warning(msg) { this.show(msg, 'warning'); },
+    info(msg) { this.show(msg, 'info'); }
+  };
 
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
-}
+  const utils = {
+    getToken: () => localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN),
+    getUser: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.USER) || 'null'),
+    getOrg: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.ORG) || 'null'),
+    redirect: url => window.location.href = url,
+    getInitials: (n, a) => (n?.charAt(0) || '') + (a?.charAt(0) || '') || '??',
+    formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
+    formatDate(d) {
+      if (!d) return '-';
+      const date = new Date(typeof d === 'string' && d.includes('T') ? d.split('T')[0] + 'T12:00:00' : d);
+      return isNaN(date) ? '-' : date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+    },
+    formatDateInput: d => d ? d.split('T')[0] : '',
+    today: () => new Date().toISOString().split('T')[0],
+    debounce: (fn, delay) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
+  };
 
-.sidebar-logo {
-  width: 40px; height: 40px;
-  background: var(--brand-primary);
-  border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-}
-.sidebar-logo svg { width: 24px; height: 24px; color: var(--text-primary); }
-.sidebar-brand { font-size: var(--font-size-lg); font-weight: 700; flex: 1; }
+  const api = {
+    async request(endpoint, options = {}) {
+      const r = await fetch(`${CONFIG.API_URL}${endpoint}`, {
+        ...options,
+        headers: { 'Authorization': `Bearer ${utils.getToken()}`, 'X-Organization-Id': state.org?.id, 'Content-Type': 'application/json', ...options.headers }
+      });
+      if (r.status === 401) { utils.redirect('/login/login.html'); return; }
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Error');
+      return data;
+    },
+    getTransacciones(p = {}) {
+      const params = { pagina: p.pagina || 1, limite: p.limite || 20 };
+      if (p.buscar) params.buscar = p.buscar;
+      if (p.tipo) params.tipo = p.tipo;
+      if (p.cuenta_bancaria_id) params.cuenta_bancaria_id = p.cuenta_bancaria_id;
+      if (p.conciliado === '1') params.conciliado = '1';
+      if (p.conciliado === '0') params.sin_conciliar = '1';
+      return this.request(`/api/transacciones?${new URLSearchParams(params)}`);
+    },
+    createTransaccion: d => api.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }),
+    updateTransaccion: (id, d) => api.request(`/api/transacciones/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    deleteTransaccion: id => api.request(`/api/transacciones/${id}`, { method: 'DELETE' }),
+    getCuentas: () => api.request('/api/cuentas-bancarias'),
+    createCuenta: d => api.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(d) }),
+    getContactos: () => api.request('/api/contactos?limite=200'),
+    createContacto: d => api.request('/api/contactos', { method: 'POST', body: JSON.stringify(d) }),
+    getCategorias: () => api.request('/api/categorias?tipo=gasto'),
+    getSubcategorias: catId => api.request(`/api/categorias/${catId}/subcategorias`),
+    getImpuestos: () => api.request('/api/impuestos'),
+    getMonedas: () => api.request('/api/monedas'),
+    getMetodosPago: () => api.request('/api/metodos-pago'),
+    createMetodoPago: d => api.request('/api/metodos-pago', { method: 'POST', body: JSON.stringify(d) }),
+    getPlataformas: () => api.request('/api/plataformas'),
+    createPlataforma: d => api.request('/api/plataformas', { method: 'POST', body: JSON.stringify(d) }),
+    createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
+    createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
+    getGasto: id => api.request(`/api/gastos/${id}`),
+    getVenta: id => api.request(`/api/ventas/${id}`)
+  };
 
-.sidebar-close {
-  width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-}
-.sidebar-close:hover { background: var(--bg-hover); color: var(--text-primary); }
-.sidebar-close svg { width: 20px; height: 20px; }
+  const render = {
+    user() { if (state.user) elements.userAvatar.textContent = utils.getInitials(state.user.nombre, state.user.apellido); },
+    org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
+    stats() {
+      const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+      let ingresos = 0, egresos = 0, sinConc = 0;
+      state.transacciones.forEach(t => {
+        const f = new Date(t.fecha), monto = parseFloat(t.monto) || 0;
+        if (f.getMonth() === m && f.getFullYear() === y) {
+          if (t.tipo === 'ingreso') ingresos += monto; else egresos += monto;
+        }
+        if (!t.gasto_id && !t.venta_id) sinConc++;
+      });
+      elements.ingresosMes.textContent = utils.formatMoney(ingresos);
+      elements.egresosMes.textContent = utils.formatMoney(egresos);
+      elements.sinConciliar.textContent = sinConc;
+      elements.balance.textContent = utils.formatMoney(ingresos - egresos);
+    },
+    cuentas() {
+      const opts = state.cuentas.map(c => `<option value="${c.id}">${c.nombre} (${utils.formatMoney(c.saldo_actual)})</option>`).join('');
+      elements.cuentaId.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      elements.filterCuenta.innerHTML = '<option value="">Cuenta</option>' + opts;
+    },
+    monedas() {
+      const activas = state.monedas.filter(m => m.activo);
+      const opts = activas.length ? activas.map(m => `<option value="${m.codigo}" ${m.es_default ? 'selected' : ''}>${m.codigo} - ${m.nombre}</option>`).join('') : '<option value="MXN" selected>MXN - Peso Mexicano</option><option value="USD">USD - Dólar</option>';
+      elements.moneda.innerHTML = opts;
+      if (elements.monedaOrigen) elements.monedaOrigen.innerHTML = activas.length ? activas.map(m => `<option value="${m.codigo}">${m.codigo}</option>`).join('') : '<option value="MXN">MXN</option><option value="USD">USD</option>';
+      if (elements.gastoMoneda) elements.gastoMoneda.innerHTML = opts;
+    },
+    metodosPago() {
+      const metodos = state.metodosPago.length ? state.metodosPago.filter(m => m.activo !== false) : [{ nombre: 'Transferencia' }, { nombre: 'Efectivo' }, { nombre: 'Cheque' }];
+      const opts = metodos.map(m => `<option value="${m.id || m.clave || m.nombre}">${m.nombre}</option>`).join('');
+      elements.metodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      if (elements.gastoMetodoPago) elements.gastoMetodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+    },
+    plataformas() {
+      const activas = state.plataformas.filter(p => p.activo);
+      elements.plataformaId.innerHTML = '<option value="">-- Sin plataforma (pago directo) --</option>' + activas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    },
+    contactos() {
+      const allOpts = state.contactos.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      const provOpts = state.contactos.filter(c => c.tipo === 'proveedor' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      const cliOpts = state.contactos.filter(c => c.tipo === 'cliente' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      elements.contactoId.innerHTML = '<option value="">-- Sin contacto --</option>' + allOpts;
+      elements.gastoProveedor.innerHTML = '<option value="">-- Seleccionar --</option>' + provOpts;
+      elements.ventaCliente.innerHTML = '<option value="">-- Seleccionar --</option>' + cliOpts;
+    },
+    categorias() { elements.gastoCategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + state.categorias.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); },
+    subcategorias(subcats) { elements.gastoSubcategoria.innerHTML = '<option value="">-- Seleccionar --</option>' + (subcats || []).map(s => `<option value="${s.id}">${s.nombre}</option>`).join(''); },
+    gastoImpuestos() {
+      const container = elements.gastoImpuestosContainer;
+      if (!state.gastoImpuestosTemp.length) { container.innerHTML = '<div class="impuestos-empty">Sin impuestos</div>'; return; }
+      const selectOpts = state.impuestosCatalogo.map(i => `<option value="${i.id}" data-tasa="${i.tasa}" data-tipo="${i.tipo}">${i.nombre}</option>`).join('');
+      container.innerHTML = state.gastoImpuestosTemp.map((imp, idx) => `
+        <div class="impuesto-row" data-idx="${idx}">
+          <select class="imp-select"><option value="">-- Seleccionar --</option>${selectOpts}</select>
+          <span class="impuesto-tipo ${imp.tipo || 'traslado'}">${imp.tipo === 'retencion' ? 'Ret.' : 'Tras.'}</span>
+          <input type="number" class="imp-importe" value="${imp.importe || ''}" placeholder="0.00" step="0.01">
+          <button type="button" class="btn-remove-imp" title="Eliminar">×</button>
+        </div>
+      `).join('');
+      container.querySelectorAll('.impuesto-row').forEach((row, idx) => {
+        const select = row.querySelector('.imp-select');
+        const impInput = row.querySelector('.imp-importe');
+        const tipoSpan = row.querySelector('.impuesto-tipo');
+        if (state.gastoImpuestosTemp[idx].impuesto_id) select.value = state.gastoImpuestosTemp[idx].impuesto_id;
+        select.addEventListener('change', () => {
+          const opt = select.selectedOptions[0];
+          state.gastoImpuestosTemp[idx].impuesto_id = select.value;
+          state.gastoImpuestosTemp[idx].tasa = parseFloat(opt?.dataset?.tasa) || 0;
+          state.gastoImpuestosTemp[idx].tipo = opt?.dataset?.tipo || 'traslado';
+          tipoSpan.textContent = state.gastoImpuestosTemp[idx].tipo === 'retencion' ? 'Ret.' : 'Tras.';
+          const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+          if (subtotal > 0 && state.gastoImpuestosTemp[idx].tasa > 0) {
+            impInput.value = (subtotal * state.gastoImpuestosTemp[idx].tasa).toFixed(2);
+            state.gastoImpuestosTemp[idx].importe = parseFloat(impInput.value);
+          }
+          handlers.calcGastoTotal();
+        });
+        impInput.addEventListener('input', () => { state.gastoImpuestosTemp[idx].importe = parseFloat(impInput.value) || 0; handlers.calcGastoTotal(); });
+        row.querySelector('.btn-remove-imp').addEventListener('click', () => { state.gastoImpuestosTemp.splice(idx, 1); render.gastoImpuestos(); handlers.calcGastoTotal(); });
+      });
+    },
+    transacciones() {
+      const { transacciones, paginacion } = state;
+      if (!transacciones.length) { elements.tableContainer.style.display = 'none'; elements.mobileCards.innerHTML = ''; elements.emptyState.style.display = 'block'; elements.pagination.style.display = 'none'; return; }
+      elements.emptyState.style.display = 'none'; elements.tableContainer.style.display = 'block'; elements.pagination.style.display = 'flex';
+      const start = (paginacion.pagina - 1) * paginacion.limite + 1;
+      const end = Math.min(paginacion.pagina * paginacion.limite, paginacion.total);
+      elements.showingStart.textContent = start; elements.showingEnd.textContent = end; elements.totalRecords.textContent = paginacion.total;
+      elements.prevPage.disabled = paginacion.pagina <= 1; elements.nextPage.disabled = paginacion.pagina >= paginacion.paginas;
 
-.sidebar-nav { flex: 1; padding: var(--spacing-md); overflow-y: auto; }
-.nav-section { margin-bottom: var(--spacing-lg); }
-.nav-section-title {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: var(--spacing-sm) var(--spacing-md);
-}
+      const getMetodoLabel = m => m ? (state.metodosPago.find(x => x.id === m || x.clave === m || x.nombre === m)?.nombre || m) : '-';
+      const getPlataformaNombre = id => id ? (state.plataformas.find(p => p.id === id)?.nombre || null) : null;
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  margin-bottom: var(--spacing-xs);
-  min-height: 44px;
-}
-.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
-.nav-item.active { background: var(--brand-primary); color: var(--text-primary); }
-.nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
-.nav-section-mobile-only { display: block; }
+      elements.tableBody.innerHTML = transacciones.map(t => {
+        const isIncome = t.tipo === 'ingreso';
+        const conciliado = t.gasto_id || t.venta_id;
+        const plataformaNombre = getPlataformaNombre(t.plataforma_id) || t.plataforma_origen;
+        const tieneComision = plataformaNombre && t.monto_bruto;
+        return `<tr data-id="${t.id}" class="clickable-row">
+          <td><div class="cell-main">${t.descripcion || 'Sin descripción'}</div><div class="cell-sub">${plataformaNombre ? `📍 ${plataformaNombre}` : ''} ${t.referencia || ''}</div></td>
+          <td>${utils.formatDate(t.fecha)}</td>
+          <td>${t.nombre_cuenta || '-'}</td>
+          <td>${t.nombre_contacto || '-'}</td>
+          <td><span class="metodo-badge">${getMetodoLabel(t.metodo_pago)}</span></td>
+          <td><div class="badges-group"><span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}${tieneComision ? '<span class="badge warning">Comisión</span>' : ''}</div></td>
+          <td style="text-align:right;"><div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto), t.moneda || 'MXN')}</div>${tieneComision ? `<div class="cell-sub">Total: ${utils.formatMoney(t.monto_bruto)}</div>` : ''}</td>
+          <td><div class="table-actions">${!conciliado ? `<button class="action-btn success" title="${isIncome ? 'Venta' : 'Gasto'}" data-action="conciliar" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>` : ''}<button class="action-btn" title="Ver" data-action="view" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn danger" title="Eliminar" data-action="delete" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></td>
+        </tr>`;
+      }).join('');
 
-.sidebar-org { padding: var(--spacing-md); border-top: 1px solid var(--border-color); }
-.org-switcher {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-md);
-  width: 100%;
-  text-align: left;
-  min-height: 48px;
-}
-.org-switcher:hover { background: var(--bg-hover); }
-.org-switcher-icon {
-  width: 32px; height: 32px;
-  background: var(--brand-primary);
-  border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.org-switcher-icon svg { width: 18px; height: 18px; color: var(--text-primary); }
-.org-switcher-info { flex: 1; min-width: 0; }
-.org-switcher-name { font-size: var(--font-size-sm); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.org-switcher-plan { font-size: var(--font-size-xs); color: var(--text-muted); }
+      elements.mobileCards.innerHTML = transacciones.map(t => {
+        const isIncome = t.tipo === 'ingreso';
+        const conciliado = t.gasto_id || t.venta_id;
+        const plataformaNombre = getPlataformaNombre(t.plataforma_id) || t.plataforma_origen;
+        const tieneComision = plataformaNombre && t.monto_bruto;
+        const comision = t.monto_bruto ? (t.monto_bruto - t.monto) : 0;
+        const porcentaje = t.monto_bruto && t.monto_bruto > 0 ? ((comision / t.monto_bruto) * 100).toFixed(1) : 0;
+        return `<div class="mobile-card" data-id="${t.id}">
+          <div class="mobile-card-header"><div class="mobile-card-title">${t.descripcion || 'Sin descripción'}</div><div class="mobile-card-amount ${isIncome ? 'income' : ''}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto))}</div></div>
+          <div class="mobile-card-meta"><span>${utils.formatDate(t.fecha)}</span><span>${t.nombre_cuenta || '-'}</span>${plataformaNombre ? `<span>📍 ${plataformaNombre}</span>` : ''}</div>
+          ${tieneComision ? `<div class="mobile-card-meta"><span>Total: ${utils.formatMoney(t.monto_bruto)}</span><span>Comisión: ${utils.formatMoney(comision)} (${porcentaje}%)</span></div>` : ''}
+          <div class="mobile-card-footer"><div class="mobile-card-badges"><span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}</div><div class="table-actions">${!conciliado ? `<button class="action-btn success" data-action="conciliar" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>` : ''}<button class="action-btn" data-action="view" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="action-btn danger" data-action="delete" data-id="${t.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div>
+        </div>`;
+      }).join('');
 
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 199;
-  backdrop-filter: blur(4px);
-}
-.sidebar-overlay.active { display: block; }
+      // Event listeners
+      elements.tableBody.querySelectorAll('tr').forEach(row => row.addEventListener('click', e => { if (!e.target.closest('.action-btn')) handlers.openDetailModal(state.transacciones.find(t => t.id === row.dataset.id)); }));
+      document.querySelectorAll('[data-action="view"]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); handlers.openDetailModal(state.transacciones.find(t => t.id === btn.dataset.id)); }));
+      document.querySelectorAll('[data-action="delete"]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); handlers.openDeleteModal(state.transacciones.find(t => t.id === btn.dataset.id)); }));
+      document.querySelectorAll('[data-action="conciliar"]').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); const tx = state.transacciones.find(t => t.id === btn.dataset.id); if (tx) { state.viewingTx = tx; tx.tipo === 'ingreso' ? handlers.openVentaFromTx() : handlers.openGastoFromTx(); } }));
+      elements.mobileCards.querySelectorAll('.mobile-card').forEach(card => card.addEventListener('click', e => { if (!e.target.closest('.action-btn')) handlers.openDetailModal(state.transacciones.find(t => t.id === card.dataset.id)); }));
+    }
+  };
 
-/* ========== MAIN ========== */
-.main-content { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+  const handlers = {
+    toggleSidebar() { elements.sidebar.classList.toggle('open'); elements.sidebarOverlay.classList.toggle('active'); },
+    closeSidebar() { elements.sidebar.classList.remove('open'); elements.sidebarOverlay.classList.remove('active'); },
 
-/* ========== HEADER ========== */
-.header {
-  height: var(--header-height);
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--spacing-md);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.header-left { display: flex; align-items: center; gap: var(--spacing-sm); }
-.menu-toggle {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-}
-.menu-toggle:hover { background: var(--bg-hover); color: var(--text-primary); }
-.menu-toggle svg { width: 24px; height: 24px; }
-.header-title { font-size: var(--font-size-lg); font-weight: 600; }
-.header-right { display: flex; align-items: center; gap: var(--spacing-md); }
-.user-avatar {
-  width: 36px; height: 36px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  color: var(--brand-primary-light);
-}
+    async loadData() {
+      try {
+        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes, metodosRes, plataformasRes] = await Promise.all([
+          api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
+          api.getCuentas(), api.getContactos(),
+          api.getCategorias().catch(() => ({ categorias: [] })),
+          api.getImpuestos().catch(() => ({ impuestos: [] })),
+          api.getMonedas().catch(() => ({ monedas: [] })),
+          api.getMetodosPago().catch(() => ({ metodos_pago: [] })),
+          api.getPlataformas().catch(() => ({ plataformas: [] }))
+        ]);
+        state.transacciones = txRes.transacciones || [];
+        state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
+        state.cuentas = cuentasRes.cuentas || [];
+        state.contactos = contactosRes.contactos || [];
+        state.categorias = catRes.categorias || [];
+        state.impuestosCatalogo = impRes.impuestos || [];
+        state.monedas = monedasRes.monedas || [];
+        state.metodosPago = metodosRes.metodos_pago || metodosRes.metodosPago || [];
+        state.plataformas = plataformasRes.plataformas || [];
+        render.cuentas(); render.contactos(); render.categorias(); render.monedas(); render.metodosPago(); render.plataformas(); render.stats(); render.transacciones();
+      } catch (e) { console.error(e); toast.error('Error al cargar datos'); }
+    },
 
-/* ========== PAGE ========== */
-.page-content {
-  flex: 1;
-  padding: var(--spacing-md);
-  padding-bottom: calc(var(--bottom-nav-height) + var(--spacing-lg) + var(--safe-bottom));
-}
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-  gap: var(--spacing-md);
-}
-.page-header-info h2 { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: 2px; }
-.page-header-info p { color: var(--text-secondary); font-size: var(--font-size-xs); }
-#addTxBtn { display: none; }
+    async loadSubcategorias() {
+      const catId = elements.gastoCategoria.value;
+      if (!catId) { render.subcategorias([]); return; }
+      try { const res = await api.getSubcategorias(catId); render.subcategorias(res.subcategorias || []); } catch { render.subcategorias([]); }
+    },
 
-/* ========== BUTTONS ========== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  height: 44px;
-  padding: 0 var(--spacing-lg);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-.btn-primary { background: var(--brand-primary); color: var(--text-primary); }
-.btn-primary:hover { background: var(--brand-primary-hover); }
-.btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); }
-.btn-secondary:hover { background: var(--bg-hover); }
-.btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); }
-.btn-outline:hover { background: var(--bg-hover); }
-.btn-danger { background: var(--error-bg); color: var(--error); }
-.btn-danger:hover { background: var(--error); color: white; }
-.btn-sm { height: 36px; padding: 0 var(--spacing-md); font-size: var(--font-size-xs); }
-.btn-xs { height: 32px; padding: 0 var(--spacing-sm); font-size: var(--font-size-xs); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    toggleComisionSection() {
+      const show = !!elements.plataformaId?.value;
+      elements.comisionSection.style.display = show ? 'block' : 'none';
+      if (!show) {
+        elements.montoTotal.value = '';
+        elements.tipoCambio.value = '1';
+        elements.comisionCalculada.textContent = '$0.00';
+        elements.porcentajeCalculado.textContent = '0%';
+      }
+    },
 
-/* ========================================
-   STATS - 2x2 GRID EN MÓVIL
-   ======================================== */
-.stats-row {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: var(--spacing-sm) !important;
-  margin-bottom: var(--spacing-lg) !important;
-}
+    calcComision() {
+      const montoTotal = parseFloat(elements.montoTotal?.value) || 0;
+      const montoNeto = parseFloat(elements.monto?.value) || 0;  // Usa el campo de arriba
+      if (montoTotal > 0 && montoNeto >= 0) {
+        const comision = montoTotal - montoNeto;
+        const porcentaje = montoTotal > 0 ? (comision / montoTotal) : 0;
+        elements.comisionCalculada.textContent = utils.formatMoney(comision);
+        elements.porcentajeCalculado.textContent = `${(porcentaje * 100).toFixed(2)}%`;
+      }
+    },
 
-.stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-}
-.stat-card-label { font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: 2px; }
-.stat-card-value { font-size: var(--font-size-lg); font-weight: 700; }
-.stat-card-value.success { color: var(--success); }
-.stat-card-value.danger { color: var(--error); }
-.stat-card-value.warning { color: var(--warning); }
-.stat-card-value.info { color: var(--info); }
+    async openDetailModal(tx) {
+      if (!tx) return;
+      state.viewingTx = tx;
+      const isIncome = tx.tipo === 'ingreso';
+      const conciliado = tx.gasto_id || tx.venta_id;
+      const plataforma = state.plataformas.find(p => p.id === tx.plataforma_id);
+      const plataformaNombre = plataforma?.nombre || tx.plataforma_origen;
+      const tieneComision = plataformaNombre && tx.monto_bruto;
+      const comision = tx.monto_bruto ? (tx.monto_bruto - tx.monto) : 0;
+      const porcentaje = tx.monto_bruto && tx.monto_bruto > 0 ? (comision / tx.monto_bruto) : 0;
 
-/* ========== FILTERS ========== */
-.filters-bar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
+      elements.detailAmount.innerHTML = `
+        <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), tx.moneda || 'MXN')}</div>
+        <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'} • ${tx.moneda || 'MXN'}</div>
+        ${tieneComision ? `<div class="detail-amount-label" style="margin-top:8px;">Total pagado: ${utils.formatMoney(tx.monto_bruto)} → Comisión: ${utils.formatMoney(comision)} (${(porcentaje * 100).toFixed(1)}%)</div>` : ''}
+      `;
 
-.search-box { position: relative; width: 100%; }
-.search-box svg {
-  position: absolute;
-  left: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px; height: 18px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.search-box input {
-  width: 100%;
-  height: 44px;
-  padding: 0 var(--spacing-md) 0 44px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-md);
-}
-.search-box input:focus { outline: none; border-color: var(--brand-primary); }
-.search-box input::placeholder { color: var(--text-muted); }
+      let gridHTML = `
+        <div class="detail-item"><label>Fecha</label><span>${utils.formatDate(tx.fecha)}</span></div>
+        <div class="detail-item"><label>Cuenta</label><span>${tx.nombre_cuenta || '-'}</span></div>
+        <div class="detail-item"><label>Contacto</label><span>${tx.nombre_contacto || '-'}</span></div>
+        <div class="detail-item"><label>Método</label><span>${tx.metodo_pago || '-'}</span></div>
+        <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
+        <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
+      `;
+      if (tieneComision) {
+        gridHTML += `
+          <div class="detail-item"><label>Plataforma</label><span>${plataformaNombre}</span></div>
+          <div class="detail-item"><label>Monto Total</label><span>${utils.formatMoney(tx.monto_bruto)}</span></div>
+          <div class="detail-item"><label>Monto Neto</label><span>${utils.formatMoney(tx.monto)}</span></div>
+          <div class="detail-item"><label>Comisión</label><span>${utils.formatMoney(comision)} (${(porcentaje * 100).toFixed(1)}%)</span></div>
+        `;
+      }
+      elements.detailGrid.innerHTML = gridHTML;
 
-.filter-select {
-  height: 44px;
-  padding: 0 28px 0 var(--spacing-sm);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  cursor: pointer;
-  width: 100%;
-  margin-bottom: var(--spacing-sm);
-}
-.filter-select:focus { outline: none; border-color: var(--brand-primary); }
+      if (conciliado) {
+        let infoHtml = '<div class="conciliacion-header"><span class="badge conciliado">✓ Conciliado</span></div>';
+        try {
+          if (tx.gasto_id) { const g = await api.getGasto(tx.gasto_id); infoHtml += `<div class="conciliacion-info"><div class="conciliacion-tipo">Gasto vinculado</div><div class="conciliacion-detalle"><strong>${g.concepto || 'Sin concepto'}</strong><br>${utils.formatMoney(g.total)}</div></div>`; }
+          else if (tx.venta_id) { const v = await api.getVenta(tx.venta_id); infoHtml += `<div class="conciliacion-info"><div class="conciliacion-tipo">Venta vinculada</div><div class="conciliacion-detalle"><strong>${v.folio || 'Sin folio'}</strong><br>${utils.formatMoney(v.total)}</div></div>`; }
+        } catch {}
+        elements.detailConciliacion.innerHTML = infoHtml;
+      } else {
+        elements.detailConciliacion.innerHTML = `
+          <div class="conciliacion-header"><span class="badge pendiente">⏳ Por conciliar</span></div>
+          <div class="conciliacion-actions"><p>Sin documento vinculado.</p><button type="button" class="btn btn-primary" id="createFromTxBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${isIncome ? 'Registrar Venta' : 'Registrar Gasto'}</button></div>
+        `;
+        setTimeout(() => { $('createFromTxBtn')?.addEventListener('click', () => isIncome ? handlers.openVentaFromTx() : handlers.openGastoFromTx()); }, 10);
+      }
+      elements.detailModal.classList.add('active');
+    },
 
-/* ========================================
-   CRITICAL: OCULTAR TABLA EN MÓVIL
-   ======================================== */
-.table-container,
-#tableContainer,
-.table-wrapper {
-  display: none !important;
-}
+    closeDetailModal() { elements.detailModal.classList.remove('active'); },
+    editFromDetail() { if (state.viewingTx) { this.closeDetailModal(); this.openEditModal(state.viewingTx); } },
 
-.pagination,
-#pagination {
-  display: none !important;
-}
+    openCreateModal() {
+      state.editingId = null;
+      elements.modalTitle.textContent = 'Nuevo Movimiento';
+      elements.txForm.reset();
+      elements.fecha.value = utils.today();
+      elements.tipoCambio.value = '1';
+      elements.comisionSection.style.display = 'none';
+      elements.comisionCalculada.textContent = '$0.00';
+      elements.porcentajeCalculado.textContent = '0%';
+      render.monedas(); render.metodosPago(); render.plataformas();
+      elements.txModal.classList.add('active');
+    },
 
-/* ========================================
-   CRITICAL: MOSTRAR CARDS EN MÓVIL
-   ======================================== */
-.mobile-cards,
-#mobileCards {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: var(--spacing-sm) !important;
-}
+    openEditModal(tx) {
+      state.editingId = tx.id;
+      elements.modalTitle.textContent = 'Editar Movimiento';
+      elements.tipo.value = tx.tipo;
+      elements.cuentaId.value = tx.cuenta_bancaria_id;
+      elements.monto.value = tx.monto;
+      elements.fecha.value = utils.formatDateInput(tx.fecha);
+      elements.moneda.value = tx.moneda || 'MXN';
+      elements.metodoPago.value = tx.metodo_pago || '';
+      elements.contactoId.value = tx.contacto_id || '';
+      elements.descripcion.value = tx.descripcion || '';
+      elements.referencia.value = tx.referencia || '';
+      elements.plataformaId.value = tx.plataforma_id || '';
+      elements.montoTotal.value = tx.monto_bruto || '';
+      elements.monedaOrigen.value = tx.moneda_origen || 'MXN';
+      elements.tipoCambio.value = tx.tipo_cambio || '1';
+      this.toggleComisionSection();
+      if (tx.plataforma_id && tx.monto_bruto) this.calcComision();
+      elements.txModal.classList.add('active');
+    },
 
-/* ========== TABLE (desktop only) ========== */
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td {
-  padding: var(--spacing-md);
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-.table th {
-  background: var(--bg-tertiary);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-.table tr:last-child td { border-bottom: none; }
-.table tr:hover td { background: var(--bg-hover); }
-.table td { font-size: var(--font-size-sm); vertical-align: middle; }
-.clickable-row { cursor: pointer; }
-.cell-main { font-weight: 500; }
-.cell-sub { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 2px; }
-.cell-amount { font-weight: 600; font-family: 'SF Mono', monospace; }
-.cell-amount.income { color: var(--success); }
-.cell-amount.expense { color: var(--error); }
+    closeTxModal() { elements.txModal.classList.remove('active'); state.editingId = null; },
 
-/* ========== BADGES ========== */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.badge.ingreso { background: var(--success-bg); color: var(--success); }
-.badge.egreso { background: var(--error-bg); color: var(--error); }
-.badge.conciliado { background: var(--info-bg); color: var(--info); }
-.badge.sin-conciliar { background: var(--warning-bg); color: var(--warning); }
-.metodo-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-}
+    async submitTx(e) {
+      e.preventDefault();
+      const plataformaId = elements.plataformaId?.value || null;
+      const montoTotal = parseFloat(elements.montoTotal?.value) || null;
+      const montoNeto = parseFloat(elements.monto.value);
+      const tc = parseFloat(elements.tipoCambio?.value) || 1;
 
-/* ========== TABLE ACTIONS ========== */
-.table-actions { display: flex; align-items: center; gap: var(--spacing-xs); }
-.action-btn {
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  transition: all var(--transition-fast);
-}
-.action-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-.action-btn.danger:hover { background: var(--error-bg); color: var(--error); }
-.action-btn svg { width: 18px; height: 18px; }
+      // Calcular comisión si hay plataforma
+      let montoBruto = null, comisionValor = 0;
+      if (plataformaId && montoTotal) {
+        montoBruto = montoTotal;
+        comisionValor = montoTotal - montoNeto;
+      }
 
-/* ========== MOBILE CARDS ========== */
-.mobile-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-.mobile-card:active { background: var(--bg-hover); }
-.mobile-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-sm);
-  gap: var(--spacing-sm);
-}
-.mobile-card-title { font-weight: 600; font-size: var(--font-size-sm); flex: 1; line-height: 1.3; }
-.mobile-card-amount { font-weight: 700; font-size: var(--font-size-md); white-space: nowrap; }
-.mobile-card-amount.income { color: var(--success); }
-.mobile-card-amount.expense { color: var(--error); }
-.mobile-card-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  margin-bottom: var(--spacing-sm);
-}
-.mobile-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-  margin-bottom: var(--spacing-sm);
-}
-.mobile-card-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--border-color);
-}
+      const d = {
+        tipo: elements.tipo.value,
+        cuenta_bancaria_id: elements.cuentaId.value,
+        monto: montoNeto,
+        fecha: elements.fecha.value,
+        moneda: elements.moneda.value || 'MXN',
+        metodo_pago: elements.metodoPago.value || null,
+        contacto_id: elements.contactoId.value || null,
+        descripcion: elements.descripcion.value.trim() || null,
+        referencia: elements.referencia.value.trim() || null,
+        plataforma_id: plataformaId,
+        plataforma_origen: plataformaId ? state.plataformas.find(p => p.id === plataformaId)?.nombre : null,
+        monto_bruto: montoBruto,
+        tipo_comision: 'monto',
+        comision_valor: comisionValor,
+        moneda_origen: elements.monedaOrigen?.value || 'MXN',
+        tipo_cambio: tc
+      };
 
-/* ========== EMPTY STATE ========== */
-.empty-state { text-align: center; padding: var(--spacing-xl) var(--spacing-md); }
-.empty-state-icon {
-  width: 56px; height: 56px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-lg);
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto var(--spacing-md);
-}
-.empty-state-icon svg { width: 28px; height: 28px; color: var(--text-muted); }
-.empty-state h3 { font-size: var(--font-size-md); margin-bottom: var(--spacing-xs); }
-.empty-state p { color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg); }
+      elements.submitModal.disabled = true;
+      try {
+        if (state.editingId) await api.updateTransaccion(state.editingId, d);
+        else await api.createTransaccion(d);
+        this.closeTxModal();
+        await this.loadData();
+        toast.success(state.editingId ? 'Movimiento actualizado' : 'Movimiento registrado');
+      } catch (e) { toast.error(e.message); }
+      finally { elements.submitModal.disabled = false; }
+    },
 
-/* ========== FAB ========== */
-.fab {
-  position: fixed;
-  bottom: calc(var(--bottom-nav-height) + var(--spacing-md) + var(--safe-bottom));
-  right: var(--spacing-md);
-  width: 56px; height: 56px;
-  background: var(--brand-primary);
-  border-radius: var(--radius-full);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--shadow-lg);
-  z-index: 90;
-}
-.fab:hover { background: var(--brand-primary-hover); }
-.fab:active { transform: scale(0.95); }
-.fab svg { width: 24px; height: 24px; color: var(--text-primary); }
+    openContactoModal() { elements.contactoForm.reset(); elements.contactoTipo.value = 'cliente'; elements.contactoModal.classList.add('active'); },
+    closeContactoModal() { elements.contactoModal.classList.remove('active'); },
+    async submitContacto(e) {
+      e.preventDefault();
+      try {
+        const result = await api.createContacto({ nombre: elements.contactoNombre.value.trim(), tipo: elements.contactoTipo.value, email: elements.contactoEmail.value.trim() || null, telefono: elements.contactoTelefono.value.trim() || null, rfc: elements.contactoRfc.value.trim().toUpperCase() || null });
+        const c = result.contacto || result;
+        state.contactos.push(c); render.contactos(); elements.contactoId.value = c.id;
+        this.closeContactoModal(); toast.success('Contacto creado');
+      } catch (e) { toast.error(e.message); }
+    },
 
-/* ========== BOTTOM NAV ========== */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: calc(var(--bottom-nav-height) + var(--safe-bottom));
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding-top: var(--spacing-sm);
-  padding-bottom: var(--safe-bottom);
-  z-index: 100;
-}
-.bottom-nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xs);
-  color: var(--text-muted);
-  font-size: 10px;
-  gap: 2px;
-  min-width: 56px;
-  transition: color var(--transition-fast);
-}
-.bottom-nav-item svg { width: 24px; height: 24px; }
-.bottom-nav-item span { font-weight: 500; }
-.bottom-nav-item.active { color: var(--brand-primary); }
+    openMetodoPagoModal() { elements.metodoPagoForm.reset(); elements.metodoPagoModal.classList.add('active'); },
+    closeMetodoPagoModal() { elements.metodoPagoModal.classList.remove('active'); },
+    async submitMetodoPago(e) {
+      e.preventDefault();
+      try {
+        const result = await api.createMetodoPago({ nombre: elements.metodoNombre.value.trim(), clave: elements.metodoClave.value.trim() || null, descripcion: elements.metodoDescripcion.value.trim() || null });
+        const m = result.metodo_pago || result.metodoPago || result;
+        state.metodosPago.push(m); render.metodosPago(); elements.metodoPago.value = m.id || m.clave || m.nombre;
+        this.closeMetodoPagoModal(); toast.success('Método de pago creado');
+      } catch (e) { toast.error(e.message); }
+    },
 
-/* ========== MODALS ========== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: all var(--transition-base);
-  z-index: 1000;
-}
-.modal-overlay.active { opacity: 1; visibility: visible; }
+    openPlataformaModal() { elements.plataformaForm.reset(); elements.plataformaModal.classList.add('active'); },
+    closePlataformaModal() { elements.plataformaModal.classList.remove('active'); },
+    async submitPlataforma(e) {
+      e.preventDefault();
+      try {
+        const result = await api.createPlataforma({ nombre: elements.plataformaNombre.value.trim(), descripcion: elements.plataformaDescripcion.value.trim() || null });
+        const p = result.plataforma || result;
+        state.plataformas.push(p); render.plataformas(); elements.plataformaId.value = p.id;
+        this.closePlataformaModal(); this.toggleComisionSection(); toast.success('Plataforma creada');
+      } catch (e) { toast.error(e.message); }
+    },
 
-.modal {
-  width: 100%;
-  max-height: 90dvh;
-  background: var(--bg-card);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(100%);
-  transition: transform var(--transition-base);
-}
-.modal.modal-sm, .modal.modal-lg { max-width: 100%; }
-.modal-overlay.active .modal { transform: translateY(0); }
+    openGastoFromTx() {
+      const tx = state.viewingTx; if (!tx) return;
+      state.gastoFromTxId = tx.id; this.closeDetailModal();
+      elements.gastoForm.reset(); state.gastoImpuestosTemp = [];
+      elements.gastoFromTxBox.style.display = 'block';
+      elements.gastoFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.gastoConcepto.value = tx.descripcion || '';
+      elements.gastoProveedor.value = tx.contacto_id || '';
+      elements.gastoFecha.value = utils.formatDateInput(tx.fecha);
+      elements.gastoTotal.value = tx.monto;
+      elements.gastoSubtotal.value = tx.monto;
+      elements.gastoMoneda.value = tx.moneda || 'MXN';
+      elements.gastoMetodoPago.value = tx.metodo_pago || '';
+      elements.gastoFiscalFields.style.display = 'none';
+      elements.gastoEsFiscal.checked = false;
+      render.subcategorias([]); render.gastoImpuestos();
+      elements.gastoModal.classList.add('active');
+    },
+    closeGastoModal() { elements.gastoModal.classList.remove('active'); state.gastoFromTxId = null; state.viewingTx = null; },
+    addGastoImpuesto() { state.gastoImpuestosTemp.push({ impuesto_id: '', tasa: 0, tipo: 'traslado', importe: 0 }); render.gastoImpuestos(); },
+    calcGastoTotal() {
+      const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+      let traslados = 0, retenciones = 0;
+      state.gastoImpuestosTemp.forEach(imp => { if (imp.tipo === 'retencion') retenciones += (imp.importe || 0); else traslados += (imp.importe || 0); });
+      if (subtotal > 0 || state.gastoImpuestosTemp.length > 0) elements.gastoTotal.value = (subtotal + traslados - retenciones).toFixed(2);
+    },
+    recalcGastoImpuestos() {
+      const subtotal = parseFloat(elements.gastoSubtotal.value) || 0;
+      state.gastoImpuestosTemp.forEach(imp => { if (imp.tasa > 0 && subtotal > 0) imp.importe = subtotal * imp.tasa; });
+      render.gastoImpuestos(); this.calcGastoTotal();
+    },
+    async submitGasto(e) {
+      e.preventDefault();
+      let totalImpuesto = 0;
+      state.gastoImpuestosTemp.forEach(imp => { if (imp.tipo === 'traslado') totalImpuesto += (imp.importe || 0); else totalImpuesto -= (imp.importe || 0); });
+      const gastoData = {
+        concepto: elements.gastoConcepto.value.trim(),
+        proveedor_id: elements.gastoProveedor.value || null,
+        categoria_id: elements.gastoCategoria.value || null,
+        subcategoria_id: elements.gastoSubcategoria.value || null,
+        fecha: elements.gastoFecha.value,
+        fecha_vencimiento: elements.gastoFechaVencimiento.value || null,
+        metodo_pago: elements.gastoMetodoPago.value || null,
+        moneda: elements.gastoMoneda.value,
+        subtotal: parseFloat(elements.gastoSubtotal.value) || parseFloat(elements.gastoTotal.value),
+        impuesto: Math.abs(totalImpuesto),
+        total: parseFloat(elements.gastoTotal.value),
+        es_fiscal: elements.gastoEsFiscal.checked ? 1 : 0,
+        uuid_cfdi: elements.gastoUuid.value.trim() || null,
+        folio_cfdi: elements.gastoFolio.value.trim() || null,
+        notas: elements.gastoNotas.value.trim() || null,
+        transaccion_id: state.gastoFromTxId,
+        estatus_pago: 'pagado',
+        impuestos: state.gastoImpuestosTemp.filter(i => i.impuesto_id).map(i => ({ impuesto_id: i.impuesto_id, base: parseFloat(elements.gastoSubtotal.value) || parseFloat(elements.gastoTotal.value), importe: i.importe || 0 }))
+      };
+      elements.submitGastoModal.disabled = true;
+      try { await api.createGasto(gastoData); this.closeGastoModal(); await this.loadData(); toast.success('Gasto registrado y conciliado'); }
+      catch (e) { toast.error(e.message); }
+      finally { elements.submitGastoModal.disabled = false; }
+    },
 
-/* =========================================================
-   FIX RESPONSIVE MODALS (FORM SCROLL + FOOTER VISIBLE)
-   Relación:
-   - truno-front/transacciones/index.html -> varios modales usan <form> dentro de `.modal`
-   - truno-front/organizaciones/seleccionar.css -> patrón: `.modal > form` flex + `.modal-body` scrolleable
+    openVentaFromTx() {
+      const tx = state.viewingTx; if (!tx) return;
+      state.ventaFromTxId = tx.id; this.closeDetailModal();
+      elements.ventaForm.reset();
+      elements.ventaFromTxBox.style.display = 'block';
+      elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto)} del ${utils.formatDate(tx.fecha)}`;
+      elements.ventaCliente.value = tx.contacto_id || '';
+      elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
+      elements.ventaTotal.value = tx.monto;
+      elements.ventaSubtotal.value = tx.monto;
+      elements.ventaConcepto.value = tx.descripcion || '';
+      elements.ventaModal.classList.add('active');
+    },
+    closeVentaModal() { elements.ventaModal.classList.remove('active'); state.ventaFromTxId = null; state.viewingTx = null; },
+    async submitVenta(e) {
+      e.preventDefault();
+      const ventaData = { folio: elements.ventaFolio.value.trim() || null, contacto_id: elements.ventaCliente.value || null, fecha: elements.ventaFecha.value, subtotal: parseFloat(elements.ventaSubtotal.value) || parseFloat(elements.ventaTotal.value), total: parseFloat(elements.ventaTotal.value), concepto: elements.ventaConcepto.value.trim() || null, estatus: 'cobrada' };
+      elements.submitVentaModal.disabled = true;
+      try {
+        const result = await api.createVenta(ventaData);
+        const ventaId = result.venta?.id || result.id;
+        if (state.ventaFromTxId && ventaId) await api.updateTransaccion(state.ventaFromTxId, { venta_id: ventaId });
+        this.closeVentaModal(); await this.loadData(); toast.success('Venta registrada y conciliada');
+      } catch (e) { toast.error(e.message); }
+      finally { elements.submitVentaModal.disabled = false; }
+    },
 
-   Problema:
-   - `.modal` es flex, pero cuando el contenido está dentro de un `<form>`,
-     el `.modal-body` NO es hijo flex directo y puede no limitarse/scroll,
-     provocando que el footer (botones) quede fuera del viewport en móvil.
+    openCuentaModal() { elements.cuentaForm.reset(); elements.cuentaModal.classList.add('active'); },
+    closeCuentaModal() { elements.cuentaModal.classList.remove('active'); },
+    async submitCuenta(e) {
+      e.preventDefault();
+      try {
+        const data = await api.createCuenta({ nombre: elements.cuentaNombre.value.trim(), banco: elements.cuentaBanco.value.trim() || null, saldo_inicial: parseFloat(elements.cuentaSaldo.value) || 0 });
+        state.cuentas.push(data.cuenta || data); render.cuentas(); elements.cuentaId.value = data.cuenta?.id || data.id;
+        this.closeCuentaModal(); toast.success('Cuenta creada');
+      } catch (e) { toast.error(e.message); }
+    },
 
-   Solución:
-   - Hacer que el `<form>` hijo directo de `.modal` sea flex en columna
-   - Permitir que `.modal-body` crezca/encoga y scrollee con `min-height:0`
-   ========================================================= */
-.modal > form {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0; /* CRÍTICO: habilita overflow en descendientes dentro de flex */
-}
+    openDeleteModal(t) { state.deletingId = t.id; elements.deleteModal.classList.add('active'); },
+    closeDeleteModal() { elements.deleteModal.classList.remove('active'); state.deletingId = null; },
+    async confirmDelete() {
+      elements.confirmDelete.disabled = true;
+      try { await api.deleteTransaccion(state.deletingId); this.closeDeleteModal(); await this.loadData(); toast.success('Movimiento eliminado'); }
+      catch (e) { toast.error(e.message); }
+      finally { elements.confirmDelete.disabled = false; }
+    },
 
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-lg) var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
-  position: relative;
-}
-.modal-header::before {
-  content: '';
-  position: absolute;
-  top: 8px; left: 50%;
-  transform: translateX(-50%);
-  width: 40px; height: 4px;
-  background: var(--border-color);
-  border-radius: var(--radius-full);
-}
-.modal-title { font-size: var(--font-size-lg); font-weight: 600; }
-.modal-close {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-}
-.modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
-.modal-close svg { width: 20px; height: 20px; }
+    applyFilters() {
+      state.filters.buscar = elements.searchInput.value.trim();
+      state.filters.tipo = elements.filterType.value;
+      state.filters.cuenta_bancaria_id = elements.filterCuenta.value;
+      state.filters.conciliado = elements.filterConciliado.value;
+      state.paginacion.pagina = 1;
+      this.loadData();
+    },
+    prevPage() { if (state.paginacion.pagina > 1) { state.paginacion.pagina--; this.loadData(); } },
+    nextPage() { if (state.paginacion.pagina < state.paginacion.paginas) { state.paginacion.pagina++; this.loadData(); } },
+    switchOrg() { localStorage.removeItem(CONFIG.STORAGE_KEYS.ORG); utils.redirect('/organizaciones/seleccionar.html'); }
+  };
 
-.modal-body {
-  padding: var(--spacing-md);
-  overflow-y: auto;
-  flex: 1 1 auto;
-  min-height: 0; /* CRÍTICO: evita que el body empuje el footer fuera */
-  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-}
+  function init() {
+    if (!utils.getToken()) { utils.redirect('/login/login.html'); return; }
+    state.org = utils.getOrg();
+    if (!state.org) { utils.redirect('/organizaciones/seleccionar.html'); return; }
+    state.user = utils.getUser();
+    render.user(); render.org();
 
-.modal-footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
-  border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
-}
+    elements.menuToggle?.addEventListener('click', () => handlers.toggleSidebar());
+    elements.sidebarClose?.addEventListener('click', () => handlers.closeSidebar());
+    elements.sidebarOverlay?.addEventListener('click', () => handlers.closeSidebar());
+    elements.orgSwitcher?.addEventListener('click', () => handlers.switchOrg());
 
-/* =========================================================
-   Botones del modal-footer (mismo tamaño que Organizaciones)
-   Relación:
-   - truno-front/organizaciones/seleccionar.css -> `.modal-footer .btn`
-   - truno-front/transacciones/index.html -> botones Cancelar/Guardar, etc.
-   Nota: limitamos el cambio al footer del modal para no afectar botones generales.
-   ========================================================= */
-.modal-footer .btn {
-  width: 100%;
-  min-height: 52px;      /* Base móvil (similar a Organizaciones en pantallas pequeñas) */
-  height: auto;
-  padding: 14px 20px;
-  font-size: var(--font-size-md);
-  line-height: 1.5;
-  text-align: center;
-  white-space: nowrap;
-  letter-spacing: 0.2px;
-}
+    elements.addTxBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.addFirstTxBtn?.addEventListener('click', () => handlers.openCreateModal());
+    elements.fabBtn?.addEventListener('click', () => handlers.openCreateModal());
 
-/* =========================================================
-   AJUSTE UX: Botones NO "fijos" (más visibilidad del formulario)
-   Relación:
-   - truno-front/transacciones/index.html -> múltiples modales con <form>
-   - En móvil, el footer se mantenía siempre visible al scrollear solo `.modal-body`
+    elements.closeDetailModal?.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
+    elements.closeDetailBtn?.addEventListener('click', () => { handlers.closeDetailModal(); state.viewingTx = null; });
+    elements.editFromDetailBtn?.addEventListener('click', () => handlers.editFromDetail());
+    elements.detailModal?.addEventListener('click', e => { if (e.target === elements.detailModal) { handlers.closeDetailModal(); state.viewingTx = null; } });
 
-   Nuevo comportamiento:
-   - El scroll lo hace el modal completo (header + body + footer)
-   - Los botones quedan al final y NO ocupan espacio fijo
-   ========================================================= */
-.modal {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
+    elements.closeModal?.addEventListener('click', () => handlers.closeTxModal());
+    elements.cancelModal?.addEventListener('click', () => handlers.closeTxModal());
+    elements.txForm?.addEventListener('submit', e => handlers.submitTx(e));
+    elements.txModal?.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
+    elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
+    elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
+    elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
+    elements.addPlataformaBtn?.addEventListener('click', () => handlers.openPlataformaModal());
 
-.modal > form {
-  flex: 0 0 auto;
-  min-height: auto;
-}
+    // Plataforma y comisión
+    elements.plataformaId?.addEventListener('change', () => handlers.toggleComisionSection());
+    elements.montoTotal?.addEventListener('input', () => handlers.calcComision());
+    elements.monto?.addEventListener('input', () => handlers.calcComision());  // Monto neto de arriba
+    elements.tipoCambio?.addEventListener('input', () => handlers.calcComision());
 
-.modal-body {
-  flex: 0 0 auto;
-  min-height: auto;
-  overflow: visible;
-}
+    elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
+    elements.cancelContactoModal?.addEventListener('click', () => handlers.closeContactoModal());
+    elements.contactoForm?.addEventListener('submit', e => handlers.submitContacto(e));
+    elements.contactoModal?.addEventListener('click', e => { if (e.target === elements.contactoModal) handlers.closeContactoModal(); });
 
-/* ========== FORMS ========== */
-.form-group { margin-bottom: var(--spacing-md); }
-.form-label {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-xs);
-}
-.form-label.required::after { content: ' *'; color: var(--error); }
+    elements.closeMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.cancelMetodoPagoModal?.addEventListener('click', () => handlers.closeMetodoPagoModal());
+    elements.metodoPagoForm?.addEventListener('submit', e => handlers.submitMetodoPago(e));
+    elements.metodoPagoModal?.addEventListener('click', e => { if (e.target === elements.metodoPagoModal) handlers.closeMetodoPagoModal(); });
 
-.form-input, .form-textarea, .form-select {
-  width: 100%;
-  padding: 0 var(--spacing-md);
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-md);
-  transition: border-color var(--transition-fast);
-}
-.form-input, .form-select { height: 48px; }
-.form-textarea { padding: var(--spacing-md); min-height: 80px; resize: vertical; font-family: inherit; }
-.form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--brand-primary); }
-.form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
-.form-row { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); }
-.form-hint { font-size: var(--font-size-xs); color: var(--text-muted); margin-top: 4px; }
+    elements.closePlataformaModal?.addEventListener('click', () => handlers.closePlataformaModal());
+    elements.cancelPlataformaModal?.addEventListener('click', () => handlers.closePlataformaModal());
+    elements.plataformaForm?.addEventListener('submit', e => handlers.submitPlataforma(e));
+    elements.plataformaModal?.addEventListener('click', e => { if (e.target === elements.plataformaModal) handlers.closePlataformaModal(); });
 
-.form-section {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 1px solid var(--border-color);
-}
-.form-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-.form-section-title { font-size: var(--font-size-sm); font-weight: 600; margin-bottom: var(--spacing-md); }
+    elements.closeGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.cancelGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
+    elements.gastoForm?.addEventListener('submit', e => handlers.submitGasto(e));
+    elements.gastoModal?.addEventListener('click', e => { if (e.target === elements.gastoModal) handlers.closeGastoModal(); });
+    elements.gastoCategoria?.addEventListener('change', () => handlers.loadSubcategorias());
+    elements.gastoSubtotal?.addEventListener('input', () => handlers.recalcGastoImpuestos());
+    elements.gastoEsFiscal?.addEventListener('change', () => { elements.gastoFiscalFields.style.display = elements.gastoEsFiscal.checked ? 'block' : 'none'; });
+    $('addGastoImpuestoBtn')?.addEventListener('click', () => handlers.addGastoImpuesto());
 
-.select-with-add { display: flex; gap: 0; }
-.select-with-add .form-select { flex: 1; border-radius: var(--radius-md) 0 0 var(--radius-md); border-right: none; }
-.select-with-add .btn-add {
-  width: 48px; height: 48px;
-  padding: 0;
-  flex-shrink: 0;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  color: var(--text-muted);
-  display: flex; align-items: center; justify-content: center;
-}
-.select-with-add .btn-add:hover { background: var(--brand-primary); color: white; border-color: var(--brand-primary); }
-.select-with-add .btn-add svg { width: 18px; height: 18px; }
+    elements.closeVentaModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.cancelVentaModal?.addEventListener('click', () => handlers.closeVentaModal());
+    elements.ventaForm?.addEventListener('submit', e => handlers.submitVenta(e));
+    elements.ventaModal?.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
 
-.form-info-box {
-  background: var(--info-bg);
-  border: 1px solid var(--info);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  font-size: var(--font-size-sm);
-}
+    elements.closeCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cancelCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cuentaForm?.addEventListener('submit', e => handlers.submitCuenta(e));
+    elements.cuentaModal?.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
 
-/* ========== TOGGLE ========== */
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-sm) 0;
-  gap: var(--spacing-md);
-}
-.toggle-info { flex: 1; }
-.toggle-info-label { font-size: var(--font-size-sm); font-weight: 500; }
-.toggle-info-hint { font-size: var(--font-size-xs); color: var(--text-muted); }
-.toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
-.toggle input { opacity: 0; width: 0; height: 0; }
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-full);
-  transition: var(--transition-fast);
-}
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  height: 22px; width: 22px;
-  left: 2px; bottom: 2px;
-  background: var(--text-muted);
-  border-radius: 50%;
-  transition: var(--transition-fast);
-}
-.toggle input:checked + .toggle-slider { background: var(--brand-primary); border-color: var(--brand-primary); }
-.toggle input:checked + .toggle-slider::before { transform: translateX(24px); background: white; }
+    elements.closeDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.cancelDeleteModal?.addEventListener('click', () => handlers.closeDeleteModal());
+    elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
+    elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
-/* ========== DETAIL ========== */
-.detail-amount {
-  text-align: center;
-  padding: var(--spacing-lg) 0;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: var(--spacing-lg);
-}
-.detail-amount-value { font-size: 2rem; font-weight: 700; }
-.detail-amount-value.income { color: var(--success); }
-.detail-amount-value.expense { color: var(--error); }
-.detail-amount-label { font-size: var(--font-size-sm); color: var(--text-secondary); margin-top: var(--spacing-xs); }
-.detail-grid { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
-.detail-item { display: flex; flex-direction: column; gap: var(--spacing-xs); }
-.detail-item label { font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-.detail-item span { font-size: var(--font-size-md); }
-.detail-section { background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--spacing-md); }
-.conciliacion-actions { text-align: center; padding: var(--spacing-md) 0; }
-.conciliacion-actions p { margin-bottom: var(--spacing-md); color: var(--text-secondary); }
+    const df = utils.debounce(() => handlers.applyFilters(), 300);
+    elements.searchInput?.addEventListener('input', df);
+    elements.filterType?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterCuenta?.addEventListener('change', () => handlers.applyFilters());
+    elements.filterConciliado?.addEventListener('change', () => handlers.applyFilters());
+    elements.prevPage?.addEventListener('click', () => handlers.prevPage());
+    elements.nextPage?.addEventListener('click', () => handlers.nextPage());
 
-/* ========== IMPUESTOS ========== */
-.impuestos-container { display: flex; flex-direction: column; gap: 8px; }
-.impuesto-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  padding: 10px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-}
-.impuesto-row select {
-  flex: 1;
-  min-width: 100px;
-  padding: 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  height: 44px;
-}
-.impuesto-row input {
-  width: 80px;
-  padding: 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  text-align: right;
-  height: 44px;
-}
-.impuesto-row .btn-remove-imp {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.impuesto-row .btn-remove-imp:hover { border-color: var(--error); background: var(--error-bg); }
-.impuesto-row .btn-remove-imp svg { width: 18px; height: 18px; stroke: var(--text-muted); }
-.impuesto-row .btn-remove-imp:hover svg { stroke: var(--error); }
-.impuestos-empty {
-  padding: var(--spacing-md);
-  text-align: center;
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  background: var(--bg-secondary);
-  border: 1px dashed var(--border-color);
-  border-radius: var(--radius-md);
-}
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        handlers.closeDetailModal(); state.viewingTx = null;
+        handlers.closeTxModal(); handlers.closeContactoModal(); handlers.closeMetodoPagoModal();
+        handlers.closePlataformaModal(); handlers.closeGastoModal(); handlers.closeVentaModal();
+        handlers.closeCuentaModal(); handlers.closeDeleteModal();
+      }
+    });
 
-/* ========== TOAST ========== */
-.toast-container {
-  position: fixed;
-  bottom: calc(var(--bottom-nav-height) + var(--spacing-md) + var(--safe-bottom));
-  left: var(--spacing-md);
-  right: var(--spacing-md);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  pointer-events: none;
-}
-.toast {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  pointer-events: auto;
-  transform: translateY(100%);
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.hide { transform: translateY(100%); opacity: 0; }
-.toast-icon { width: 24px; height: 24px; flex-shrink: 0; }
-.toast-icon svg { width: 100%; height: 100%; }
-.toast-message { flex: 1; font-size: var(--font-size-sm); font-weight: 500; }
-.toast-close {
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-}
-.toast-close svg { width: 16px; height: 16px; }
-.toast-success { border-left: 4px solid var(--success); }
-.toast-success .toast-icon { color: var(--success); }
-.toast-error { border-left: 4px solid var(--error); }
-.toast-error .toast-icon { color: var(--error); }
-.toast-warning { border-left: 4px solid var(--warning); }
-.toast-warning .toast-icon { color: var(--warning); }
-.toast-info { border-left: 4px solid var(--info); }
-.toast-info .toast-icon { color: var(--info); }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.mobile-card { animation: fadeIn 0.2s ease-out both; }
-
-/* ============================================
-   DESKTOP (min-width: 769px)
-   ============================================ */
-@media (min-width: 769px) {
-  .sidebar { transform: translateX(0); }
-  .sidebar-close { display: none; }
-  .nav-section-mobile-only { display: none; }
-  .main-content { margin-left: var(--sidebar-width); }
-  .header { padding: 0 var(--spacing-lg); }
-  .menu-toggle { display: none; }
-  .page-content { padding: var(--spacing-lg); padding-bottom: var(--spacing-lg); }
-  .page-header-info h2 { font-size: var(--font-size-xl); }
-  .page-header-info p { font-size: var(--font-size-sm); }
-  #addTxBtn { display: inline-flex; }
-  
-  .stats-row { grid-template-columns: repeat(4, 1fr) !important; gap: var(--spacing-md) !important; }
-  .stat-card { padding: var(--spacing-lg); }
-  .stat-card-label { font-size: var(--font-size-sm); }
-  .stat-card-value { font-size: var(--font-size-xl); }
-  
-  .filters-bar { flex-direction: row; align-items: center; gap: var(--spacing-md); }
-  .search-box { max-width: 320px; }
-  .filter-select { width: auto; min-width: 120px; padding: 0 var(--spacing-xl) 0 var(--spacing-md); background-position: right 12px center; margin-bottom: 0; }
-  
-  .table-container, #tableContainer {
-    display: block !important;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+    handlers.loadData();
+    console.log('🚀 TRUNO Transacciones v13 - Comisión = Total - Neto');
   }
-  .table-wrapper { display: block !important; overflow-x: auto; }
-  
-  .pagination, #pagination {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--border-color);
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-  }
-  .pagination-controls { display: flex; align-items: center; gap: var(--spacing-sm); }
-  .pagination-btn {
-    width: 40px; height: 40px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-  }
-  .pagination-btn:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
-  .pagination-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .pagination-btn svg { width: 18px; height: 18px; }
-  
-  .mobile-cards, #mobileCards { display: none !important; }
-  .fab { display: none; }
-  .bottom-nav { display: none; }
-  
-  .modal-overlay { align-items: center; padding: var(--spacing-lg); }
-  .modal { max-width: 560px; max-height: calc(100vh - 48px); border-radius: var(--radius-xl); }
-  .modal.modal-sm { max-width: 420px; }
-  .modal.modal-lg { max-width: 640px; }
-  .modal-header::before { display: none; }
-  .modal-footer { flex-direction: row; padding-bottom: var(--spacing-md); }
-  .modal-footer .btn {
-    width: auto;
-    flex: 1;
-    /* Match con Organizaciones en desktop: botones más altos y con padding generoso */
-    min-height: 56px;
-    padding: 16px 32px;
-    font-size: var(--font-size-md);
-    min-width: 120px;
-  }
-  
-  .form-row { grid-template-columns: repeat(2, 1fr); }
-  .form-input, .form-select { height: 44px; font-size: var(--font-size-sm); }
-  .select-with-add .btn-add { width: 44px; height: 44px; }
-  
-  .detail-grid { grid-template-columns: repeat(2, 1fr); }
-  .detail-amount-value { font-size: 2.5rem; }
-  
-  .toast-container { bottom: auto; top: var(--spacing-lg); left: auto; right: var(--spacing-lg); max-width: 400px; }
-  .toast { transform: translateX(100%); }
-  .toast.show { transform: translateX(0); }
-  .toast.hide { transform: translateX(100%); }
-}
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
-  .table th:nth-child(5), .table td:nth-child(5),
-  .table th:nth-child(6), .table td:nth-child(6) { display: none; }
-}
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
