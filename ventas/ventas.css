@@ -1074,7 +1074,8 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
 
 .modal {
   width: 100%;
-  max-width: 560px;
+  /* Desktop: más ancho para aprovechar pantalla */
+  max-width: 760px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -1087,11 +1088,11 @@ p, span, a, h1, h2, h3, h4, h5, h6, label, div {
 }
 
 .modal.modal-sm {
-  max-width: 420px;
+  max-width: 520px;
 }
 
 .modal.modal-lg {
-  max-width: 640px;
+  max-width: 920px;
 }
 
 .modal-overlay.active .modal {

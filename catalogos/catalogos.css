@@ -1149,6 +1149,42 @@ input:checked + .toggle-slider {
   }
 }
 
+/* =========================================================
+   MODALS (DESKTOP)
+   Objetivo: que en PC NO se vean como modal "móvil/drawer".
+   - Centrado real con padding
+   - Más ancho para aprovechar pantalla
+   - Altura controlada (scroll del modal completo)
+   Relación: truno-front/catalogos/index.html (todos los modales)
+   ========================================================= */
+@media (min-width: 769px) {
+  .modal-overlay {
+    align-items: center;
+    padding: var(--spacing-lg);
+  }
+
+  .modal {
+    /* Aprovecha más espacio en pantallas grandes */
+    max-width: min(760px, 92vw);
+    margin: 0;
+    border-radius: var(--radius-xl);
+    max-height: calc(100vh - 96px);
+  }
+
+  .modal-body {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+
+  .modal-footer {
+    flex-direction: row;
+    padding: var(--spacing-lg);
+  }
+
+  .modal-footer .btn {
+    width: auto;
+  }
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     transform: translateX(-100%);
