@@ -74,12 +74,19 @@
     // Campos comisión
     plataformaOrigen: $('plataformaOrigen'),
     comisionSection: $('comisionSection'),
+    tieneComision: $('tieneComision'),
     montoBruto: $('montoBruto'),
     monedaOrigen: $('monedaOrigen'),
+    // `tipoComision` se mantiene para compatibilidad (se guarda en DB)
+    // En UI el usuario elige `comisionModo` para definir cómo capturar el dato.
     tipoComision: $('tipoComision'),
+    comisionModo: $('comisionModo'),
     comisionValor: $('comisionValor'),
     tipoCambio: $('tipoCambio'),
     montoNetoDisplay: $('montoNetoDisplay'),
+    pagoBrutoDisplay: $('pagoBrutoDisplay'),
+    comisionMontoDisplay: $('comisionMontoDisplay'),
+    comisionPctDisplay: $('comisionPctDisplay'),
     // Modal crear contacto
     contactoModal: $('contactoModal'),
     contactoForm: $('contactoForm'),
@@ -232,7 +239,14 @@
     getOrg: () => JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.ORG) || 'null'),
     redirect: url => window.location.href = url,
     getInitials: (n, a) => (n?.charAt(0).toUpperCase() || '') + (a?.charAt(0).toUpperCase() || '') || '??',
-    formatMoney: (a, c = 'MXN') => new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0),
+    // Formateador seguro (evita RangeError si llega un código de moneda no estándar)
+    formatMoney: (a, c = 'MXN') => {
+      try {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: c }).format(a || 0);
+      } catch (_) {
+        return new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0) + ` ${c || ''}`.trim();
+      }
+    },
     formatDate(d) {
       if (!d) return '-';
       let date;
@@ -501,12 +515,35 @@
         return labels[metodo] || metodo;
       };
 
+      // Helpers de comisión: muestra siempre monto + % real (estilo “Remitly”)
+      const normalizePct = (raw) => {
+        const v = parseFloat(raw) || 0;
+        if (!v) return 0;
+        return v <= 1 ? v * 100 : v; // soporta % guardado como fracción (0-1)
+      };
+      const calcFeeFromTx = (t) => {
+        const bruto = parseFloat(t.monto_bruto) || 0;
+        if (!bruto) return { fee: 0, pct: 0, bruto: 0 };
+        const tipo = t.tipo_comision || 'monto';
+        const raw = parseFloat(t.comision_valor) || 0;
+        let fee = 0;
+        if (tipo === 'porcentaje') {
+          const pct = normalizePct(raw);
+          fee = bruto * (pct / 100);
+        } else {
+          fee = raw;
+        }
+        const pctReal = bruto > 0 ? (fee / bruto) * 100 : 0;
+        return { fee, pct: pctReal, bruto };
+      };
+
       elements.tableBody.innerHTML = transacciones.map(t => {
         const isIncome = t.tipo === 'ingreso';
         const conciliado = t.gasto_id || t.venta_id;
         const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
-        const tieneComision = t.plataforma_origen && t.monto_bruto;
+        const tieneComision = !!(t.monto_bruto && (t.comision_valor !== null && t.comision_valor !== undefined));
+        const feeInfo = tieneComision ? calcFeeFromTx(t) : null;
         
         return `<tr data-id="${t.id}" class="clickable-row">
           <td>
@@ -526,7 +563,7 @@
           </td>
           <td style="text-align:right;">
             <div class="cell-amount ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(t.monto), moneda)}</div>
-            <div class="cell-sub">${tieneComision ? `Bruto: ${utils.formatMoney(t.monto_bruto, t.moneda_origen || moneda)}` : moneda}</div>
+            <div class="cell-sub">${tieneComision ? `Pagado: ${utils.formatMoney(feeInfo.bruto, t.moneda_origen || moneda)} • Comisión: ${utils.formatMoney(feeInfo.fee, t.moneda_origen || moneda)} (${feeInfo.pct.toFixed(2)}%)` : moneda}</div>
           </td>
           <td>
             <div class="table-actions">
@@ -543,7 +580,8 @@
         const conciliado = t.gasto_id || t.venta_id;
         const metodoLabel = getMetodoLabel(t.metodo_pago);
         const moneda = t.moneda || 'MXN';
-        const tieneComision = t.plataforma_origen && t.monto_bruto;
+        const tieneComision = !!(t.monto_bruto && (t.comision_valor !== null && t.comision_valor !== undefined));
+        const feeInfo = tieneComision ? calcFeeFromTx(t) : null;
         
         return `<div class="mobile-card" data-id="${t.id}">
           <div class="mobile-card-header">
@@ -556,7 +594,7 @@
             ${t.plataforma_origen ? `<span>📍 ${t.plataforma_origen}</span>` : ''}
             ${metodoLabel !== '-' ? `<span>${metodoLabel}</span>` : ''}
           </div>
-          ${tieneComision ? `<div class="mobile-card-meta"><span>Bruto: ${utils.formatMoney(t.monto_bruto, t.moneda_origen || moneda)}</span><span>Comisión: ${t.tipo_comision === 'porcentaje' ? t.comision_valor + '%' : utils.formatMoney(t.comision_valor)}</span></div>` : ''}
+          ${tieneComision ? `<div class="mobile-card-meta"><span>Pagado: ${utils.formatMoney(feeInfo.bruto, t.moneda_origen || moneda)}</span><span>Comisión: ${utils.formatMoney(feeInfo.fee, t.moneda_origen || moneda)} (${feeInfo.pct.toFixed(2)}%)</span></div>` : ''}
           <div class="mobile-card-footer">
             <div class="mobile-card-badges">
               <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
@@ -666,30 +704,125 @@
 
     // ========== COMISIÓN HANDLERS ==========
     toggleComisionSection() {
-      const show = elements.plataformaOrigen?.value?.trim();
+      // Mostrar sección SOLO si el usuario activó el switch.
+      // Nota: antes también se mostraba al escribir "Plataforma Origen" (legacy),
+      // pero eso hacía que el switch pareciera "no hacer nada".
+      const show = !!elements.tieneComision?.checked;
       if (elements.comisionSection) {
         elements.comisionSection.style.display = show ? 'block' : 'none';
         if (!show) {
           if (elements.montoBruto) elements.montoBruto.value = '';
           if (elements.comisionValor) elements.comisionValor.value = '';
           if (elements.tipoCambio) elements.tipoCambio.value = '1';
+          if (elements.comisionModo) elements.comisionModo.value = 'desde_neto';
+          if (elements.tipoComision) elements.tipoComision.value = 'monto';
+          handlers.renderComisionResumen();
         }
       }
     },
 
-    calcMontoNeto() {
-      const bruto = parseFloat(elements.montoBruto?.value) || 0;
-      const tipoComision = elements.tipoComision?.value || 'monto';
-      const valorComision = parseFloat(elements.comisionValor?.value) || 0;
-      const tc = parseFloat(elements.tipoCambio?.value) || 1;
-      
-      if (bruto > 0) {
-        let comision = tipoComision === 'porcentaje' ? bruto * valorComision / 100 : valorComision;
-        const neto = (bruto - comision) * tc;
-        elements.monto.value = neto.toFixed(2);
-        if (elements.montoNetoDisplay) {
-          elements.montoNetoDisplay.textContent = utils.formatMoney(neto);
+    /**
+     * Calcula comisión/monto recibido en ambos sentidos.
+     *
+     * Modelo:
+     * - `montoBruto` está en moneda origen (lo pagado)
+     * - `monto` (principal) está en moneda de la cuenta (lo recibido)
+     * - `tipoCambio` = (moneda cuenta) por 1 (moneda origen). Ej: 1 USD = 17.10 MXN
+     * - `comisionValor` puede ser:
+     *   - monto fijo en moneda origen, o
+     *   - porcentaje (0-100)
+     *
+     * Relación:
+     * - truno-front/transacciones/index.html (#comisionModo, #tipoComision, #comisionValor, #montoBruto, #monto, #tipoCambio)
+     */
+    calcComisionYMontos(source = 'auto') {
+      const brutoOrigen = parseFloat(elements.montoBruto?.value) || 0;
+      const tc = Math.max(0, parseFloat(elements.tipoCambio?.value) || 1);
+      const netoCuenta = parseFloat(elements.monto?.value) || 0;
+      const monedaCuenta = elements.moneda?.value || 'MXN';
+      const monedaOrigen = elements.monedaOrigen?.value || monedaCuenta;
+
+      // Si no hay bruto, solo refrescar resumen.
+      if (!brutoOrigen) {
+        handlers.renderComisionResumen();
+        return;
+      }
+
+      // Determinar modo de captura
+      const modo = elements.comisionModo?.value || 'desde_neto';
+
+      // Normalizar: si el usuario tocó el input de comisión, respetar ese modo
+      if (source === 'comisionValor' || source === 'tipoComision') {
+        if (elements.comisionModo) {
+          if (elements.tipoComision?.value === 'porcentaje') elements.comisionModo.value = 'porcentaje';
+          else elements.comisionModo.value = 'monto';
         }
+      }
+
+      // Ejecutar cálculo según modo
+      if (modo === 'porcentaje') {
+        if (elements.tipoComision) elements.tipoComision.value = 'porcentaje';
+        if (elements.comisionValor) elements.comisionValor.disabled = false;
+        const pct = Math.max(0, parseFloat(elements.comisionValor?.value) || 0);
+        const feeOrigen = brutoOrigen * (pct / 100);
+        const netoCalc = (brutoOrigen - feeOrigen) * tc;
+        if (elements.monto) elements.monto.value = isFinite(netoCalc) ? netoCalc.toFixed(2) : '';
+      } else if (modo === 'monto') {
+        if (elements.tipoComision) elements.tipoComision.value = 'monto';
+        if (elements.comisionValor) elements.comisionValor.disabled = false;
+        const feeOrigen = Math.max(0, parseFloat(elements.comisionValor?.value) || 0);
+        const netoCalc = (brutoOrigen - feeOrigen) * tc;
+        if (elements.monto) elements.monto.value = isFinite(netoCalc) ? netoCalc.toFixed(2) : '';
+      } else {
+        // desde_neto: el usuario conoce lo recibido (monto) y el bruto; calculamos la comisión
+        if (elements.tipoComision) elements.tipoComision.value = 'monto';
+        if (elements.comisionValor) elements.comisionValor.disabled = true;
+
+        const netoEnOrigen = tc > 0 ? (netoCuenta / tc) : 0;
+        const feeOrigen = Math.max(0, brutoOrigen - netoEnOrigen);
+        if (elements.comisionValor) elements.comisionValor.value = feeOrigen ? feeOrigen.toFixed(2) : '0';
+      }
+
+      // Refrescar resumen (incluye % calculado siempre)
+      handlers.renderComisionResumen({ monedaCuenta, monedaOrigen });
+    },
+
+    /**
+     * Renderiza el resumen: pagado, comisión (monto + %) y llega.
+     * - Siempre calcula % real, aunque la comisión se haya ingresado como monto.
+     */
+    renderComisionResumen(opts = {}) {
+      const monedaCuenta = opts.monedaCuenta || (elements.moneda?.value || 'MXN');
+      const monedaOrigen = opts.monedaOrigen || (elements.monedaOrigen?.value || monedaCuenta);
+
+      const brutoOrigen = parseFloat(elements.montoBruto?.value) || 0;
+      const tc = Math.max(0, parseFloat(elements.tipoCambio?.value) || 1);
+      const netoCuenta = parseFloat(elements.monto?.value) || 0;
+
+      let feeOrigen = 0;
+      const tipoComision = elements.tipoComision?.value || 'monto';
+      const rawComision = parseFloat(elements.comisionValor?.value) || 0;
+
+      // Soportar datos antiguos: porcentaje puede venir como fracción (0.035) o como % (3.5)
+      if (tipoComision === 'porcentaje') {
+        const pct = rawComision <= 1 ? (rawComision * 100) : rawComision;
+        feeOrigen = brutoOrigen > 0 ? brutoOrigen * (pct / 100) : 0;
+      } else {
+        feeOrigen = rawComision;
+      }
+
+      const pctReal = brutoOrigen > 0 ? (feeOrigen / brutoOrigen) * 100 : 0;
+
+      if (elements.pagoBrutoDisplay) elements.pagoBrutoDisplay.textContent = utils.formatMoney(brutoOrigen, monedaOrigen);
+      if (elements.comisionMontoDisplay) elements.comisionMontoDisplay.textContent = utils.formatMoney(feeOrigen, monedaOrigen);
+      if (elements.comisionPctDisplay) elements.comisionPctDisplay.textContent = `${(pctReal || 0).toFixed(2)}%`;
+      if (elements.montoNetoDisplay) elements.montoNetoDisplay.textContent = utils.formatMoney(netoCuenta, monedaCuenta);
+
+      // UX: placeholder cambia según modo
+      const modo = elements.comisionModo?.value || 'desde_neto';
+      if (elements.comisionValor) {
+        if (modo === 'porcentaje') elements.comisionValor.placeholder = 'Ej: 3.5';
+        else elements.comisionValor.placeholder = '0.00';
       }
     },
     
@@ -699,7 +832,29 @@
       const isIncome = tx.tipo === 'ingreso';
       const conciliado = tx.gasto_id || tx.venta_id;
       const moneda = tx.moneda || 'MXN';
-      const tieneComision = tx.plataforma_origen && tx.monto_bruto;
+      const tieneComision = !!(tx.monto_bruto && (tx.comision_valor !== null && tx.comision_valor !== undefined));
+
+      const normalizePct = (raw) => {
+        const v = parseFloat(raw) || 0;
+        if (!v) return 0;
+        return v <= 1 ? v * 100 : v;
+      };
+      const calcFee = () => {
+        const bruto = parseFloat(tx.monto_bruto) || 0;
+        if (!bruto) return { fee: 0, pct: 0, bruto: 0 };
+        const tipo = tx.tipo_comision || 'monto';
+        const raw = parseFloat(tx.comision_valor) || 0;
+        let fee = 0;
+        if (tipo === 'porcentaje') {
+          const pct = normalizePct(raw);
+          fee = bruto * (pct / 100);
+        } else {
+          fee = raw;
+        }
+        const pctReal = bruto > 0 ? (fee / bruto) * 100 : 0;
+        return { fee, pct: pctReal, bruto };
+      };
+      const feeInfo = tieneComision ? calcFee() : null;
       
       const getMetodoLabel = (metodo) => {
         if (!metodo) return '-';
@@ -713,7 +868,7 @@
       elements.detailAmount.innerHTML = `
         <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), moneda)}</div>
         <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'} • ${moneda}</div>
-        ${tieneComision ? `<div class="detail-amount-label" style="margin-top:8px;">Bruto: ${utils.formatMoney(tx.monto_bruto, tx.moneda_origen || moneda)} → Comisión: ${tx.tipo_comision === 'porcentaje' ? tx.comision_valor + '%' : utils.formatMoney(tx.comision_valor)}</div>` : ''}
+        ${tieneComision ? `<div class="detail-amount-label" style="margin-top:8px;">Pagado: ${utils.formatMoney(feeInfo.bruto, tx.moneda_origen || moneda)} → Comisión: ${utils.formatMoney(feeInfo.fee, tx.moneda_origen || moneda)} (${feeInfo.pct.toFixed(2)}%)</div>` : ''}
       `;
 
       const contacto = state.contactos.find(c => c.id === tx.contacto_id);
@@ -729,7 +884,7 @@
       
       if (tieneComision) {
         gridHTML += `
-          <div class="detail-item"><label>Plataforma Origen</label><span>${tx.plataforma_origen}</span></div>
+          <div class="detail-item"><label>Plataforma Origen</label><span>${tx.plataforma_origen || '-'}</span></div>
           <div class="detail-item"><label>Moneda Origen</label><span>${tx.moneda_origen || moneda}</span></div>
           <div class="detail-item"><label>Tipo de Cambio</label><span>${tx.tipo_cambio || 1}</span></div>
         `;
@@ -799,6 +954,10 @@
       elements.fecha.value = utils.today();
       if (elements.tipoCambio) elements.tipoCambio.value = '1';
       if (elements.comisionSection) elements.comisionSection.style.display = 'none';
+      if (elements.tieneComision) elements.tieneComision.checked = false;
+      if (elements.comisionModo) elements.comisionModo.value = 'desde_neto';
+      if (elements.tipoComision) elements.tipoComision.value = 'monto';
+      if (elements.comisionValor) elements.comisionValor.disabled = true;
       render.monedas();
       render.metodosPago();
       elements.txModal.classList.add('active');
@@ -821,11 +980,26 @@
       if (elements.montoBruto) elements.montoBruto.value = tx.monto_bruto || '';
       if (elements.monedaOrigen) elements.monedaOrigen.value = tx.moneda_origen || 'MXN';
       if (elements.tipoComision) elements.tipoComision.value = tx.tipo_comision || 'monto';
-      if (elements.comisionValor) elements.comisionValor.value = tx.comision_valor || '';
+      if (elements.comisionValor) elements.comisionValor.value = (tx.comision_valor ?? '') !== null ? (tx.comision_valor ?? '') : '';
       if (elements.tipoCambio) elements.tipoCambio.value = tx.tipo_cambio || '1';
+
+      // Marcar el switch si hay datos de comisión/conversión
+      if (elements.tieneComision) {
+        elements.tieneComision.checked = !!(tx.monto_bruto || tx.plataforma_origen);
+      }
+
+      // Derivar modo UI desde lo guardado
+      if (elements.comisionModo) {
+        if (tx.tipo_comision === 'porcentaje') elements.comisionModo.value = 'porcentaje';
+        else elements.comisionModo.value = 'monto';
+        // Si no hay valor de comisión pero sí bruto, permitir “desde_neto” (calcular)
+        if ((tx.comision_valor === null || tx.comision_valor === undefined) && tx.monto_bruto) {
+          elements.comisionModo.value = 'desde_neto';
+        }
+      }
       
       this.toggleComisionSection();
-      if (tx.monto_bruto) this.calcMontoNeto();
+      handlers.calcComisionYMontos('auto');
       
       elements.txModal.classList.add('active');
     },
@@ -837,6 +1011,10 @@
     
     async submitTx(e) {
       e.preventDefault();
+      // Asegurar que el resumen y los valores calculados estén sincronizados antes de enviar
+      handlers.calcComisionYMontos('auto');
+
+      const usarComision = !!elements.tieneComision?.checked;
       const d = {
         tipo: elements.tipo.value,
         cuenta_bancaria_id: elements.cuentaId.value,
@@ -848,9 +1026,11 @@
         descripcion: elements.descripcion.value.trim() || null,
         referencia: elements.referencia.value.trim() || null,
         plataforma_origen: elements.plataformaOrigen?.value?.trim() || null,
-        monto_bruto: parseFloat(elements.montoBruto?.value) || null,
-        tipo_comision: elements.tipoComision?.value || 'monto',
-        comision_valor: parseFloat(elements.comisionValor?.value) || 0,
+        // Solo enviar payload de comisión si el switch está activo.
+        // Esto evita “comisiones fantasma” y hace el comportamiento evidente.
+        monto_bruto: usarComision ? (parseFloat(elements.montoBruto?.value) || null) : null,
+        tipo_comision: usarComision ? (elements.tipoComision?.value || 'monto') : null,
+        comision_valor: usarComision ? (parseFloat(elements.comisionValor?.value) || 0) : null,
         moneda_origen: elements.monedaOrigen?.value || 'MXN',
         tipo_cambio: parseFloat(elements.tipoCambio?.value) || 1
       };
@@ -1241,11 +1421,17 @@
     elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
     
     // Comisión listeners
-    elements.plataformaOrigen?.addEventListener('input', () => handlers.toggleComisionSection());
-    elements.montoBruto?.addEventListener('input', () => handlers.calcMontoNeto());
-    elements.tipoComision?.addEventListener('change', () => handlers.calcMontoNeto());
-    elements.comisionValor?.addEventListener('input', () => handlers.calcMontoNeto());
-    elements.tipoCambio?.addEventListener('input', () => handlers.calcMontoNeto());
+    // `plataformaOrigen` es informativo; NO controla visibilidad de la sección.
+    elements.plataformaOrigen?.addEventListener('input', () => { handlers.calcComisionYMontos('plataformaOrigen'); });
+    elements.tieneComision?.addEventListener('change', () => { handlers.toggleComisionSection(); handlers.calcComisionYMontos('tieneComision'); });
+    elements.comisionModo?.addEventListener('change', () => { handlers.calcComisionYMontos('comisionModo'); handlers.renderComisionResumen(); });
+    elements.montoBruto?.addEventListener('input', () => handlers.calcComisionYMontos('montoBruto'));
+    elements.tipoComision?.addEventListener('change', () => handlers.calcComisionYMontos('tipoComision'));
+    elements.comisionValor?.addEventListener('input', () => handlers.calcComisionYMontos('comisionValor'));
+    elements.tipoCambio?.addEventListener('input', () => handlers.calcComisionYMontos('tipoCambio'));
+    elements.monto?.addEventListener('input', () => handlers.calcComisionYMontos('monto'));
+    elements.moneda?.addEventListener('change', () => handlers.renderComisionResumen());
+    elements.monedaOrigen?.addEventListener('change', () => handlers.renderComisionResumen());
 
     // Modal crear contacto
     elements.closeContactoModal?.addEventListener('click', () => handlers.closeContactoModal());

@@ -419,8 +419,9 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label required">Monto Neto</label>
+              <label class="form-label required">Monto recibido (en cuenta)</label>
               <input type="number" class="form-input" id="monto" placeholder="0.00" step="0.01" min="0" required>
+              <span class="form-hint">Lo que realmente entró/salió en tu cuenta bancaria (después de comisiones)</span>
             </div>
             <div class="form-group">
               <label class="form-label required">Fecha</label>
@@ -477,6 +478,24 @@
             <input type="text" class="form-input" id="plataformaOrigen" placeholder="Ej: Stripe, PayPal, Binance">
             <span class="form-hint">Si el dinero pasó por otra plataforma antes de llegar a la cuenta</span>
           </div>
+
+          <!--
+            Toggle de comisión/diferencia
+            Relación:
+            - truno-front/transacciones/transacciones.js -> handlers.toggleComisionSection(), handlers.calcComisionYMontos()
+            Objetivo:
+            - Permitir capturar "valor del pago" vs "monto recibido" y calcular comisión + % de forma clara.
+          -->
+          <div class="toggle-row" style="margin-top:8px;">
+            <div class="toggle-info">
+              <div class="toggle-info-label">¿El monto recibido es diferente al pagado?</div>
+              <div class="toggle-info-hint">Actívalo si hubo comisión / conversión / fee de plataforma</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="tieneComision">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
 
         <div id="comisionSection" style="display:none;">
@@ -484,11 +503,12 @@
             <div class="form-section-title">Comisión y Conversión</div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Monto Bruto</label>
+                <label class="form-label">Valor del pago (antes de comisiones)</label>
                 <input type="number" class="form-input" id="montoBruto" placeholder="0.00" step="0.01" min="0">
+                <span class="form-hint">Lo que pagó el cliente / lo que se envió antes de fees</span>
               </div>
               <div class="form-group">
-                <label class="form-label">Moneda Origen</label>
+                <label class="form-label">Moneda del pago</label>
                 <select class="form-select" id="monedaOrigen">
                   <option value="MXN">MXN</option>
                   <option value="USD">USD</option>
@@ -498,24 +518,38 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Tipo Comisión</label>
-                <select class="form-select" id="tipoComision">
-                  <option value="monto">Monto fijo</option>
-                  <option value="porcentaje">Porcentaje</option>
+                <label class="form-label">¿Cómo quieres ingresar la comisión?</label>
+                <select class="form-select" id="comisionModo">
+                  <option value="desde_neto">Tengo el monto recibido (calcular comisión)</option>
+                  <option value="monto">Tengo el monto de comisión</option>
+                  <option value="porcentaje">Tengo el % de comisión</option>
                 </select>
+                <!-- tipoComision se mantiene por compatibilidad con datos guardados -->
+                <input type="hidden" id="tipoComision" value="monto">
               </div>
               <div class="form-group">
-                <label class="form-label">Valor Comisión</label>
+                <label class="form-label">Comisión (moneda del pago)</label>
                 <input type="number" class="form-input" id="comisionValor" placeholder="0" step="0.01" min="0">
+                <span class="form-hint">Si seleccionas “%”, escribe el porcentaje (ej: 3.5)</span>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Tipo de Cambio</label>
               <input type="number" class="form-input" id="tipoCambio" placeholder="1.00" step="0.0001" min="0" value="1">
-              <span class="form-hint">Cuántos pesos por cada unidad de moneda origen</span>
+              <span class="form-hint">Cuánto vale 1 unidad de la moneda del pago en la moneda de tu cuenta (ej: 1 USD = 17.10 MXN)</span>
             </div>
             <div class="form-info-box">
-              <strong>Monto Neto Calculado:</strong> <span id="montoNetoDisplay">$0.00</span>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div><strong>Resumen:</strong></div>
+                <div>
+                  Pagado: <strong><span id="pagoBrutoDisplay">$0.00</span></strong>
+                  • Comisión: <strong><span id="comisionMontoDisplay">$0.00</span></strong>
+                  (<strong><span id="comisionPctDisplay">0%</span></strong>)
+                </div>
+                <div>
+                  Llega (en cuenta): <strong><span id="montoNetoDisplay">$0.00</span></strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
