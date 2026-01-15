@@ -73,6 +73,7 @@
     addMonedaBtn: $('addMonedaBtn'),
     // Campos comisión
     plataformaOrigen: $('plataformaOrigen'),
+    addPlataformaBtn: $('addPlataformaBtn'),
     comisionSection: $('comisionSection'),
     tieneComision: $('tieneComision'),
     montoBruto: $('montoBruto'),
@@ -118,6 +119,20 @@
     monedaSimbolo: $('monedaSimbolo'),
     monedaDecimales: $('monedaDecimales'),
     monedaTipoCambio: $('monedaTipoCambio'),
+    // Modal crear plataforma (origen)
+    // Relación:
+    // - truno-front/transacciones/index.html (#plataformaModal)
+    // - truno-back/src/routes/plataformas.routes.js (GET/POST /api/plataformas)
+    plataformaModal: $('plataformaModal'),
+    plataformaForm: $('plataformaForm'),
+    closePlataformaModal: $('closePlataformaModal'),
+    cancelPlataformaModal: $('cancelPlataformaModal'),
+    submitPlataformaBtn: $('submitPlataformaBtn'),
+    plataformaModalTitle: $('plataformaModalTitle'),
+    cancelEditPlataformaBtn: $('cancelEditPlataformaBtn'),
+    plataformasList: $('plataformasList'),
+    plataformaNombre: $('plataformaNombre'),
+    plataformaDescripcion: $('plataformaDescripcion'),
     // Modal gasto
     gastoModal: $('gastoModal'), 
     gastoForm: $('gastoForm'), 
@@ -168,7 +183,16 @@
     deleteModal: $('deleteModal'), 
     closeDeleteModal: $('closeDeleteModal'), 
     cancelDeleteModal: $('cancelDeleteModal'), 
-    confirmDelete: $('confirmDelete')
+    confirmDelete: $('confirmDelete'),
+    // Modal confirmación (reutilizable)
+    // Relación:
+    // - truno-front/transacciones/index.html (#confirmModal)
+    confirmModal: $('confirmModal'),
+    closeConfirmModal: $('closeConfirmModal'),
+    confirmTitle: $('confirmTitle'),
+    confirmMessage: $('confirmMessage'),
+    confirmCancelBtn: $('confirmCancelBtn'),
+    confirmOkBtn: $('confirmOkBtn')
   };
 
   let state = {
@@ -181,6 +205,8 @@
     impuestosCatalogo: [],
     monedas: [],
     metodosPago: [],
+    plataformas: [],
+    plataformaEditingId: null,
     gastoImpuestosTemp: [],
     paginacion: { pagina: 1, limite: 20, total: 0, paginas: 0 },
     editingId: null, 
@@ -302,6 +328,11 @@
     createMoneda: d => api.request('/api/monedas', { method: 'POST', body: JSON.stringify(d) }),
     getMetodosPago: () => api.request('/api/metodos-pago'),
     createMetodoPago: d => api.request('/api/metodos-pago', { method: 'POST', body: JSON.stringify(d) }),
+    // Plataformas (orígenes)
+    getPlataformas: () => api.request('/api/plataformas?activo=1'),
+    createPlataforma: d => api.request('/api/plataformas', { method: 'POST', body: JSON.stringify(d) }),
+    updatePlataforma: (id, d) => api.request(`/api/plataformas/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    deletePlataforma: id => api.request(`/api/plataformas/${id}`, { method: 'DELETE' }),
     createGasto: d => api.request('/api/gastos', { method: 'POST', body: JSON.stringify(d) }),
     createVenta: d => api.request('/api/ventas', { method: 'POST', body: JSON.stringify(d) }),
     getGasto: id => api.request(`/api/gastos/${id}`),
@@ -407,6 +438,81 @@
       if (elements.gastoMetodoPago) {
         elements.gastoMetodoPago.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
       }
+    },
+    plataformas() {
+      // Relación:
+      // - truno-front/transacciones/index.html (#plataformaOrigen)
+      // - truno-back/src/routes/plataformas.routes.js (GET /api/plataformas)
+      if (!elements.plataformaOrigen) return;
+      const plataformasActivas = (state.plataformas || []).filter(p => p.activo !== false);
+      const opts = plataformasActivas.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+      const current = elements.plataformaOrigen.value;
+      elements.plataformaOrigen.innerHTML = '<option value="">-- Seleccionar --</option>' + opts;
+      // Mantener selección si existía y aún está en la lista
+      if (current) elements.plataformaOrigen.value = current;
+    },
+    plataformasAdmin() {
+      // Render dentro del modal de plataformas (editar / eliminar)
+      // Relación:
+      // - truno-front/transacciones/index.html (#plataformasList)
+      // - truno-back/src/routes/plataformas.routes.js (PUT/DELETE)
+      if (!elements.plataformasList) return;
+      const list = Array.isArray(state.plataformas) ? state.plataformas.slice() : [];
+      // Mostrar activas primero
+      list.sort((a, b) => (b.activo === false) - (a.activo === false) || String(a.nombre).localeCompare(String(b.nombre)));
+
+      if (!list.length) {
+        elements.plataformasList.innerHTML = `<div class="impuestos-empty">Sin plataformas registradas</div>`;
+        return;
+      }
+
+      elements.plataformasList.innerHTML = list.map(p => {
+        const inactive = (p.activo === 0 || p.activo === false);
+        return `
+          <div class="plataforma-item ${inactive ? 'inactive' : ''}" data-id="${p.id}">
+            <div class="plataforma-item-info">
+              <div class="plataforma-item-name">
+                ${p.nombre || 'Sin nombre'}
+                ${inactive ? '<span class="plataforma-status">Baja</span>' : ''}
+              </div>
+              <div class="plataforma-item-desc">${p.descripcion || '—'}</div>
+            </div>
+            <div class="plataforma-item-actions">
+              <!--
+                IMPORTANTE:
+                No usar data-action="delete" aquí porque colisiona con listeners globales de Transacciones
+                (render.transacciones() enlaza [data-action="delete"] para eliminar movimientos).
+              -->
+              <button type="button" class="action-btn" title="Editar" data-plataforma-action="edit" data-plataforma-id="${p.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button type="button" class="action-btn danger" title="Eliminar / Dar de baja" data-plataforma-action="delete" data-plataforma-id="${p.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Event delegation para evitar listeners duplicados en re-render
+      elements.plataformasList.onclick = (e) => {
+        const btn = e.target.closest('button[data-plataforma-action]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const action = btn.dataset.plataformaAction;
+        const id = btn.dataset.plataformaId;
+        const p = state.plataformas.find(x => x.id === id);
+        if (!p) return;
+        if (action === 'edit') handlers.startEditPlataforma(p);
+        if (action === 'delete') handlers.deletePlataforma(p);
+      };
     },
     contactos() {
       const provOpts = state.contactos.filter(c => c.tipo === 'proveedor' || c.tipo === 'ambos').map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
@@ -652,6 +758,50 @@
   };
 
   const handlers = {
+    // ========== CONFIRMACIÓN CON ESTILO (MODAL) ==========
+    // Reemplaza window.confirm para mantener el diseño del sistema.
+    // Retorna Promise<boolean>.
+    uiConfirm(opts = {}) {
+      const title = opts.title || 'Confirmar';
+      const message = opts.message || '¿Seguro que deseas continuar?';
+      const confirmText = opts.confirmText || 'Confirmar';
+      const confirmVariant = opts.confirmVariant || 'danger'; // 'danger' | 'primary'
+
+      return new Promise(resolve => {
+        if (!elements.confirmModal) return resolve(false);
+
+        // Set content
+        if (elements.confirmTitle) elements.confirmTitle.textContent = title;
+        if (elements.confirmMessage) elements.confirmMessage.textContent = message;
+        if (elements.confirmOkBtn) {
+          elements.confirmOkBtn.textContent = confirmText;
+          elements.confirmOkBtn.classList.remove('btn-primary', 'btn-danger');
+          elements.confirmOkBtn.classList.add(confirmVariant === 'primary' ? 'btn-primary' : 'btn-danger');
+        }
+
+        const cleanup = () => {
+          elements.confirmModal.classList.remove('active');
+          elements.confirmCancelBtn?.removeEventListener('click', onCancel);
+          elements.closeConfirmModal?.removeEventListener('click', onCancel);
+          elements.confirmOkBtn?.removeEventListener('click', onOk);
+          elements.confirmModal?.removeEventListener('click', onOverlay);
+          document.removeEventListener('keydown', onEsc);
+        };
+
+        const onCancel = () => { cleanup(); resolve(false); };
+        const onOk = () => { cleanup(); resolve(true); };
+        const onOverlay = (e) => { if (e.target === elements.confirmModal) onCancel(); };
+        const onEsc = (e) => { if (e.key === 'Escape') onCancel(); };
+
+        elements.confirmCancelBtn?.addEventListener('click', onCancel);
+        elements.closeConfirmModal?.addEventListener('click', onCancel);
+        elements.confirmOkBtn?.addEventListener('click', onOk);
+        elements.confirmModal?.addEventListener('click', onOverlay);
+        document.addEventListener('keydown', onEsc);
+
+        elements.confirmModal.classList.add('active');
+      });
+    },
     toggleSidebar() { 
       elements.sidebar.classList.toggle('open'); 
       elements.sidebarOverlay.classList.toggle('active'); 
@@ -663,14 +813,15 @@
     
     async loadData() {
       try {
-        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes, metodosRes] = await Promise.all([
+        const [txRes, cuentasRes, contactosRes, catRes, impRes, monedasRes, metodosRes, plataformasRes] = await Promise.all([
           api.getTransacciones({ ...state.filters, pagina: state.paginacion.pagina, limite: state.paginacion.limite }),
           api.getCuentas(),
           api.getContactos(),
           api.getCategorias().catch(() => ({ categorias: [] })),
           api.getImpuestos().catch(() => ({ impuestos: [] })),
           api.getMonedas().catch(() => ({ monedas: [] })),
-          api.getMetodosPago().catch(() => ({ metodos_pago: [] }))
+          api.getMetodosPago().catch(() => ({ metodos_pago: [] })),
+          api.getPlataformas().catch(() => ({ plataformas: [] }))
         ]);
         state.transacciones = txRes.transacciones || [];
         state.paginacion = txRes.paginacion || { pagina: 1, limite: 20, total: 0, paginas: 0 };
@@ -680,11 +831,13 @@
         state.impuestosCatalogo = impRes.impuestos || [];
         state.monedas = monedasRes.monedas || [];
         state.metodosPago = metodosRes.metodos_pago || metodosRes.metodosPago || [];
+        state.plataformas = plataformasRes.plataformas || [];
         render.cuentas();
         render.contactos();
         render.categorias();
         render.monedas();
         render.metodosPago();
+        render.plataformas();
         render.stats();
         render.transacciones();
       } catch (e) { 
@@ -960,6 +1113,7 @@
       if (elements.comisionValor) elements.comisionValor.disabled = true;
       render.monedas();
       render.metodosPago();
+      render.plataformas();
       elements.txModal.classList.add('active');
     },
     
@@ -976,7 +1130,20 @@
       elements.descripcion.value = tx.descripcion || '';
       elements.referencia.value = tx.referencia || '';
       
-      if (elements.plataformaOrigen) elements.plataformaOrigen.value = tx.plataforma_origen || '';
+      // Asegurar que la plataforma exista en el select (por compatibilidad con datos antiguos)
+      if (elements.plataformaOrigen) {
+        const val = tx.plataforma_origen || '';
+        if (val) {
+          const has = Array.from(elements.plataformaOrigen.options).some(o => o.value === val);
+          if (!has) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            elements.plataformaOrigen.appendChild(opt);
+          }
+        }
+        elements.plataformaOrigen.value = val;
+      }
       if (elements.montoBruto) elements.montoBruto.value = tx.monto_bruto || '';
       if (elements.monedaOrigen) elements.monedaOrigen.value = tx.moneda_origen || 'MXN';
       if (elements.tipoComision) elements.tipoComision.value = tx.tipo_comision || 'monto';
@@ -1025,7 +1192,7 @@
         contacto_id: elements.contactoId.value || null,
         descripcion: elements.descripcion.value.trim() || null,
         referencia: elements.referencia.value.trim() || null,
-        plataforma_origen: elements.plataformaOrigen?.value?.trim() || null,
+        plataforma_origen: elements.plataformaOrigen?.value || null,
         // Solo enviar payload de comisión si el switch está activo.
         // Esto evita “comisiones fantasma” y hace el comportamiento evidente.
         monto_bruto: usarComision ? (parseFloat(elements.montoBruto?.value) || null) : null,
@@ -1044,6 +1211,111 @@
       } catch (e) { toast.error(e.message); }
       finally { elements.submitModal.disabled = false; }
     },
+    // ========== CREAR PLATAFORMA (ORIGEN) ==========
+    async openPlataformaModal() {
+      handlers.cancelEditPlataforma(); // fuerza modo "crear"
+      elements.plataformaForm?.reset();
+      elements.plataformaModal?.classList.add('active');
+      try {
+        const res = await api.getPlataformas().catch(() => ({ plataformas: [] }));
+        state.plataformas = res.plataformas || [];
+        render.plataformas();
+        render.plataformasAdmin();
+      } catch (_) {
+        render.plataformasAdmin();
+      }
+      elements.plataformaNombre?.focus();
+    },
+
+    closePlataformaModal() {
+      elements.plataformaModal?.classList.remove('active');
+    },
+
+    startEditPlataforma(plataforma) {
+      state.plataformaEditingId = plataforma.id;
+      if (elements.plataformaModalTitle) elements.plataformaModalTitle.textContent = 'Editar Plataforma';
+      if (elements.submitPlataformaBtn) elements.submitPlataformaBtn.textContent = 'Guardar Cambios';
+      if (elements.cancelEditPlataformaBtn) elements.cancelEditPlataformaBtn.style.display = 'inline-flex';
+      if (elements.plataformaNombre) elements.plataformaNombre.value = plataforma.nombre || '';
+      if (elements.plataformaDescripcion) elements.plataformaDescripcion.value = plataforma.descripcion || '';
+      elements.plataformaNombre?.focus();
+    },
+
+    cancelEditPlataforma() {
+      state.plataformaEditingId = null;
+      if (elements.plataformaModalTitle) elements.plataformaModalTitle.textContent = 'Nueva Plataforma';
+      if (elements.submitPlataformaBtn) elements.submitPlataformaBtn.textContent = 'Crear Plataforma';
+      if (elements.cancelEditPlataformaBtn) elements.cancelEditPlataformaBtn.style.display = 'none';
+    },
+
+    async submitPlataforma(e) {
+      e.preventDefault();
+      const nombre = elements.plataformaNombre?.value?.trim();
+      if (!nombre) return;
+
+      const data = {
+        nombre,
+        descripcion: elements.plataformaDescripcion?.value?.trim() || null,
+        activo: true
+      };
+
+      try {
+        if (state.plataformaEditingId) {
+          const prev = state.plataformas.find(p => p.id === state.plataformaEditingId);
+          const oldName = prev?.nombre || null;
+          const result = await api.updatePlataforma(state.plataformaEditingId, data);
+          const updated = result.plataforma || result;
+          state.plataformas = state.plataformas.map(p => p.id === updated.id ? updated : p);
+          render.plataformas();
+          render.plataformasAdmin();
+          // Si el select estaba usando el nombre anterior, actualizarlo al nuevo nombre
+          if (oldName && elements.plataformaOrigen?.value === oldName) {
+            elements.plataformaOrigen.value = updated.nombre;
+          }
+          handlers.cancelEditPlataforma();
+          toast.success('Plataforma actualizada');
+        } else {
+          const result = await api.createPlataforma(data);
+          const nueva = result.plataforma || result;
+          state.plataformas.push(nueva);
+          render.plataformas();
+          render.plataformasAdmin();
+          if (elements.plataformaOrigen) elements.plataformaOrigen.value = nueva.nombre;
+          toast.success('Plataforma creada');
+        }
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
+
+    async deletePlataforma(plataforma) {
+      const nombre = plataforma?.nombre || 'esta plataforma';
+      const ok = await handlers.uiConfirm({
+        title: 'Eliminar plataforma',
+        message: `¿Eliminar / dar de baja "${nombre}"?`,
+        confirmText: 'Eliminar',
+        confirmVariant: 'danger'
+      });
+      if (!ok) return;
+      try {
+        await api.deletePlataforma(plataforma.id);
+        // Refrescar desde API para respetar si fue borrado o desactivado
+        const res = await api.getPlataformas().catch(() => ({ plataformas: [] }));
+        state.plataformas = res.plataformas || [];
+        render.plataformas();
+        render.plataformasAdmin();
+        // Si estaba seleccionada y ya no existe/está inactiva, limpiar
+        const stillActive = state.plataformas.some(p => p.nombre === elements.plataformaOrigen?.value && p.activo !== false);
+        if (elements.plataformaOrigen && elements.plataformaOrigen.value && !stillActive) {
+          elements.plataformaOrigen.value = '';
+        }
+        handlers.cancelEditPlataforma();
+        toast.success('Plataforma eliminada/dada de baja');
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
+
     
     // ========== CREAR CONTACTO ==========
     openContactoModal() {
@@ -1419,10 +1691,11 @@
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
     elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
+    elements.addPlataformaBtn?.addEventListener('click', () => handlers.openPlataformaModal());
     
     // Comisión listeners
     // `plataformaOrigen` es informativo; NO controla visibilidad de la sección.
-    elements.plataformaOrigen?.addEventListener('input', () => { handlers.calcComisionYMontos('plataformaOrigen'); });
+    elements.plataformaOrigen?.addEventListener('change', () => { handlers.calcComisionYMontos('plataformaOrigen'); });
     elements.tieneComision?.addEventListener('change', () => { handlers.toggleComisionSection(); handlers.calcComisionYMontos('tieneComision'); });
     elements.comisionModo?.addEventListener('change', () => { handlers.calcComisionYMontos('comisionModo'); handlers.renderComisionResumen(); });
     elements.montoBruto?.addEventListener('input', () => handlers.calcComisionYMontos('montoBruto'));
@@ -1450,6 +1723,13 @@
     elements.cancelMonedaModal?.addEventListener('click', () => handlers.closeMonedaModal());
     elements.monedaForm?.addEventListener('submit', e => handlers.submitMoneda(e));
     elements.monedaModal?.addEventListener('click', e => { if (e.target === elements.monedaModal) handlers.closeMonedaModal(); });
+
+    // Modal crear plataforma
+    elements.closePlataformaModal?.addEventListener('click', () => handlers.closePlataformaModal());
+    elements.cancelPlataformaModal?.addEventListener('click', () => handlers.closePlataformaModal());
+    elements.cancelEditPlataformaBtn?.addEventListener('click', () => handlers.cancelEditPlataforma());
+    elements.plataformaForm?.addEventListener('submit', e => handlers.submitPlataforma(e));
+    elements.plataformaModal?.addEventListener('click', e => { if (e.target === elements.plataformaModal) handlers.closePlataformaModal(); });
 
     // Modal gasto
     elements.closeGastoModal?.addEventListener('click', () => handlers.closeGastoModal());
@@ -1481,6 +1761,10 @@
     elements.confirmDelete?.addEventListener('click', () => handlers.confirmDelete());
     elements.deleteModal?.addEventListener('click', e => { if (e.target === elements.deleteModal) handlers.closeDeleteModal(); });
 
+    // Modal confirmación (reutilizable)
+    // Nota: Los listeners principales se instalan dinámicamente en handlers.uiConfirm()
+    // aquí solo soportamos cerrar si el usuario abre el modal y presiona Escape global.
+
     // Filtros
     const df = utils.debounce(() => handlers.applyFilters(), 300);
     elements.searchInput?.addEventListener('input', df);
@@ -1499,6 +1783,7 @@
         handlers.closeContactoModal();
         handlers.closeMetodoPagoModal();
         handlers.closeMonedaModal();
+        handlers.closePlataformaModal();
         handlers.closeGastoModal();
         handlers.closeVentaModal(); 
         handlers.closeCuentaModal(); 

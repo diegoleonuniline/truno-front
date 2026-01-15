@@ -58,6 +58,20 @@
         <h1 class="org-title">Selecciona una Empresa</h1>
         <p class="org-subtitle">Elige la empresa con la que deseas trabajar</p>
 
+        <!-- Filtro: mostrar/ocultar empresas inactivas -->
+        <!--
+          Relación:
+          - truno-front/organizaciones/seleccionar.js -> toggle de inactivas
+          Objetivo:
+          - Por defecto mostrar solo activas, con opción de desplegar las inactivas (para activar/editar).
+        -->
+        <div class="org-filters" id="orgFilters" style="display:none;">
+          <button class="org-toggle-inactive" id="toggleInactiveBtn" type="button">
+            <span id="toggleInactiveLabel">Ver empresas inactivas</span>
+            <span class="org-toggle-count" id="inactiveCount">0</span>
+          </button>
+        </div>
+
         <!-- Loading State -->
         <div class="org-loading" id="loadingState">
           <div class="spinner"></div>
@@ -137,6 +151,67 @@
           </button>
           <button type="submit" class="btn btn-primary" id="submitOrgBtn">
             <span class="btn-text">Crear Empresa</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Editar Organización (Empresa) -->
+  <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editOrgTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="editOrgTitle">Editar Empresa</h2>
+        <button class="modal-close" id="closeEditModalBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="editOrgForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="editOrgName">Nombre de la Empresa *</label>
+            <input type="text" id="editOrgName" class="form-input" placeholder="Ej. Mi Empresa S.A." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelEditModalBtn">
+            <span class="btn-text">Cancelar</span>
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitEditOrgBtn">
+            <span class="btn-text">Guardar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Baja/Activación -->
+  <div class="modal-overlay" id="estadoModal" role="dialog" aria-modal="true" aria-labelledby="estadoTitle">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="estadoTitle">Cambiar estado</h2>
+        <button class="modal-close" id="closeEstadoModalBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="estadoForm">
+        <div class="modal-body">
+          <p id="estadoText" style="color: var(--text-secondary);">
+            ¿Seguro que deseas cambiar el estado de esta empresa?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelEstadoModalBtn">
+            <span class="btn-text">Cancelar</span>
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitEstadoBtn">
+            <span class="btn-text">Confirmar</span>
           </button>
         </div>
       </form>

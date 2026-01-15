@@ -475,7 +475,24 @@
           </div>
           <div class="form-group">
             <label class="form-label">Plataforma Origen</label>
-            <input type="text" class="form-input" id="plataformaOrigen" placeholder="Ej: Stripe, PayPal, Binance">
+            <!--
+              Origen (Plataformas)
+              Relación:
+              - truno-back/src/routes/plataformas.routes.js -> GET/POST/PUT/DELETE /api/plataformas
+              - truno-front/transacciones/transacciones.js -> render.plataformas(), handlers.openPlataformaModal()
+              Nota:
+              - Se guarda en transacciones.plataforma_origen como texto (nombre de la plataforma) para mantener compatibilidad.
+            -->
+            <div class="select-with-add">
+              <select class="form-select" id="plataformaOrigen">
+                <option value="">-- Seleccionar --</option>
+              </select>
+              <button type="button" class="btn-add" id="addPlataformaBtn" title="Crear plataforma">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
             <span class="form-hint">Si el dinero pasó por otra plataforma antes de llegar a la cuenta</span>
           </div>
 
@@ -690,6 +707,46 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelMonedaModal">Cancelar</button>
           <button type="submit" class="btn btn-primary">Crear Moneda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Plataforma (Origen) -->
+  <div class="modal-overlay" id="plataformaModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="plataformaModalTitle">Nueva Plataforma</h2>
+        <button class="modal-close" id="closePlataformaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="plataformaForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="plataformaNombre" placeholder="Ej: Stripe, PayPal, Mercado Pago" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-input" id="plataformaDescripcion" placeholder="Opcional">
+          </div>
+          <button type="button" class="btn btn-xs btn-secondary" id="cancelEditPlataformaBtn" style="display:none; width:100%;">
+            Cancelar edición
+          </button>
+
+          <!-- Administración rápida (editar / eliminar) -->
+          <div class="plataformas-admin">
+            <div class="plataformas-admin-title">Plataformas existentes</div>
+            <div class="plataformas-admin-list" id="plataformasList"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelPlataformaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitPlataformaBtn">Crear Plataforma</button>
         </div>
       </form>
     </div>
@@ -941,6 +998,34 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancelar</button>
         <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmación (reutilizable) -->
+  <!--
+    Relación:
+    - truno-front/transacciones/transacciones.js -> handlers.uiConfirm()
+    Objetivo:
+    - Evitar window.confirm (sin estilo) y usar UI consistente del sistema.
+  -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirmTitle">Confirmar</h2>
+        <button class="modal-close" id="closeConfirmModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" style="color: var(--text-secondary);"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="confirmCancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
       </div>
     </div>
   </div>

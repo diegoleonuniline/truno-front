@@ -705,6 +705,87 @@ a { color: inherit; text-decoration: none; }
 .select-with-add .btn-add:hover { background: var(--brand-primary); color: white; border-color: var(--brand-primary); }
 .select-with-add .btn-add svg { width: 18px; height: 18px; }
 
+/* ========== PLATAFORMAS (ADMIN EN MODAL) ==========
+   Relación:
+   - truno-front/transacciones/index.html -> modal #plataformaModal (lista #plataformasList)
+   - truno-front/transacciones/transacciones.js -> render.plataformasAdmin()
+*/
+.plataformas-admin {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.plataformas-admin-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.plataformas-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.plataforma-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.plataforma-item.inactive {
+  opacity: 0.65;
+}
+
+.plataforma-item-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.plataforma-item-name {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plataforma-item-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plataforma-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.plataforma-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  margin-left: 6px;
+}
+
 .form-info-box {
   background: var(--info-bg);
   border: 1px solid var(--info);

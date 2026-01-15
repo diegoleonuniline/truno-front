@@ -39,13 +39,37 @@
     orgName: document.getElementById('orgName'),
     orgType: document.getElementById('orgType'),
     orgRfc: document.getElementById('orgRfc'),
-    orgEmail: document.getElementById('orgEmail')
+    orgEmail: document.getElementById('orgEmail'),
+    // Modal editar
+    editModal: document.getElementById('editModal'),
+    editOrgForm: document.getElementById('editOrgForm'),
+    closeEditModalBtn: document.getElementById('closeEditModalBtn'),
+    cancelEditModalBtn: document.getElementById('cancelEditModalBtn'),
+    submitEditOrgBtn: document.getElementById('submitEditOrgBtn'),
+    editOrgName: document.getElementById('editOrgName'),
+    // Modal estado (baja/activar)
+    estadoModal: document.getElementById('estadoModal'),
+    estadoForm: document.getElementById('estadoForm'),
+    closeEstadoModalBtn: document.getElementById('closeEstadoModalBtn'),
+    cancelEstadoModalBtn: document.getElementById('cancelEstadoModalBtn'),
+    submitEstadoBtn: document.getElementById('submitEstadoBtn'),
+    estadoTitle: document.getElementById('estadoTitle'),
+    estadoText: document.getElementById('estadoText'),
+    // Filtro inactivas
+    orgFilters: document.getElementById('orgFilters'),
+    toggleInactiveBtn: document.getElementById('toggleInactiveBtn'),
+    toggleInactiveLabel: document.getElementById('toggleInactiveLabel'),
+    inactiveCount: document.getElementById('inactiveCount')
   };
 
   let state = {
     user: null,
     organizations: [],
-    isLoading: false
+    isLoading: false,
+    editingOrg: null,
+    estadoOrg: null,
+    estadoActivo: null,
+    showInactive: false
   };
 
   const utils = {
@@ -92,6 +116,53 @@
       };
       return roles[rol] || rol;
     }
+  };
+
+  // ========== TOAST SYSTEM (estilo TRUNO) ==========
+  // Relación:
+  // - truno-front/organizaciones/seleccionar.css -> estilos .toast-*
+  const toast = {
+    container: null,
+    init() {
+      if (this.container) return;
+      this.container = document.createElement('div');
+      this.container.className = 'toast-container';
+      document.body.appendChild(this.container);
+    },
+    show(message, type = 'warning', duration = 2500) {
+      this.init();
+      const toastEl = document.createElement('div');
+      toastEl.className = `toast toast-${type}`;
+      const icons = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      };
+      toastEl.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.warning}</div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" type="button" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      `;
+      this.container.appendChild(toastEl);
+      requestAnimationFrame(() => toastEl.classList.add('show'));
+      const closeBtn = toastEl.querySelector('.toast-close');
+      closeBtn?.addEventListener('click', () => this.hide(toastEl));
+      if (duration > 0) setTimeout(() => this.hide(toastEl), duration);
+      return toastEl;
+    },
+    hide(toastEl) {
+      if (!toastEl || !toastEl.parentNode) return;
+      toastEl.classList.remove('show');
+      toastEl.classList.add('hide');
+      setTimeout(() => toastEl.remove(), 220);
+    },
+    success(msg, duration) { return this.show(msg, 'success', duration ?? 2200); },
+    error(msg, duration) { return this.show(msg, 'error', duration ?? 3200); },
+    warning(msg, duration) { return this.show(msg, 'warning', duration ?? 2600); }
   };
 
   const api = {
@@ -141,6 +212,56 @@
       }
 
       return response.json();
+    },
+
+    /**
+     * Actualizar organización (nombre).
+     * Relación:
+     * - truno-back/src/routes/organizaciones.routes.js -> PUT /api/organizaciones/:id
+     */
+    async updateOrganization(id, data) {
+      const response = await fetch(`${CONFIG.API_URL}/api/organizaciones/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${utils.getToken()}`,
+          // IMPORTANTE: el backend requiere contexto de organización para permisos
+          // Relación: truno-back/src/middlewares/auth.middleware.js -> requireOrg
+          'X-Organization-Id': id,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || payload.mensaje || 'Error al actualizar organización');
+      }
+      return payload;
+    },
+
+    /**
+     * Dar de baja / reactivar organización.
+     * Relación:
+     * - truno-back/src/routes/organizaciones.routes.js -> PUT /api/organizaciones/:id/estado
+     */
+    async setOrganizationEstado(id, activo) {
+      const response = await fetch(`${CONFIG.API_URL}/api/organizaciones/${id}/estado`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${utils.getToken()}`,
+          // IMPORTANTE: el backend requiere contexto de organización para permisos
+          // Relación: truno-back/src/middlewares/auth.middleware.js -> requireOrg
+          'X-Organization-Id': id,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ activo })
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || payload.mensaje || 'Error al cambiar estado');
+      }
+      return payload;
     }
   };
 
@@ -165,11 +286,54 @@
       
       if (!orgs || !orgs.length) {
         this.showEmpty();
+        if (elements.orgFilters) elements.orgFilters.style.display = 'none';
         return;
       }
 
-      elements.orgList.innerHTML = orgs.map(org => `
-        <div class="org-card" data-org-id="${org.id}" data-org='${JSON.stringify(org).replace(/'/g, "&#39;")}'>
+      const isInactive = (o) => (o.activo === 0 || o.activo === false);
+      const inactivas = orgs.filter(isInactive);
+      const activas = orgs.filter(o => !isInactive(o));
+
+      // Mostrar/ocultar filtro
+      if (elements.orgFilters) {
+        elements.orgFilters.style.display = inactivas.length ? 'flex' : 'none';
+      }
+      if (elements.inactiveCount) elements.inactiveCount.textContent = String(inactivas.length || 0);
+      if (elements.toggleInactiveBtn) {
+        elements.toggleInactiveBtn.classList.toggle('active', !!state.showInactive);
+        if (elements.toggleInactiveLabel) {
+          elements.toggleInactiveLabel.textContent = state.showInactive ? 'Ocultar empresas inactivas' : 'Ver empresas inactivas';
+        }
+      }
+
+      // Filtrar lista a renderizar
+      const listToRender = state.showInactive ? [...activas, ...inactivas] : activas;
+
+      // Si no hay activas pero sí inactivas y el toggle está apagado, mostrar mensaje útil
+      if (!listToRender.length && inactivas.length && !state.showInactive) {
+        if (elements.emptyState) {
+          elements.emptyState.style.display = 'block';
+          elements.orgList.style.display = 'none';
+          elements.emptyState.innerHTML = `
+            <div class="org-empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/>
+                <path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/>
+                <path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+              </svg>
+            </div>
+            <h3 class="org-empty-title">No hay empresas activas</h3>
+            <p class="org-empty-text">Tienes ${inactivas.length} empresa(s) inactiva(s). Usa “Ver empresas inactivas” para activarlas.</p>
+          `;
+        }
+        return;
+      }
+
+      elements.orgList.innerHTML = listToRender.map(org => {
+        const isAdmin = org.rol === 'propietario' || org.rol === 'administrador';
+        const inactive = isInactive(org);
+        return `
+        <div class="org-card ${inactive ? 'inactive' : ''}" data-org-id="${org.id}" data-org='${JSON.stringify(org).replace(/'/g, "&#39;")}'>
           <div class="org-icon">
             ${org.url_logo 
               ? `<img src="${org.url_logo}" alt="${org.nombre}">`
@@ -184,19 +348,52 @@
             <h3 class="org-name">${org.nombre}</h3>
             <div class="org-meta">
               <span class="org-role ${org.rol}">${utils.getRoleLabel(org.rol)}</span>
+              ${inactive ? `<span class="org-status-badge">Baja</span>` : ''}
             </div>
           </div>
+          ${isAdmin ? `
+            <div class="org-actions">
+              <button type="button" class="org-action-btn" data-action="edit" title="Editar nombre">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button type="button" class="org-action-btn danger" data-action="estado" title="${inactive ? 'Reactivar' : 'Dar de baja'}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4"/><path d="M12 18v4"/>
+                  <path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/>
+                  <path d="M2 12h4"/><path d="M18 12h4"/>
+                  <path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </button>
+            </div>
+          ` : ''}
           <svg class="org-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 18l6-6-6-6"/>
           </svg>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       elements.orgList.style.display = 'flex';
       elements.emptyState.style.display = 'none';
 
       document.querySelectorAll('.org-card').forEach(card => {
         card.addEventListener('click', () => handlers.selectOrg(card));
+      });
+
+      // Acciones: editar / estado (stopPropagation para no seleccionar org al dar click)
+      document.querySelectorAll('.org-action-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const card = btn.closest('.org-card');
+          if (!card) return;
+          const org = JSON.parse(card.dataset.org.replace(/&#39;/g, "'"));
+          const action = btn.dataset.action;
+          if (action === 'edit') handlers.openEditModal(org);
+          if (action === 'estado') handlers.openEstadoModal(org);
+        });
       });
     },
 
@@ -245,8 +442,19 @@
     selectOrg(card) {
       const org = JSON.parse(card.dataset.org.replace(/&#39;/g, "'"));
       console.log('✅ Organización seleccionada:', org);
+      // No permitir seleccionar una empresa inactiva (solo administrar: activar/editar)
+      if (org.activo === 0 || org.activo === false) {
+        // Requisito:
+        // - Al seleccionar empresa inactiva: SOLO mostrar aviso (no abrir modal).
+        toast.warning('Empresa inactiva. Usa el botón de reactivar para activarla.');
+        return;
+      }
       utils.saveOrg(org);
       utils.redirect(CONFIG.REDIRECT.DASHBOARD);
+    },
+    toggleInactive() {
+      state.showInactive = !state.showInactive;
+      render.organizations(state.organizations);
     },
 
     openModal() {
@@ -263,6 +471,86 @@
       // Relación: `organizaciones/seleccionar.css` -> regla `body.modal-open`
       document.body.classList.remove('modal-open');
       elements.createOrgForm.reset();
+    },
+
+    openEditModal(org) {
+      state.editingOrg = org;
+      if (elements.editOrgName) elements.editOrgName.value = org?.nombre || '';
+      elements.editModal?.classList.add('active');
+      document.body.classList.add('modal-open');
+      elements.editOrgName?.focus();
+    },
+
+    closeEditModal() {
+      elements.editModal?.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      state.editingOrg = null;
+      elements.editOrgForm?.reset();
+    },
+
+    async submitEditOrg(e) {
+      e.preventDefault();
+      if (!state.editingOrg?.id) return;
+      const nombre = elements.editOrgName?.value?.trim();
+      if (!nombre) return;
+
+      elements.submitEditOrgBtn?.classList.add('loading');
+      if (elements.submitEditOrgBtn) elements.submitEditOrgBtn.disabled = true;
+      try {
+        await api.updateOrganization(state.editingOrg.id, { nombre });
+        this.closeEditModal();
+        await this.loadOrganizations();
+        toast.success('Empresa actualizada');
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        elements.submitEditOrgBtn?.classList.remove('loading');
+        if (elements.submitEditOrgBtn) elements.submitEditOrgBtn.disabled = false;
+      }
+    },
+
+    openEstadoModal(org) {
+      state.estadoOrg = org;
+      const isInactive = (org.activo === 0 || org.activo === false);
+      state.estadoActivo = isInactive ? 1 : 0; // si estaba inactiva -> reactivar
+      if (elements.estadoTitle) elements.estadoTitle.textContent = isInactive ? 'Reactivar empresa' : 'Dar de baja empresa';
+      if (elements.estadoText) {
+        elements.estadoText.textContent = isInactive
+          ? `¿Deseas reactivar la empresa "${org.nombre}"?`
+          : `¿Deseas dar de baja la empresa "${org.nombre}"? (No se eliminará, solo quedará inactiva)`;
+      }
+      elements.estadoModal?.classList.add('active');
+      document.body.classList.add('modal-open');
+    },
+
+    closeEstadoModal() {
+      elements.estadoModal?.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      state.estadoOrg = null;
+      state.estadoActivo = null;
+      elements.estadoForm?.reset();
+    },
+
+    async submitEstado(e) {
+      e.preventDefault();
+      if (!state.estadoOrg?.id || state.estadoActivo === null) return;
+
+      // Guardar acción antes de cerrar modal (closeEstadoModal limpia el state)
+      const willBeActive = state.estadoActivo === true || state.estadoActivo === 1 || state.estadoActivo === '1';
+
+      elements.submitEstadoBtn?.classList.add('loading');
+      if (elements.submitEstadoBtn) elements.submitEstadoBtn.disabled = true;
+      try {
+        await api.setOrganizationEstado(state.estadoOrg.id, state.estadoActivo);
+        this.closeEstadoModal();
+        await this.loadOrganizations();
+        toast.success(willBeActive ? 'Empresa reactivada correctamente' : 'Empresa dada de baja correctamente');
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        elements.submitEstadoBtn?.classList.remove('loading');
+        if (elements.submitEstadoBtn) elements.submitEstadoBtn.disabled = false;
+      }
     },
 
     toggleUserMenu() {
@@ -300,7 +588,7 @@
         await this.loadOrganizations();
       } catch (error) {
         console.error('Error:', error);
-        alert(error.message);
+        toast.error(error.message);
       } finally {
         elements.submitOrgBtn.classList.remove('loading');
         elements.submitOrgBtn.disabled = false;
@@ -327,9 +615,21 @@
 
     // Event listeners
     elements.createOrgBtn?.addEventListener('click', () => handlers.openModal());
+    elements.toggleInactiveBtn?.addEventListener('click', () => handlers.toggleInactive());
     elements.closeModalBtn?.addEventListener('click', () => handlers.closeModal());
     elements.cancelModalBtn?.addEventListener('click', () => handlers.closeModal());
     elements.createOrgForm?.addEventListener('submit', (e) => handlers.submitOrg(e));
+    // Edit modal
+    elements.closeEditModalBtn?.addEventListener('click', () => handlers.closeEditModal());
+    elements.cancelEditModalBtn?.addEventListener('click', () => handlers.closeEditModal());
+    elements.editOrgForm?.addEventListener('submit', (e) => handlers.submitEditOrg(e));
+    elements.editModal?.addEventListener('click', (e) => { if (e.target === elements.editModal) handlers.closeEditModal(); });
+    // Estado modal
+    elements.closeEstadoModalBtn?.addEventListener('click', () => handlers.closeEstadoModal());
+    elements.cancelEstadoModalBtn?.addEventListener('click', () => handlers.closeEstadoModal());
+    elements.estadoForm?.addEventListener('submit', (e) => handlers.submitEstado(e));
+    elements.estadoModal?.addEventListener('click', (e) => { if (e.target === elements.estadoModal) handlers.closeEstadoModal(); });
+
     elements.userMenuBtn?.addEventListener('click', () => handlers.toggleUserMenu());
     elements.logoutBtn?.addEventListener('click', () => handlers.logout());
     document.addEventListener('click', (e) => handlers.closeUserMenu(e));
@@ -343,6 +643,8 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         handlers.closeModal();
+        handlers.closeEditModal();
+        handlers.closeEstadoModal();
         elements.userDropdown?.classList.remove('active');
       }
     });

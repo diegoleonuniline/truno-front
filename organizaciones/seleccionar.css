@@ -252,6 +252,157 @@ button {
   margin-bottom: var(--spacing-xl);
 }
 
+/* === FILTROS (Mostrar inactivas) ===
+   Relación:
+   - truno-front/organizaciones/seleccionar.html -> #toggleInactiveBtn
+   - truno-front/organizaciones/seleccionar.js -> state.showInactive
+*/
+.org-filters {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.org-toggle-inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+
+.org-toggle-inactive:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.org-toggle-inactive.active {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text-primary);
+}
+
+.org-toggle-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--error);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+/* === TOAST (mensajes con estilo) ===
+   Relación:
+   - truno-front/organizaciones/seleccionar.js -> toast.warning()
+   Objetivo:
+   - Evitar alert() y mantener consistencia visual.
+*/
+.toast-container {
+  position: fixed;
+  left: var(--spacing-lg);
+  right: var(--spacing-lg);
+  bottom: var(--spacing-lg);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  transform: translateY(24px);
+  opacity: 0;
+  transition: all 0.25s ease;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.hide {
+  transform: translateY(24px);
+  opacity: 0;
+}
+
+.toast-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.toast-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toast-close {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+
+.toast-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.toast-warning {
+  border-left: 4px solid var(--warning);
+}
+
+.toast-warning .toast-icon {
+  color: var(--warning);
+}
+
+.toast-error {
+  border-left: 4px solid var(--error);
+}
+
+.toast-error .toast-icon {
+  color: var(--error);
+}
+
+.toast-success {
+  border-left: 4px solid var(--success);
+}
+
+.toast-success .toast-icon {
+  color: var(--success);
+}
+
 /* === ORGANIZATIONS LIST === */
 .org-list {
   display: flex;
@@ -270,6 +421,17 @@ button {
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-base);
+}
+
+.org-card.inactive {
+  opacity: 0.65;
+}
+
+.org-card.inactive:hover {
+  border-color: var(--border-color);
+  background: var(--bg-card);
+  transform: none;
+  box-shadow: none;
 }
 
 .org-card:hover {
@@ -364,6 +526,64 @@ button {
 .org-card:hover .org-arrow {
   color: var(--brand-primary);
   transform: translateX(4px);
+}
+
+/* === ACCIONES (Editar / Dar de baja) ===
+   Relación:
+   - truno-front/organizaciones/seleccionar.js -> render.organizations() agrega botones
+   - Objetivo: CRUD básico de empresas sin romper el click de "seleccionar"
+*/
+.org-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-left: auto;
+}
+
+.org-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  flex: 0 0 auto;
+}
+
+.org-action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.org-action-btn.danger {
+  color: var(--error);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.org-action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.org-action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.org-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 /* === CREATE NEW === */
