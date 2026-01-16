@@ -1,0 +1,115 @@
+/* ============================================
+   TRUNO - Theme Overrides (Modo Día / Modo Noche)
+   Objetivo:
+   - Agregar Modo Día sin modificar ni borrar los estilos existentes.
+   - Se basa en variables CSS ya usadas en los módulos (bancos, dashboard, login, etc.).
+
+   Cómo se usa:
+   - theme.js setea en <html>: data-truno-theme="dark|light"
+   - Este archivo sobre-escribe variables SOLO cuando el tema es "light".
+
+   Relacionado con:
+   - truno-front/theme.js (manejo de atributo + persistencia + botón toggle)
+   - Cualquier *.css del frontend que use variables como --bg-primary, --text-primary, etc.
+   ============================================ */
+
+/* Ayuda al navegador con controles nativos (inputs, scrollbars, etc.) */
+:root {
+  color-scheme: dark;
+}
+
+:root[data-truno-theme="light"] {
+  color-scheme: light;
+
+  /* ======= Fondo / Superficies (Light) ======= */
+  --bg-primary: #f8fafc;      /* slate-50 */
+  --bg-secondary: #f1f5f9;    /* slate-100 */
+  --bg-tertiary: #e2e8f0;     /* slate-200 */
+  --bg-card: #ffffff;        /* white */
+  --bg-input: #ffffff;       /* white */
+  --bg-hover: #e2e8f0;       /* slate-200 */
+
+  /* ======= Texto (Light) ======= */
+  --text-primary: #0f172a;    /* slate-900 */
+  --text-secondary: #334155;  /* slate-700 */
+  --text-muted: #64748b;      /* slate-500 */
+  --text-placeholder: #94a3b8;/* slate-400 (si el módulo lo usa) */
+
+  /* ======= Bordes / Sombras (Light) ======= */
+  --border-color: #e2e8f0;    /* slate-200 */
+  --border-light: #cbd5e1;    /* slate-300 (si el módulo lo usa) */
+
+  /* Sombras ajustadas para fondo claro (si el módulo usa estas vars) */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.12);
+}
+
+/* ============================================
+   Botón Toggle del Tema
+   - Se inyecta por theme.js (id: trunoThemeToggle)
+   - El estilo usa variables, así se integra con ambos temas.
+   ============================================ */
+
+.truno-theme-toggle {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  transition: transform 150ms ease, background 150ms ease, color 150ms ease, border-color 150ms ease;
+  flex-shrink: 0;
+}
+
+.truno-theme-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.truno-theme-toggle:active {
+  transform: scale(0.98);
+}
+
+.truno-theme-toggle__icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.truno-theme-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Mostrar un ícono u otro según el tema actual */
+:root[data-truno-theme="dark"] .truno-theme-toggle .icon-sun { display: inline; }
+:root[data-truno-theme="dark"] .truno-theme-toggle .icon-moon { display: none; }
+:root[data-truno-theme="light"] .truno-theme-toggle .icon-sun { display: none; }
+:root[data-truno-theme="light"] .truno-theme-toggle .icon-moon { display: inline; }
+
+/* Fallback flotante para páginas sin header */
+.truno-theme-toggle--floating {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 480px) {
+  .truno-theme-toggle--floating {
+    top: 10px;
+    right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .truno-theme-toggle {
+    transition: none;
+  }
+}
+
