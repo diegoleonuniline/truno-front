@@ -66,6 +66,19 @@
     fecha: $('fecha'),
     descripcion: $('descripcion'),
     referencia: $('referencia'),
+    // Crear rápido: cuentas bancarias (desde el modal de transferencia)
+    // Relación:
+    // - truno-front/transferencias/index.html (#addCuentaOrigenBtn, #addCuentaDestinoBtn, #cuentaModal, #cuentaForm)
+    // - truno-back -> POST /api/cuentas-bancarias
+    addCuentaOrigenBtn: $('addCuentaOrigenBtn'),
+    addCuentaDestinoBtn: $('addCuentaDestinoBtn'),
+    cuentaModal: $('cuentaModal'),
+    cuentaForm: $('cuentaForm'),
+    closeCuentaModal: $('closeCuentaModal'),
+    cancelCuentaModal: $('cancelCuentaModal'),
+    cuentaNombre: $('cuentaNombre'),
+    cuentaBanco: $('cuentaBanco'),
+    cuentaSaldo: $('cuentaSaldo'),
     // Modal Delete
     deleteModal: $('deleteModal'),
     closeDeleteModal: $('closeDeleteModal'),
@@ -82,7 +95,12 @@
     paginacion: { pagina: 1, limite: 20, total: 0 },
     filters: { buscar: '', cuenta_id: '', fecha_desde: '', fecha_hasta: '' },
     deletingId: null,
-    saldoOrigenActual: 0
+    saldoOrigenActual: 0,
+    // Target del "crear rápido" de cuenta: 'origen' | 'destino'
+    // Relación:
+    // - handlers.openCuentaModal()
+    // - handlers.submitCuenta() -> autoselecciona el nuevo id en el select correcto
+    cuentaCreateTarget: null
   };
 
   // ========== TOAST SYSTEM ==========
@@ -172,6 +190,11 @@
       return this.request(`/api/transacciones?${q}`);
     },
     getCuentas() { return this.request('/api/cuentas-bancarias'); },
+    // Crear cuenta (rápido) - mismo endpoint usado en Transacciones
+    // Relación:
+    // - truno-front/transacciones/transacciones.js -> api.createCuenta()
+    // - truno-back -> POST /api/cuentas-bancarias
+    createCuenta(data) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(data) }); },
     createTransferencia(data) { return this.request('/api/transacciones/transferencia', { method: 'POST', body: JSON.stringify(data) }); },
     deleteTransferencia(id) { return this.request(`/api/transacciones/transferencia/${id}`, { method: 'DELETE' }); }
   };
@@ -409,6 +432,68 @@
       elements.transferenciaForm.reset();
     },
 
+    // ========== CREAR CUENTA (RÁPIDO) ==========
+    // Objetivo:
+    // - Permitir crear una cuenta desde el modal de transferencia (origen/destino)
+    // Relación:
+    // - truno-front/transferencias/index.html (#cuentaModal + form)
+    // - truno-front/transferencias/index.html (#addCuentaOrigenBtn / #addCuentaDestinoBtn)
+    // - truno-back -> POST /api/cuentas-bancarias
+    openCuentaModal(target = 'origen') {
+      // Guardar a qué select hay que asignar el nuevo id
+      state.cuentaCreateTarget = (target === 'destino') ? 'destino' : 'origen';
+      elements.cuentaForm?.reset();
+      if (elements.cuentaSaldo) elements.cuentaSaldo.value = 0;
+      elements.cuentaModal?.classList.add('active');
+      elements.cuentaNombre?.focus();
+    },
+
+    closeCuentaModal() {
+      elements.cuentaModal?.classList.remove('active');
+      state.cuentaCreateTarget = null;
+    },
+
+    async submitCuenta(e) {
+      e.preventDefault();
+      const nombre = elements.cuentaNombre?.value?.trim();
+      if (!nombre) return;
+
+      const payload = {
+        nombre,
+        banco: elements.cuentaBanco?.value?.trim() || null,
+        saldo_inicial: parseFloat(elements.cuentaSaldo?.value) || 0
+      };
+
+      // UX: deshabilitar botón submit del form (si existe)
+      const submitBtn = elements.cuentaForm?.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const res = await api.createCuenta(payload);
+        const nueva = res.cuenta || res;
+
+        // Actualizar state local y re-renderizar selects/grid
+        state.cuentas.push(nueva);
+        render.cuentas();
+
+        // Autoseleccionar la cuenta recién creada en el campo correcto
+        if (state.cuentaCreateTarget === 'destino' && elements.cuentaDestino) {
+          elements.cuentaDestino.value = nueva.id;
+          elements.cuentaDestino.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (elements.cuentaOrigen) {
+          elements.cuentaOrigen.value = nueva.id;
+          elements.cuentaOrigen.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        this.closeCuentaModal();
+        toast.success('Cuenta creada');
+      } catch (err) {
+        toast.error(err.message || 'Error al crear cuenta');
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    },
+
     onCuentaOrigenChange() {
       const selected = elements.cuentaOrigen.selectedOptions[0];
       if (selected && selected.value) {
@@ -609,6 +694,14 @@
     elements.transferenciaForm?.addEventListener('submit', e => handlers.submitTransferencia(e));
     elements.transferenciaModal?.addEventListener('click', e => { if (e.target === elements.transferenciaModal) handlers.closeModal(); });
 
+    // Crear rápido: cuentas bancarias desde transferencia
+    elements.addCuentaOrigenBtn?.addEventListener('click', () => handlers.openCuentaModal('origen'));
+    elements.addCuentaDestinoBtn?.addEventListener('click', () => handlers.openCuentaModal('destino'));
+    elements.closeCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cancelCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());
+    elements.cuentaForm?.addEventListener('submit', e => handlers.submitCuenta(e));
+    elements.cuentaModal?.addEventListener('click', e => { if (e.target === elements.cuentaModal) handlers.closeCuentaModal(); });
+
     // Cuenta changes
     elements.cuentaOrigen?.addEventListener('change', () => handlers.onCuentaOrigenChange());
     elements.cuentaDestino?.addEventListener('change', () => handlers.onCuentaDestinoChange());
@@ -633,6 +726,7 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         handlers.closeModal();
+        handlers.closeCuentaModal();
         handlers.closeDeleteModal();
       }
     });

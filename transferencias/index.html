@@ -334,9 +334,24 @@
           <!-- Cuenta Origen -->
           <div class="form-group">
             <label class="form-label required">Cuenta Origen</label>
-            <select class="form-select" id="cuentaOrigen" required>
-              <option value="">-- Seleccionar cuenta --</option>
-            </select>
+            <!--
+              Crear rápido (cuenta bancaria)
+              Relación:
+              - truno-front/transferencias/transferencias.js -> handlers.openCuentaModal('origen'), handlers.submitCuenta()
+              - truno-back -> POST /api/cuentas-bancarias
+              Objetivo:
+              - Permitir crear una cuenta sin salir del flujo de "Nueva Transferencia"
+            -->
+            <div class="select-with-add">
+              <select class="form-select" id="cuentaOrigen" required>
+                <option value="">-- Seleccionar cuenta --</option>
+              </select>
+              <button type="button" class="btn-add" id="addCuentaOrigenBtn" title="Crear cuenta (rápido)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
             <div class="saldo-disponible" id="saldoOrigenInfo">
               <span class="saldo-label">Saldo disponible:</span>
               <span class="saldo-valor" id="saldoOrigen">$0.00</span>
@@ -346,9 +361,24 @@
           <!-- Cuenta Destino -->
           <div class="form-group">
             <label class="form-label required">Cuenta Destino</label>
-            <select class="form-select" id="cuentaDestino" required>
-              <option value="">-- Seleccionar cuenta --</option>
-            </select>
+            <!--
+              Crear rápido (cuenta bancaria)
+              Relación:
+              - truno-front/transferencias/transferencias.js -> handlers.openCuentaModal('destino'), handlers.submitCuenta()
+              - truno-back -> POST /api/cuentas-bancarias
+              Objetivo:
+              - Permitir crear una cuenta sin salir del flujo de "Nueva Transferencia"
+            -->
+            <div class="select-with-add">
+              <select class="form-select" id="cuentaDestino" required>
+                <option value="">-- Seleccionar cuenta --</option>
+              </select>
+              <button type="button" class="btn-add" id="addCuentaDestinoBtn" title="Crear cuenta (rápido)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+            </div>
             <div class="saldo-disponible" id="saldoDestinoInfo">
               <span class="saldo-label">Saldo actual:</span>
               <span class="saldo-valor" id="saldoDestino">$0.00</span>
@@ -451,6 +481,50 @@
           <span class="btn-text">Eliminar</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crear Cuenta (rápido) -->
+  <!--
+    Relación:
+    - truno-front/transferencias/transferencias.js -> handlers.openCuentaModal(), handlers.submitCuenta()
+    - truno-back -> POST /api/cuentas-bancarias
+    Objetivo:
+    - Reutilizar el mismo patrón de "crear rápido" que existe en Transacciones.
+  -->
+  <div class="modal-overlay" id="cuentaModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva Cuenta</h2>
+        <button class="modal-close" id="closeCuentaModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="cuentaForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label required">Nombre</label>
+            <input type="text" class="form-input" id="cuentaNombre" placeholder="BBVA Principal" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Banco</label>
+              <input type="text" class="form-input" id="cuentaBanco" placeholder="BBVA">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Saldo inicial</label>
+              <input type="number" class="form-input" id="cuentaSaldo" step="0.01" value="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelCuentaModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear</button>
+        </div>
+      </form>
     </div>
   </div>
 

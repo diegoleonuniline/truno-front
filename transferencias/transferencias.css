@@ -268,6 +268,45 @@ a { color: inherit; text-decoration: none; }
 .form-input.error { border-color: var(--error); }
 .form-input.error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
 
+/* =========================================================
+   Select con botón "crear rápido" (como Transacciones)
+   Relación:
+   - truno-front/transferencias/index.html (.select-with-add + .btn-add)
+   - truno-front/transferencias/transferencias.js (handlers.openCuentaModal / submitCuenta)
+   Objetivo:
+   - Mantener UX consistente en selects que permiten alta rápida
+   ========================================================= */
+.select-with-add {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.select-with-add .form-select {
+  flex: 1;
+}
+.btn-add {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  flex: 0 0 auto;
+}
+.btn-add:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--brand-primary);
+}
+.btn-add svg {
+  width: 18px;
+  height: 18px;
+}
+
 /* Saldo Info */
 .saldo-disponible { display: flex; align-items: center; justify-content: space-between; margin-top: var(--spacing-xs); padding: var(--spacing-xs) var(--spacing-sm); background: var(--bg-tertiary); border-radius: var(--radius-sm); font-size: var(--font-size-xs); }
 .saldo-label { color: var(--text-muted); }
