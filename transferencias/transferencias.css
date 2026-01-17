@@ -56,6 +56,37 @@
   --header-height: 64px;
 }
 
+/* ============================================
+   Estado de Transferencia (Tabla / Mobile)
+   Relacionado con:
+   - truno-front/transferencias/index.html (columna "Estado" y select #estadoTransferencia)
+   - truno-front/transferencias/transferencias.js (clase .estado-select)
+   ============================================ */
+
+.estado-select {
+  width: 100%;
+  min-width: 140px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: all var(--transition-fast);
+}
+
+.estado-select:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.mobile-card-meta {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { font-family: var(--font-family); font-size: var(--font-size-md); line-height: 1.5; color: var(--text-primary); background: var(--bg-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }

@@ -64,6 +64,11 @@
     monto: $('monto'),
     montoError: $('montoError'),
     fecha: $('fecha'),
+    // Estado de la transferencia (tracking)
+    // Relación:
+    // - truno-front/transferencias/index.html (#estadoTransferencia)
+    // - truno-back/src/routes/transacciones.routes.js -> POST /api/transacciones/transferencia
+    estadoTransferencia: $('estadoTransferencia'),
     descripcion: $('descripcion'),
     referencia: $('referencia'),
     // Crear rápido: cuentas bancarias (desde el modal de transferencia)
@@ -196,8 +201,29 @@
     // - truno-back -> POST /api/cuentas-bancarias
     createCuenta(data) { return this.request('/api/cuentas-bancarias', { method: 'POST', body: JSON.stringify(data) }); },
     createTransferencia(data) { return this.request('/api/transacciones/transferencia', { method: 'POST', body: JSON.stringify(data) }); },
+    updateTransferenciaEstado(id, estado_transferencia) {
+      return this.request(`/api/transacciones/transferencia/${id}/estado`, {
+        method: 'PUT',
+        body: JSON.stringify({ estado_transferencia })
+      });
+    },
     deleteTransferencia(id) { return this.request(`/api/transacciones/transferencia/${id}`, { method: 'DELETE' }); }
   };
+
+  // Estados permitidos para transferencias (tracking)
+  // Relación:
+  // - truno-back/src/routes/transacciones.routes.js (validación de estados)
+  const TRANSFER_ESTADOS = [
+    { value: 'recibido', label: 'Recibido' },
+    { value: 'en_transito', label: 'En tránsito' },
+    { value: 'en_cuenta', label: 'En cuenta' }
+  ];
+
+  function normalizeEstadoTransferencia(v) {
+    const s = String(v || '').toLowerCase().trim();
+    if (TRANSFER_ESTADOS.some(x => x.value === s)) return s;
+    return 'en_cuenta';
+  }
 
   const render = {
     user() {
@@ -305,6 +331,10 @@
       elements.tableBody.innerHTML = transferenciasConPar.map(t => {
         const cuentaOrigen = state.cuentas.find(c => c.id === t.cuenta_bancaria_id);
         const cuentaDestino = t.par ? state.cuentas.find(c => c.id === t.par.cuenta_bancaria_id) : null;
+        const estado = normalizeEstadoTransferencia(t.estado_transferencia);
+        const estadoOptions = TRANSFER_ESTADOS.map(opt =>
+          `<option value="${opt.value}" ${opt.value === estado ? 'selected' : ''}>${opt.label}</option>`
+        ).join('');
 
         return `
           <tr data-id="${t.id}">
@@ -323,6 +353,11 @@
               <div class="cell-main">${t.descripcion || 'Transferencia'}</div>
             </td>
             <td><span class="cell-sub">${t.referencia || '-'}</span></td>
+            <td>
+              <select class="estado-select" data-id="${t.id}" aria-label="Estado de la transferencia">
+                ${estadoOptions}
+              </select>
+            </td>
             <td style="text-align:right;">
               <div class="cell-amount transfer">${utils.formatMoney(t.monto)}</div>
             </td>
@@ -344,6 +379,10 @@
       elements.mobileCards.innerHTML = transferenciasConPar.map(t => {
         const cuentaOrigen = state.cuentas.find(c => c.id === t.cuenta_bancaria_id);
         const cuentaDestino = t.par ? state.cuentas.find(c => c.id === t.par.cuenta_bancaria_id) : null;
+        const estado = normalizeEstadoTransferencia(t.estado_transferencia);
+        const estadoOptions = TRANSFER_ESTADOS.map(opt =>
+          `<option value="${opt.value}" ${opt.value === estado ? 'selected' : ''}>${opt.label}</option>`
+        ).join('');
 
         return `
           <div class="mobile-card" data-id="${t.id}">
@@ -358,6 +397,11 @@
                 <polyline points="12 5 19 12 12 19"/>
               </svg>
               <span class="flow-to">${cuentaDestino?.nombre || '?'}</span>
+            </div>
+            <div class="mobile-card-meta">
+              <select class="estado-select" data-id="${t.id}" aria-label="Estado de la transferencia">
+                ${estadoOptions}
+              </select>
             </div>
             <div class="mobile-card-footer">
               <span class="mobile-card-date">${utils.formatDate(t.fecha)}</span>
@@ -380,6 +424,31 @@
           e.stopPropagation();
           const t = state.transferencias.find(x => x.id === btn.dataset.id);
           handlers.openDeleteModal(t);
+        });
+      });
+
+      // Estado - cambiar y persistir
+      document.querySelectorAll('.estado-select').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const id = sel.dataset.id;
+          const nuevo = normalizeEstadoTransferencia(sel.value);
+          sel.disabled = true;
+          try {
+            await api.updateTransferenciaEstado(id, nuevo);
+            // Actualizar en memoria el registro y su par (si está cargado)
+            const tx = state.transferencias.find(x => x.id === id);
+            if (tx) tx.estado_transferencia = nuevo;
+            const par = tx?.id_par_transferencia ? state.transferencias.find(x => x.id === tx.id_par_transferencia) : null;
+            if (par) par.estado_transferencia = nuevo;
+            toast.success('Estado actualizado');
+          } catch (e) {
+            toast.error(e.message || 'Error al actualizar estado');
+            // revert visual a lo que estaba
+            const tx = state.transferencias.find(x => x.id === id);
+            sel.value = normalizeEstadoTransferencia(tx?.estado_transferencia);
+          } finally {
+            sel.disabled = false;
+          }
         });
       });
     }
@@ -418,6 +487,9 @@
     openModal() {
       elements.transferenciaForm.reset();
       elements.fecha.value = utils.today();
+      // Default conservador: "En cuenta" (el sistema actual acredita al instante).
+      // Si el usuario necesita tracking previo ("en_transito"), lo puede cambiar.
+      if (elements.estadoTransferencia) elements.estadoTransferencia.value = 'en_cuenta';
       elements.saldoOrigen.textContent = '$0.00';
       elements.saldoDestino.textContent = '$0.00';
       elements.montoError.style.display = 'none';
@@ -594,7 +666,8 @@
         monto: parseFloat(elements.monto.value),
         fecha: elements.fecha.value,
         descripcion: elements.descripcion.value.trim() || 'Transferencia entre cuentas',
-        referencia: elements.referencia.value.trim() || null
+        referencia: elements.referencia.value.trim() || null,
+        estado_transferencia: normalizeEstadoTransferencia(elements.estadoTransferencia?.value)
       };
 
       elements.submitModal.classList.add('loading');

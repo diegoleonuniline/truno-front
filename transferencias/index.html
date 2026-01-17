@@ -258,13 +258,14 @@
                 <th>Origen → Destino</th>
                 <th>Descripción</th>
                 <th>Referencia</th>
+                <th>Estado</th>
                 <th style="text-align:right;">Monto</th>
                 <th style="width:80px;"></th>
               </tr>
             </thead>
             <tbody id="tableBody">
               <tr>
-                <td colspan="6" style="text-align:center; padding: 48px;">
+                <td colspan="7" style="text-align:center; padding: 48px;">
                   <div class="empty-state-icon" style="margin: 0 auto 16px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M16 3h5v5"/><path d="M8 21H3v-5"/>
@@ -428,6 +429,22 @@
           <div class="form-group">
             <label class="form-label required">Fecha</label>
             <input type="date" class="form-input" id="fecha" required>
+          </div>
+
+          <!-- Estado -->
+          <div class="form-group">
+            <label class="form-label required">Estado</label>
+            <!--
+              Estado (tracking) de la transferencia.
+              Relación:
+              - truno-front/transferencias/transferencias.js -> submitTransferencia() envía estado_transferencia
+              - truno-back/src/routes/transacciones.routes.js -> POST /api/transacciones/transferencia (guarda estado_transferencia)
+            -->
+            <select class="form-select" id="estadoTransferencia" required>
+              <option value="en_cuenta">En cuenta</option>
+              <option value="en_transito">En tránsito</option>
+              <option value="recibido">Recibido</option>
+            </select>
           </div>
 
           <!-- Descripción -->

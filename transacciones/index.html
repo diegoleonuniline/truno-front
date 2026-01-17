@@ -915,9 +915,22 @@
             </div>
             <div class="form-group">
               <label class="form-label">Cliente</label>
-              <select class="form-select" id="ventaCliente">
-                <option value="">-- Seleccionar --</option>
-              </select>
+              <!--
+                Crear cliente rápido (sin salir del flujo de conciliación)
+                Relación:
+                - truno-front/transacciones/transacciones.js -> handlers.openContactoModal('venta') + handlers.submitContacto()
+                - truno-back/src/routes/contactos.routes.js -> POST /api/contactos
+              -->
+              <div class="select-with-add">
+                <select class="form-select" id="ventaCliente">
+                  <option value="">-- Seleccionar --</option>
+                </select>
+                <button type="button" class="btn-add" id="addVentaClienteBtn" title="Crear cliente (rápido)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Concepto</label>

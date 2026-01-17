@@ -69,6 +69,11 @@
     referencia: $('referencia'),
     addCuentaBtn: $('addCuentaBtn'),
     addContactoBtn: $('addContactoBtn'),
+    // Crear cliente rápido desde conciliación (Registrar Venta)
+    // Relación:
+    // - truno-front/transacciones/index.html (#addVentaClienteBtn)
+    // - handlers.openContactoModal('venta') -> al crear, autoselecciona en #ventaCliente
+    addVentaClienteBtn: $('addVentaClienteBtn'),
     addMetodoPagoBtn: $('addMetodoPagoBtn'),
     addMonedaBtn: $('addMonedaBtn'),
     // Campos comisión
@@ -214,6 +219,11 @@
     viewingTx: null,
     gastoFromTxId: null,
     ventaFromTxId: null,
+    // Target para creación rápida de contactos:
+    // - 'tx' -> selecciona en #contactoId (movimiento)
+    // - 'venta' -> selecciona en #ventaCliente (conciliar venta)
+    // - 'gasto' -> selecciona en #gastoProveedor (conciliar gasto) [no solicitado ahora, pero queda listo]
+    contactCreateTarget: 'tx',
     filters: { buscar: '', tipo: '', cuenta_bancaria_id: '', conciliado: '' }
   };
 
@@ -312,6 +322,11 @@
       if (p.cuenta_bancaria_id) params.cuenta_bancaria_id = p.cuenta_bancaria_id;
       if (p.conciliado === '1') params.conciliado = '1';
       if (p.conciliado === '0') params.sin_conciliar = '1';
+      // IMPORTANT:
+      // En Transacciones no queremos mezclar Transferencias internas (tienen su propio módulo).
+      // Si se mezclan, el filtro "Estado" (Conciliados / Sin conciliar) se percibe incorrecto.
+      // Relacionado con: truno-back/src/routes/transacciones.routes.js (excluir_transferencias)
+      params.excluir_transferencias = '1';
       return this.request(`/api/transacciones?${new URLSearchParams(params)}`);
     },
     createTransaccion: d => api.request('/api/transacciones', { method: 'POST', body: JSON.stringify(d) }),
@@ -588,16 +603,27 @@
     },
     transacciones() {
       const { transacciones, paginacion } = state;
-      if (!transacciones.length) { 
-        elements.tableContainer.style.display = 'none'; 
-        elements.mobileCards.innerHTML = ''; 
-        elements.emptyState.style.display = 'block'; 
-        elements.pagination.style.display = 'none'; 
-        return; 
+      // Nota:
+      // - En transacciones.css hay reglas con display: ... !important (desktop).
+      // - Por eso aquí usamos una clase .truno-hidden (display:none !important) para ocultar de verdad.
+      // Relacionado con: truno-front/transacciones/transacciones.css
+      const hide = (el) => el?.classList?.add('truno-hidden');
+      const show = (el) => el?.classList?.remove('truno-hidden');
+
+      if (!transacciones.length) {
+        // Limpiar para evitar que se vean filas "viejas" si CSS fuerza la tabla visible
+        if (elements.tableBody) elements.tableBody.innerHTML = '';
+        if (elements.mobileCards) elements.mobileCards.innerHTML = '';
+
+        hide(elements.tableContainer);
+        hide(elements.pagination);
+        show(elements.emptyState);
+        return;
       }
-      elements.emptyState.style.display = 'none'; 
-      elements.tableContainer.style.display = 'block'; 
-      elements.pagination.style.display = 'flex';
+
+      hide(elements.emptyState);
+      show(elements.tableContainer);
+      show(elements.pagination);
       
       const start = (paginacion.pagina - 1) * paginacion.limite + 1;
       const end = Math.min(paginacion.pagina * paginacion.limite, paginacion.total);
@@ -1318,15 +1344,30 @@
 
     
     // ========== CREAR CONTACTO ==========
-    openContactoModal() {
+    openContactoModal(target = 'tx') {
+      // Guardar target para autoseleccionar después de crear
+      state.contactCreateTarget = (target === 'venta' || target === 'gasto') ? target : 'tx';
+
+      // Si el contacto se crea desde conciliación (venta), este modal debe quedar arriba del modal de venta.
+      // Relación:
+      // - truno-front/transacciones/transacciones.css (#contactoModal.truno-modal-top)
+      if (elements.contactoModal) {
+        if (state.contactCreateTarget === 'venta') elements.contactoModal.classList.add('truno-modal-top');
+        else elements.contactoModal.classList.remove('truno-modal-top');
+      }
+
       elements.contactoForm.reset();
-      elements.contactoTipo.value = 'cliente';
+      // Por defecto: cliente (esto cubre Transacción + Venta).
+      // Si en el futuro se usa para gasto, se puede forzar a proveedor.
+      elements.contactoTipo.value = (state.contactCreateTarget === 'gasto') ? 'proveedor' : 'cliente';
       elements.contactoModal.classList.add('active');
       elements.contactoNombre.focus();
     },
     
     closeContactoModal() {
       elements.contactoModal.classList.remove('active');
+      // Limpiar stacking para futuros usos
+      elements.contactoModal.classList.remove('truno-modal-top');
     },
     
     async submitContacto(e) {
@@ -1343,7 +1384,21 @@
         const nuevoContacto = result.contacto || result;
         state.contactos.push(nuevoContacto);
         render.contactos();
-        elements.contactoId.value = nuevoContacto.id;
+        // Autoseleccionar según el flujo donde se creó
+        // Relación:
+        // - 'tx' -> Movimiento
+        // - 'venta' -> Registrar Venta
+        // - 'gasto' -> Registrar Gasto (opcional)
+        if (state.contactCreateTarget === 'venta' && elements.ventaCliente) {
+          elements.ventaCliente.value = nuevoContacto.id;
+        } else if (state.contactCreateTarget === 'gasto' && elements.gastoProveedor) {
+          elements.gastoProveedor.value = nuevoContacto.id;
+        } else if (elements.contactoId) {
+          elements.contactoId.value = nuevoContacto.id;
+        }
+
+        // Reset target al default para no “contaminar” otros flujos
+        state.contactCreateTarget = 'tx';
         this.closeContactoModal();
         toast.success('Contacto creado');
       } catch (e) {
@@ -1688,7 +1743,8 @@
     elements.txForm?.addEventListener('submit', e => handlers.submitTx(e));
     elements.txModal?.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
     elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
-    elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal());
+    // Crear contacto desde el modal de movimiento
+    elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal('tx'));
     elements.addMetodoPagoBtn?.addEventListener('click', () => handlers.openMetodoPagoModal());
     elements.addMonedaBtn?.addEventListener('click', () => handlers.openMonedaModal());
     elements.addPlataformaBtn?.addEventListener('click', () => handlers.openPlataformaModal());
@@ -1748,6 +1804,8 @@
     elements.cancelVentaModal?.addEventListener('click', () => handlers.closeVentaModal());
     elements.ventaForm?.addEventListener('submit', e => handlers.submitVenta(e));
     elements.ventaModal?.addEventListener('click', e => { if (e.target === elements.ventaModal) handlers.closeVentaModal(); });
+    // Crear cliente rápido desde conciliación (Registrar Venta)
+    elements.addVentaClienteBtn?.addEventListener('click', () => handlers.openContactoModal('venta'));
 
     // Modal cuenta
     elements.closeCuentaModal?.addEventListener('click', () => handlers.closeCuentaModal());

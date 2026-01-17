@@ -467,6 +467,16 @@ a { color: inherit; text-decoration: none; }
 .empty-state h3 { font-size: var(--font-size-md); margin-bottom: var(--spacing-xs); }
 .empty-state p { color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-lg); }
 
+/* ============================================
+   UTILIDAD: forzar ocultamiento aunque existan reglas display: ... !important
+   Problema que resuelve:
+   - En desktop, este CSS usa display: block/flex !important para tabla y paginación.
+   - Si JS intenta ocultarlas con style.display='none', NO funciona porque !important gana.
+   Relacionado con:
+   - truno-front/transacciones/transacciones.js -> render.transacciones()
+   ============================================ */
+.truno-hidden { display: none !important; }
+
 /* ========== FAB ========== */
 .fab {
   position: fixed;
@@ -527,6 +537,25 @@ a { color: inherit; text-decoration: none; }
   z-index: 1000;
 }
 .modal-overlay.active { opacity: 1; visibility: visible; }
+
+/* =========================================================
+   MODAL STACKING (conciliación)
+   Problema:
+   - Al abrir "Nuevo Contacto" desde "Registrar Venta", ambos overlays quedan activos.
+   - Como ambos tienen el mismo z-index, el modal que está más abajo en el DOM (Venta)
+     puede quedar por encima y "tapar" el modal de contacto.
+   Solución:
+   - Subir el z-index del overlay #contactoModal cuando se usa como modal secundario.
+   - Además, ampliar el ancho para que no se perciba "más pequeño" que Registrar Venta.
+   Relacionado con:
+   - truno-front/transacciones/transacciones.js -> handlers.openContactoModal('venta')
+   ========================================================= */
+#contactoModal.truno-modal-top {
+  z-index: 1300;
+}
+#contactoModal.truno-modal-top .modal {
+  max-width: 760px; /* match del modal normal en desktop */
+}
 
 .modal {
   width: 100%;
