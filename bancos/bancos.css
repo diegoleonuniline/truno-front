@@ -332,6 +332,99 @@ a { color: inherit; text-decoration: none; }
   gap: var(--spacing-lg);
 }
 
+/* ============================================
+   PLATAFORMAS (Dinero en Plataforma)
+   Relación:
+   - truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
+   - truno-front/bancos/bancos.js -> render.plataformas()
+   ============================================ */
+.platforms-section {
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.platforms-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.platforms-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.platforms-subtitle {
+  margin-top: var(--spacing-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.platforms-total {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: right;
+  min-width: 240px;
+}
+
+.platforms-total-label {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.platforms-total-value {
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--warning);
+}
+
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.platform-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.platform-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.platform-name {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.platform-balance {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--warning);
+  white-space: nowrap;
+}
+
+.platform-meta {
+  margin-top: var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
 /* === ACCOUNT CARD === */
 .account-card {
   background: var(--bg-card);

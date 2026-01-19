@@ -87,7 +87,17 @@
     paginacion: { pagina: 1, limite: 20, total: 0 },
     editingId: null, deletingId: null, payingGasto: null, comprobanteData: null,
     currentTab: 'todos',
-    filters: { buscar: '', estatus: '', categoria: '', es_fiscal: '' }
+    filters: {
+      buscar: '',
+      estatus: '',
+      // Compatibilidad:
+      // - Antes se usaba `categoria` (pero backend espera `categoria_id`)
+      // - No eliminamos `categoria` para no romper, pero enviamos `categoria_id` correctamente.
+      // Relación: truno-back/src/routes/gastos.routes.js (query `categoria_id`)
+      categoria: '',
+      categoria_id: '',
+      es_fiscal: ''
+    }
   };
 
   const utils = {
@@ -775,7 +785,9 @@
     applyFilters() {
       state.filters.buscar = elements.searchInput.value.trim();
       state.filters.estatus = elements.filterStatus.value;
+      // Mantener (legacy) y corregir (backend)
       state.filters.categoria = elements.filterCategoria.value;
+      state.filters.categoria_id = elements.filterCategoria.value;
       state.filters.es_fiscal = elements.filterFiscal.value;
       state.paginacion.pagina = 1;
       this.loadData();

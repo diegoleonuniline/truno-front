@@ -1122,6 +1122,22 @@ a { color: inherit; text-decoration: none; }
     border-radius: var(--radius-lg);
     overflow: hidden;
   }
+
+  /* =========================================================
+     FIX: Tabla invisible en desktop
+     Problema:
+     - En móvil se hace: `.table-wrapper { display:none !important; }`
+     - En desktop se vuelve a mostrar `.table-container` pero NO se re-activa `.table-wrapper`
+     Resultado:
+     - Se ve la paginación (porque sí se re-activa), pero la tabla queda vacía/invisible.
+
+     Relación:
+     - truno-front/gastos/index.html -> `.table-wrapper` envuelve la tabla
+     - truno-front/gastos/gastos.js  -> render.gastos() llena #tableBody
+     ========================================================= */
+  .table-wrapper {
+    display: block !important;
+  }
   
   .pagination, #pagination {
     display: flex !important;

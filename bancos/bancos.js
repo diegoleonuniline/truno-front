@@ -38,6 +38,13 @@
     emptyState: document.getElementById('emptyState'),
     totalBalance: document.getElementById('totalBalance'),
     accountCount: document.getElementById('accountCount'),
+    // Plataformas (Dinero en plataforma)
+    // Relación:
+    // - truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
+    // - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
+    platformsSection: document.getElementById('platformsSection'),
+    platformsGrid: document.getElementById('platformsGrid'),
+    platformTotal: document.getElementById('platformTotal'),
     // Buttons
     addAccountBtn: document.getElementById('addAccountBtn'),
     addFirstAccountBtn: document.getElementById('addFirstAccountBtn'),
@@ -92,6 +99,9 @@
     accounts: [],
     monedas: [],
     monedasLoaded: false,
+    // Plataformas (Catálogo) + saldos
+    plataformas: [],
+    plataformasSaldos: [],
     editingId: null,
     deletingId: null,
     adjustingId: null,
@@ -192,6 +202,21 @@
         method: 'POST',
         body: JSON.stringify(data)
       });
+    },
+
+    // Plataformas (Catálogo)
+    // Relación:
+    // - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas?activo=1
+    // - truno-front/transacciones -> el usuario selecciona plataforma_origen
+    getPlataformas() {
+      return this.request('/api/plataformas?activo=1');
+    },
+
+    // Saldos por plataforma (Dinero en Plataforma)
+    // Relación:
+    // - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
+    getPlataformasSaldos() {
+      return this.request('/api/transacciones/plataformas/saldos');
     }
   };
 
@@ -242,6 +267,61 @@
         elements.tableContainer.style.display = 'none';
         this.accountsCards();
       }
+    },
+
+    /**
+     * Renderiza la sección de Plataformas con su saldo (Dinero en plataforma).
+     *
+     * Definición (negocio):
+     * - "Dinero en plataforma" = ingresos en tránsito agrupados por plataforma_origen.
+     *
+     * Relación:
+     * - Backend: /api/transacciones/plataformas/saldos
+     * - Catálogo: /api/plataformas?activo=1
+     * - UI: truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
+     */
+    plataformas() {
+      if (!elements.platformsSection || !elements.platformsGrid || !elements.platformTotal) return;
+
+      const plataformas = Array.isArray(state.plataformas) ? state.plataformas : [];
+      const saldos = Array.isArray(state.plataformasSaldos) ? state.plataformasSaldos : [];
+
+      // Map de saldos por nombre de plataforma
+      const saldoByName = new Map();
+      saldos.forEach(r => {
+        const key = String(r.plataforma_origen || '').trim();
+        if (!key) return;
+        saldoByName.set(key, parseFloat(r.total) || 0);
+      });
+
+      // Construir lista final: todas las plataformas activas + saldo (0 si no hay)
+      const rows = plataformas
+        .filter(p => p && p.activo !== false)
+        .map(p => {
+          const nombre = p.nombre || '';
+          return {
+            nombre,
+            total: saldoByName.get(nombre) || 0
+          };
+        })
+        // Mostrar primero las que tienen saldo
+        .sort((a, b) => (b.total - a.total) || String(a.nombre).localeCompare(String(b.nombre)));
+
+      const total = rows.reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0);
+      elements.platformTotal.textContent = utils.formatMoney(total);
+
+      // Mostrar sección si hay plataformas (aunque sea 0.00, el jefe pidió verlas)
+      elements.platformsSection.style.display = rows.length ? 'block' : 'none';
+
+      elements.platformsGrid.innerHTML = rows.map(r => `
+        <div class="platform-card">
+          <div class="platform-card-header">
+            <div class="platform-name">${r.nombre || 'Sin nombre'}</div>
+            <div class="platform-balance">${utils.formatMoney(r.total)}</div>
+          </div>
+          <div class="platform-meta">Ingresos en tránsito (pendientes de caer al banco)</div>
+        </div>
+      `).join('');
     },
 
     accountsCards() {
@@ -465,6 +545,30 @@
           <h3>Error al cargar cuentas</h3>
           <p>${error.message}</p>
         `;
+      }
+    },
+
+    /**
+     * Carga catálogo de plataformas + saldos por plataforma (Dinero en plataforma).
+     *
+     * Relación:
+     * - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas?activo=1
+     * - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
+     */
+    async loadPlataformas() {
+      try {
+        const [plRes, saldosRes] = await Promise.all([
+          api.getPlataformas().catch(() => ({ plataformas: [] })),
+          api.getPlataformasSaldos().catch(() => ({ plataformas: [] }))
+        ]);
+        state.plataformas = plRes.plataformas || [];
+        state.plataformasSaldos = saldosRes.plataformas || [];
+        render.plataformas();
+      } catch (error) {
+        console.error('Error loading plataformas:', error);
+        state.plataformas = [];
+        state.plataformasSaldos = [];
+        render.plataformas();
       }
     },
 
@@ -813,6 +917,7 @@
     // Load data
     handlers.loadAccounts();
     handlers.loadMonedas();
+    handlers.loadPlataformas();
 
     console.log('🚀 TRUNO Bancos initialized');
   }

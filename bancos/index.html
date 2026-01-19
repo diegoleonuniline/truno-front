@@ -240,6 +240,30 @@
           </div>
         </div>
 
+        <!--
+          Sección: Plataformas (Dinero en Plataforma)
+          Objetivo:
+          - Mostrar "saldo" por plataforma, entendido como dinero en tránsito (ingresos) antes de caer al banco.
+          - Cálculo base: SUM(ingresos.monto) donde estado_operacion = en_transito agrupado por plataforma_origen.
+          Relación:
+          - truno-front/bancos/bancos.js -> handlers.loadPlataformas() + render.plataformas()
+          - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
+          - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas
+        -->
+        <div class="platforms-section" id="platformsSection" style="display:none;">
+          <div class="platforms-header">
+            <div>
+              <h2 class="platforms-title">Plataformas</h2>
+              <p class="platforms-subtitle">Dinero en plataforma (ingresos en tránsito)</p>
+            </div>
+            <div class="platforms-total">
+              <div class="platforms-total-label">Dinero en Plataforma</div>
+              <div class="platforms-total-value" id="platformTotal">$0.00</div>
+            </div>
+          </div>
+          <div class="platforms-grid" id="platformsGrid"></div>
+        </div>
+
         <!-- Vista Tarjetas -->
         <div class="accounts-grid" id="accountsGrid">
           <!-- Loading -->
