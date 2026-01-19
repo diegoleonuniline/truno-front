@@ -24,6 +24,11 @@
     userAvatar: $('userAvatar'),
     ingresosMes: $('ingresosMes'), 
     egresosMes: $('egresosMes'), 
+    // Tarjeta: Dinero en Tránsito (solo ingresos con estado_operacion = en_transito)
+    // Relación:
+    // - truno-front/transacciones/index.html (#dineroTransito)
+    // - truno-back/src/routes/transacciones.routes.js (transacciones.estado_operacion)
+    dineroTransito: $('dineroTransito'),
     sinConciliar: $('sinConciliar'), 
     balance: $('balance'),
     searchInput: $('searchInput'), 
@@ -59,6 +64,11 @@
     cancelModal: $('cancelModal'), 
     submitModal: $('submitModal'),
     tipo: $('tipo'), 
+    // Estado operativo (solo ingresos)
+    // Relación:
+    // - truno-front/transacciones/index.html (#estadoOperacion)
+    // - handlers.toggleEstadoOperacionByTipo()
+    estadoOperacion: $('estadoOperacion'),
     cuentaId: $('cuentaId'), 
     monto: $('monto'), 
     fecha: $('fecha'),
@@ -359,17 +369,24 @@
     org() { if (state.org) { elements.orgName.textContent = state.org.nombre; elements.orgPlan.textContent = `Plan ${state.org.plan || 'Free'}`; } },
     stats() {
       const now = new Date(), m = now.getMonth(), y = now.getFullYear();
-      let ingresos = 0, egresos = 0, sinConc = 0;
+      let ingresos = 0, egresos = 0, sinConc = 0, dineroEnTransito = 0;
       state.transacciones.forEach(t => {
         const f = new Date(t.fecha), monto = parseFloat(t.monto) || 0;
         if (f.getMonth() === m && f.getFullYear() === y) {
           if (t.tipo === 'ingreso') ingresos += monto;
           else egresos += monto;
         }
+        // Dinero en tránsito:
+        // - Solo aplica a ingresos
+        // - El backend guarda valores normalizados: en_transito | realizado | cancelado
+        if (t.tipo === 'ingreso' && String(t.estado_operacion || '').toLowerCase() === 'en_transito') {
+          dineroEnTransito += monto;
+        }
         if (!t.gasto_id && !t.venta_id) sinConc++;
       });
       elements.ingresosMes.textContent = utils.formatMoney(ingresos);
       elements.egresosMes.textContent = utils.formatMoney(egresos);
+      if (elements.dineroTransito) elements.dineroTransito.textContent = utils.formatMoney(dineroEnTransito);
       elements.sinConciliar.textContent = sinConc;
       elements.balance.textContent = utils.formatMoney(ingresos - egresos);
     },
@@ -647,6 +664,23 @@
         return labels[metodo] || metodo;
       };
 
+      // Estado operativo (solo ingresos)
+      const normalizeEstadoOperacion = (v) => {
+        const s = String(v || '').toLowerCase().trim();
+        if (s === 'en_transito' || s === 'realizado' || s === 'cancelado') return s;
+        return 'realizado';
+      };
+      const estadoOperacionBadge = (tx) => {
+        if (!tx || tx.tipo !== 'ingreso') return '';
+        const s = normalizeEstadoOperacion(tx.estado_operacion);
+        const meta = {
+          en_transito: { label: 'En Tránsito', cls: 'estado-en-transito' },
+          realizado: { label: 'Realizado', cls: 'estado-realizado' },
+          cancelado: { label: 'Cancelado', cls: 'estado-cancelado' }
+        }[s];
+        return `<span class="badge estado-op ${meta.cls}">${meta.label}</span>`;
+      };
+
       // Helpers de comisión: muestra siempre monto + % real (estilo “Remitly”)
       const normalizePct = (raw) => {
         const v = parseFloat(raw) || 0;
@@ -689,6 +723,7 @@
           <td>
             <div class="badges-group">
               <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+              ${estadoOperacionBadge(t)}
               ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
               ${tieneComision ? '<span class="badge warning">Comisión</span>' : ''}
             </div>
@@ -730,6 +765,7 @@
           <div class="mobile-card-footer">
             <div class="mobile-card-badges">
               <span class="badge ${isIncome ? 'fiscal' : 'sin-factura'}">${isIncome ? 'Ingreso' : 'Egreso'}</span>
+              ${estadoOperacionBadge(t)}
               ${conciliado ? '<span class="badge conciliado">Conciliado</span>' : '<span class="badge pendiente">Por conciliar</span>'}
             </div>
             <div class="table-actions">
@@ -784,6 +820,27 @@
   };
 
   const handlers = {
+    /**
+     * Estado operativo:
+     * - Solo aplica a ingresos (regla de negocio)
+     * - Si es egreso: deshabilita el select y fuerza UI a "Realizado"
+     *
+     * Relación:
+     * - truno-front/transacciones/index.html (#tipo, #estadoOperacion)
+     * - submitTx(): solo envía estado_operacion cuando tipo=ingreso
+     */
+    toggleEstadoOperacionByTipo() {
+      if (!elements.estadoOperacion || !elements.tipo) return;
+      const isIngreso = elements.tipo.value === 'ingreso';
+      elements.estadoOperacion.disabled = !isIngreso;
+      if (!isIngreso) {
+        // UI consistente (aunque el backend por default también usa "realizado")
+        elements.estadoOperacion.value = 'realizado';
+      } else {
+        // Asegurar un valor válido por defecto
+        if (!elements.estadoOperacion.value) elements.estadoOperacion.value = 'realizado';
+      }
+    },
     // ========== CONFIRMACIÓN CON ESTILO (MODAL) ==========
     // Reemplaza window.confirm para mantener el diseño del sistema.
     // Retorna Promise<boolean>.
@@ -1044,6 +1101,14 @@
       };
       const metodoLabel = getMetodoLabel(tx.metodo_pago);
 
+      // Estado operativo (solo ingresos)
+      const estadoOp = (tx.tipo === 'ingreso') ? String(tx.estado_operacion || 'realizado').toLowerCase() : '';
+      const estadoOpLabel = {
+        en_transito: 'En Tránsito',
+        realizado: 'Realizado',
+        cancelado: 'Cancelado'
+      }[estadoOp] || (tx.tipo === 'ingreso' ? 'Realizado' : '-');
+
       elements.detailAmount.innerHTML = `
         <div class="detail-amount-value ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${utils.formatMoney(Math.abs(tx.monto), moneda)}</div>
         <div class="detail-amount-label">${isIncome ? '💰 Ingreso' : '💸 Egreso'} • ${moneda}</div>
@@ -1056,6 +1121,7 @@
         <div class="detail-item"><label>Cuenta</label><span>${tx.nombre_cuenta || '-'}</span></div>
         <div class="detail-item"><label>Contacto</label><span>${contacto?.nombre || tx.nombre_contacto || '-'}</span></div>
         <div class="detail-item"><label>Método de Pago</label><span>${metodoLabel}</span></div>
+        ${tx.tipo === 'ingreso' ? `<div class="detail-item"><label>Estado (Ingreso)</label><span>${estadoOpLabel}</span></div>` : ''}
         <div class="detail-item"><label>Moneda</label><span>${moneda}</span></div>
         <div class="detail-item"><label>Descripción</label><span>${tx.descripcion || '-'}</span></div>
         <div class="detail-item"><label>Referencia</label><span>${tx.referencia || '-'}</span></div>
@@ -1131,6 +1197,7 @@
       elements.modalTitle.textContent = 'Nuevo Movimiento';
       elements.txForm.reset();
       elements.fecha.value = utils.today();
+      if (elements.estadoOperacion) elements.estadoOperacion.value = 'realizado';
       if (elements.tipoCambio) elements.tipoCambio.value = '1';
       if (elements.comisionSection) elements.comisionSection.style.display = 'none';
       if (elements.tieneComision) elements.tieneComision.checked = false;
@@ -1140,6 +1207,7 @@
       render.monedas();
       render.metodosPago();
       render.plataformas();
+      handlers.toggleEstadoOperacionByTipo();
       elements.txModal.classList.add('active');
     },
     
@@ -1147,6 +1215,7 @@
       state.editingId = tx.id;
       elements.modalTitle.textContent = 'Editar Movimiento';
       elements.tipo.value = tx.tipo;
+      if (elements.estadoOperacion) elements.estadoOperacion.value = (tx.estado_operacion || 'realizado');
       elements.cuentaId.value = tx.cuenta_bancaria_id;
       elements.monto.value = tx.monto;
       elements.fecha.value = utils.formatDateInput(tx.fecha);
@@ -1193,6 +1262,9 @@
       
       this.toggleComisionSection();
       handlers.calcComisionYMontos('auto');
+
+      // Asegurar que el estado quede coherente con el tipo
+      handlers.toggleEstadoOperacionByTipo();
       
       elements.txModal.classList.add('active');
     },
@@ -1227,6 +1299,11 @@
         moneda_origen: elements.monedaOrigen?.value || 'MXN',
         tipo_cambio: parseFloat(elements.tipoCambio?.value) || 1
       };
+
+      // Estado operativo: solo para ingresos
+      if (d.tipo === 'ingreso' && elements.estadoOperacion) {
+        d.estado_operacion = elements.estadoOperacion.value || 'realizado';
+      }
       elements.submitModal.disabled = true;
       try {
         if (state.editingId) await api.updateTransaccion(state.editingId, d);
@@ -1742,6 +1819,8 @@
     elements.cancelModal?.addEventListener('click', () => handlers.closeTxModal());
     elements.txForm?.addEventListener('submit', e => handlers.submitTx(e));
     elements.txModal?.addEventListener('click', e => { if (e.target === elements.txModal) handlers.closeTxModal(); });
+    // Estado operativo (solo ingresos)
+    elements.tipo?.addEventListener('change', () => handlers.toggleEstadoOperacionByTipo());
     elements.addCuentaBtn?.addEventListener('click', () => handlers.openCuentaModal());
     // Crear contacto desde el modal de movimiento
     elements.addContactoBtn?.addEventListener('click', () => handlers.openContactoModal('tx'));
