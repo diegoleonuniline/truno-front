@@ -1673,8 +1673,17 @@
       elements.ventaFromTxInfo.textContent = `${utils.formatMoney(tx.monto, tx.moneda || 'MXN')} del ${utils.formatDate(tx.fecha)}`;
       elements.ventaCliente.value = tx.contacto_id || '';
       elements.ventaFecha.value = utils.formatDateInput(tx.fecha);
-      elements.ventaTotal.value = tx.monto;
-      elements.ventaSubtotal.value = tx.monto;
+      // ✅ Negocio (Ventas):
+      // Si la transacción tiene comisión, `tx.monto` es lo que cayó al banco (neto)
+      // pero la venta debe reflejar el monto cobrado (bruto, sin comisión).
+      // Relación:
+      // - truno-back/src/routes/transacciones.routes.js -> monto_bruto se guarda en transacciones
+      // - truno-back/src/routes/transacciones.routes.js -> venta.monto_cobrado usa monto_bruto cuando existe
+      const totalVenta = (tx.monto_bruto !== null && tx.monto_bruto !== undefined && tx.monto_bruto !== '')
+        ? (parseFloat(tx.monto_bruto) || parseFloat(tx.monto) || 0)
+        : (parseFloat(tx.monto) || 0);
+      elements.ventaTotal.value = totalVenta;
+      elements.ventaSubtotal.value = totalVenta;
       elements.ventaConcepto.value = tx.descripcion || '';
       elements.ventaModal.classList.add('active');
     },

@@ -953,7 +953,15 @@
                     <div class="pago-desc">${tx.descripcion || 'Cobro'}</div>
                     <div class="pago-cuenta">${tx.nombre_cuenta || '-'}</div>
                   </div>
-                  <div class="pago-monto success">+${utils.formatMoney(tx.monto)}</div>
+                  <!--
+                    ✅ Negocio (Ventas):
+                    Mostrar el monto cobrado SIN descontar comisiones si existe <code>monto_bruto</code>.
+                    Esto evita confusión cuando la venta fue 1000 pero al banco llegaron 800.
+                    Relación:
+                    - truno-front/transacciones: comisiones guardan <code>monto_bruto</code>
+                    - truno-back/src/routes/transacciones.routes.js: venta.monto_cobrado usa monto_bruto cuando existe
+                  -->
+                  <div class="pago-monto success">+${utils.formatMoney((tx.monto_bruto !== null && tx.monto_bruto !== undefined && tx.monto_bruto !== '') ? (parseFloat(tx.monto_bruto) || tx.monto) : tx.monto)}</div>
                 </div>
               `).join('')}
             </div>
