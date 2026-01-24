@@ -1,5 +1,6 @@
 /* ============================================
    TRUNO - Bancos Module CSS
+   Soporta: Cuentas Bancarias, Efectivo y Tarjetas de Crédito
    ============================================ */
 
 :root {
@@ -332,12 +333,7 @@ a { color: inherit; text-decoration: none; }
   gap: var(--spacing-lg);
 }
 
-/* ============================================
-   PLATAFORMAS (Dinero en Plataforma)
-   Relación:
-   - truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
-   - truno-front/bancos/bancos.js -> render.plataformas()
-   ============================================ */
+/* === PLATAFORMAS === */
 .platforms-section {
   margin-top: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
@@ -534,6 +530,30 @@ a { color: inherit; text-decoration: none; }
 .account-balance.positive { color: var(--success); }
 .account-balance.negative { color: var(--error); }
 
+/* === TARJETA DE CRÉDITO - INFO ADICIONAL === */
+.account-credit-info {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px dashed var(--border-color);
+}
+
+.credit-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.credit-row:last-child {
+  margin-bottom: 0;
+}
+
+.credit-available {
+  color: var(--success);
+  font-weight: 600;
+}
+
 .account-footer {
   display: flex;
   align-items: center;
@@ -597,76 +617,46 @@ a { color: inherit; text-decoration: none; }
 
 .modal-overlay.active .modal { transform: scale(1); }
 
-/* =========================================================
-   FIX RESPONSIVE MODAL (MÓVIL)
-   Relacionado con: truno-front/bancos/index.html (estructura de modales)
-
-   Problema:
-   - `.modal` limita altura (max-height) y tiene `overflow: hidden`
-   - El formulario puede ser más alto que el modal en móviles
-   - `.modal-body` no tenía un "tope" de altura, por lo que NO scrolleaba
-   Resultado: el contenido se recorta y no se ve todo el modal en pantalla.
-
-   Solución:
-   - Convertir `.modal` y su `form` en contenedores flex (columna)
-   - Hacer `.modal-body` flexible y scrollable (con `min-height:0`)
-   - Mantener header/footer fijos y visibles
-   ========================================================= */
 .modal {
   display: flex;
   flex-direction: column;
 }
 
-/* El formulario es hijo directo de `.modal` en esta pantalla */
 .modal > form {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;      /* Permite que el form use el alto disponible */
-  min-height: 0;       /* CRÍTICO: habilita scroll interno en flex children */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-body {
-  flex: 1 1 auto;      /* Toma el espacio restante entre header y footer */
-  min-height: 0;       /* CRÍTICO: evita que el body "empuje" al footer fuera */
-  overflow-y: auto;    /* Scroll del contenido del formulario */
-  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-footer {
-  flex: 0 0 auto;      /* Footer siempre visible, no colapsa */
+  flex: 0 0 auto;
 }
 
-/* =========================================================
-   AJUSTE UX: Botones NO "fijos" (más espacio al formulario)
-   Relación:
-   - truno-front/bancos/index.html -> modales (accountModal/adjustModal/deleteModal)
-   - Este archivo -> fix responsive anterior dejaba scroll solo en `.modal-body`
-
-   Nuevo comportamiento:
-   - El scroll lo hace el modal COMPLETO (header + body + footer)
-   - El footer deja de quedarse siempre visible y solo se ve al final del scroll
-   ========================================================= */
 .modal {
-  /* Antes: `overflow: hidden` (necesario para bordes), pero impide scroll del modal */
   overflow-x: hidden;
   overflow-y: auto;
 }
 
-/* Desktop: aprovecha más pantalla (sin look móvil) */
 @media (min-width: 769px) {
   .modal {
-    max-width: 640px; /* antes 480px */
+    max-width: 640px;
   }
 }
 
 .modal > form {
-  /* Evita que el form se "estire" y mantenga el footer siempre en pantalla */
   flex: 0 0 auto;
   min-height: auto;
 }
 
 .modal-body {
-  /* Desactiva el scroll interno para que el footer no quede fijo */
   flex: 0 0 auto;
   min-height: auto;
   overflow: visible;
@@ -701,23 +691,14 @@ a { color: inherit; text-decoration: none; }
   border-top: 1px solid var(--border-color);
 }
 
-/* =========================================================
-   Botones del modal-footer (Cancelar / Guardar)
-   Objetivo: igualar tamaño al módulo Organizaciones
-   Relación:
-   - truno-front/organizaciones/seleccionar.css  -> `.btn` y `.modal-footer .btn`
-   - truno-front/bancos/index.html               -> botones #cancelModal / #submitModal
-   - truno-front/bancos/index.html               -> botones #cancelAdjustModal / #submitAdjust
-   ========================================================= */
 .modal-footer .btn {
   flex: 1;
-  /* Match visual con Organizaciones (más "grandes" y táctiles) */
-  min-height: 56px;              /* Org: min-height 56px */
-  height: auto;                  /* Permite crecer si el texto lo requiere */
-  padding: 14px 28px;            /* Org: padding 14px 28px (desktop base) */
+  min-height: 56px;
+  height: auto;
+  padding: 14px 28px;
   font-size: var(--font-size-md);
   line-height: 1.5;
-  min-width: 120px;              /* Evita botones demasiado estrechos */
+  min-width: 120px;
   letter-spacing: 0.2px;
   text-align: center;
   white-space: nowrap;
@@ -734,8 +715,6 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: var(--spacing-sm);
 }
 
-/* Label requerido con asterisco (mismo patrón que Catálogos) */
-/* Relacionado con: truno-front/bancos/index.html (#quickMonedaForm) */
 .form-label.required::after {
   content: ' *';
   color: var(--error);
@@ -767,12 +746,6 @@ a { color: inherit; text-decoration: none; }
   gap: var(--spacing-md);
 }
 
-/* =========================================================
-   INPUT CON ACCIÓN (Moneda + crear rápido)
-   Relacionado con:
-   - truno-front/bancos/index.html (#accountCurrency + #addCurrencyQuickBtn)
-   - truno-front/bancos/bancos.js (abre #quickMonedaModal y refresca monedas)
-   ========================================================= */
 .form-input-action {
   display: flex;
   align-items: center;
@@ -784,7 +757,6 @@ a { color: inherit; text-decoration: none; }
   min-width: 0;
 }
 
-/* Botón cuadrado para ícono junto a inputs (altura igual al input) */
 .btn-icon-square {
   width: 48px;
   height: 48px;
@@ -797,8 +769,6 @@ a { color: inherit; text-decoration: none; }
   height: 18px;
 }
 
-/* Toggle switch (copiado del módulo Catálogos para mantener el diseño) */
-/* Relacionado con: truno-front/bancos/index.html (#quickMonDefault / #quickMonActivo) */
 .toggle-wrapper {
   display: flex;
   align-items: center;
@@ -835,13 +805,11 @@ a { color: inherit; text-decoration: none; }
   background: var(--text-primary);
 }
 
-/* Fallback para navegadores que NO soporten :has */
 input:checked + .toggle-slider {
   transform: translateX(20px);
   background: var(--text-primary);
 }
 
-/* Modern browsers */
 .toggle:has(input:checked) {
   background: var(--brand-primary);
 }
@@ -895,25 +863,22 @@ input:checked + .toggle-slider {
   .form-row { grid-template-columns: 1fr; }
   .modal-footer { flex-direction: column; }
 
-  /* Botones del modal en móvil: mismos criterios de Organizaciones */
   .modal-footer .btn {
     width: 100%;
-    min-height: 52px;     /* Similar a Org en <=576px */
-    padding: 14px 20px;   /* Padding cómodo para pantallas pequeñas */
+    min-height: 52px;
+    padding: 14px 20px;
     font-size: var(--font-size-md);
   }
 
-  /* Modal: en móvil se ancla arriba y usa el viewport real */
   .modal-overlay {
-    align-items: flex-start; /* Evita cortes cuando el modal es alto */
+    align-items: flex-start;
     padding: var(--spacing-md);
     padding-top: calc(var(--spacing-md) + env(safe-area-inset-top));
     padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
-    overflow-y: auto; /* Si el dispositivo es muy bajo, permite scroll del overlay */
+    overflow-y: auto;
   }
 
   .modal {
-    /* Fallback: 90vh ya existe arriba. Mejora en navegadores modernos con dvh */
     max-height: calc(100dvh - (var(--spacing-md) * 2));
   }
 }
@@ -955,6 +920,32 @@ input:checked + .toggle-slider {
 .balance-value { font-weight: 600; }
 .balance-value.positive { color: var(--success); }
 .balance-value.negative { color: var(--error); }
+
+/* === TIPO BADGE (para tabla) === */
+.tipo-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tipo-bancaria {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.tipo-efectivo {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.tipo-tarjeta_credito {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
 
 /* === TABLE ACTIONS === */
 .table-actions { display: flex; gap: var(--spacing-xs); justify-content: flex-end; }
