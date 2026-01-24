@@ -1,12 +1,11 @@
 /**
  * TRUNO - Bancos Module
+ * Soporta: Cuentas Bancarias, Efectivo y Tarjetas de Crédito
  */
 
 (function() {
   'use strict';
 
-  // Usar configuración centralizada desde config.js
-  // Relacionado con: config.js (configuración global)
   const CONFIG = window.TRUNO_CONFIG || {
     API_URL: 'http://localhost:3000',
     STORAGE_KEYS: {
@@ -38,10 +37,7 @@
     emptyState: document.getElementById('emptyState'),
     totalBalance: document.getElementById('totalBalance'),
     accountCount: document.getElementById('accountCount'),
-    // Plataformas (Dinero en plataforma)
-    // Relación:
-    // - truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
-    // - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
+    // Plataformas
     platformsSection: document.getElementById('platformsSection'),
     platformsGrid: document.getElementById('platformsGrid'),
     platformTotal: document.getElementById('platformTotal'),
@@ -56,6 +52,7 @@
     closeModal: document.getElementById('closeModal'),
     cancelModal: document.getElementById('cancelModal'),
     submitModal: document.getElementById('submitModal'),
+    accountType: document.getElementById('accountType'),
     accountName: document.getElementById('accountName'),
     accountBank: document.getElementById('accountBank'),
     accountNumber: document.getElementById('accountNumber'),
@@ -63,8 +60,18 @@
     accountCurrency: document.getElementById('accountCurrency'),
     accountBalance: document.getElementById('accountBalance'),
     accountNotes: document.getElementById('accountNotes'),
-    // Moneda (creación rápida desde el modal de Cuenta)
-    // Relacionado con: truno-front/bancos/index.html (#addCurrencyQuickBtn y #quickMonedaModal)
+    // Campos de Tarjeta de Crédito
+    creditCardFields: document.getElementById('creditCardFields'),
+    accountLimit: document.getElementById('accountLimit'),
+    accountCutoffDay: document.getElementById('accountCutoffDay'),
+    accountPaymentDay: document.getElementById('accountPaymentDay'),
+    // Grupos condicionales
+    bankGroup: document.getElementById('bankGroup'),
+    accountNumbersGroup: document.getElementById('accountNumbersGroup'),
+    balanceGroup: document.getElementById('balanceGroup'),
+    balanceLabel: document.getElementById('balanceLabel'),
+    balanceHint: document.getElementById('balanceHint'),
+    // Moneda rápida
     addCurrencyQuickBtn: document.getElementById('addCurrencyQuickBtn'),
     quickMonedaModal: document.getElementById('quickMonedaModal'),
     quickMonedaForm: document.getElementById('quickMonedaForm'),
@@ -99,13 +106,12 @@
     accounts: [],
     monedas: [],
     monedasLoaded: false,
-    // Plataformas (Catálogo) + saldos
     plataformas: [],
     plataformasSaldos: [],
     editingId: null,
     deletingId: null,
     adjustingId: null,
-    currentView: 'cards' // 'cards' or 'table'
+    currentView: 'cards'
   };
 
   // ============================================
@@ -191,8 +197,6 @@
       });
     },
 
-    // Monedas (Catálogos)
-    // Relacionado con: truno-back/src/routes/monedas.routes.js
     getMonedas() {
       return this.request('/api/monedas');
     },
@@ -204,17 +208,10 @@
       });
     },
 
-    // Plataformas (Catálogo)
-    // Relación:
-    // - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas?activo=1
-    // - truno-front/transacciones -> el usuario selecciona plataforma_origen
     getPlataformas() {
       return this.request('/api/plataformas?activo=1');
     },
 
-    // Saldos por plataforma (Dinero en Plataforma)
-    // Relación:
-    // - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
     getPlataformasSaldos() {
       return this.request('/api/transacciones/plataformas/saldos');
     }
@@ -238,7 +235,6 @@
     accounts() {
       const { accounts, currentView } = state;
 
-      // Hide loading
       elements.loadingState.style.display = 'none';
 
       if (!accounts.length) {
@@ -252,12 +248,19 @@
 
       elements.emptyState.style.display = 'none';
 
-      // Calculate total
-      const total = accounts.reduce((sum, acc) => sum + parseFloat(acc.saldo_actual || 0), 0);
+      // Calcular total: bancarias y efectivo suman, TC resta (es deuda)
+      const total = accounts.reduce((sum, acc) => {
+        const saldo = parseFloat(acc.saldo_actual || 0);
+        if (acc.tipo === 'tarjeta_credito') {
+          // TC: el saldo es deuda, restamos del disponible
+          return sum - saldo;
+        }
+        return sum + saldo;
+      }, 0);
+
       elements.totalBalance.textContent = utils.formatMoney(total);
       elements.accountCount.textContent = accounts.length;
 
-      // Show correct view
       if (currentView === 'table') {
         elements.accountsGrid.style.display = 'none';
         elements.tableContainer.style.display = 'block';
@@ -269,24 +272,12 @@
       }
     },
 
-    /**
-     * Renderiza la sección de Plataformas con su saldo (Dinero en plataforma).
-     *
-     * Definición (negocio):
-     * - "Dinero en plataforma" = ingresos en tránsito agrupados por plataforma_origen.
-     *
-     * Relación:
-     * - Backend: /api/transacciones/plataformas/saldos
-     * - Catálogo: /api/plataformas?activo=1
-     * - UI: truno-front/bancos/index.html (#platformsSection, #platformsGrid, #platformTotal)
-     */
     plataformas() {
       if (!elements.platformsSection || !elements.platformsGrid || !elements.platformTotal) return;
 
       const plataformas = Array.isArray(state.plataformas) ? state.plataformas : [];
       const saldos = Array.isArray(state.plataformasSaldos) ? state.plataformasSaldos : [];
 
-      // Map de saldos por nombre de plataforma
       const saldoByName = new Map();
       saldos.forEach(r => {
         const key = String(r.plataforma_origen || '').trim();
@@ -294,7 +285,6 @@
         saldoByName.set(key, parseFloat(r.total) || 0);
       });
 
-      // Construir lista final: todas las plataformas activas + saldo (0 si no hay)
       const rows = plataformas
         .filter(p => p && p.activo !== false)
         .map(p => {
@@ -304,13 +294,11 @@
             total: saldoByName.get(nombre) || 0
           };
         })
-        // Mostrar primero las que tienen saldo
         .sort((a, b) => (b.total - a.total) || String(a.nombre).localeCompare(String(b.nombre)));
 
       const total = rows.reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0);
       elements.platformTotal.textContent = utils.formatMoney(total);
 
-      // Mostrar sección si hay plataformas (aunque sea 0.00, el jefe pidió verlas)
       elements.platformsSection.style.display = rows.length ? 'block' : 'none';
 
       elements.platformsGrid.innerHTML = rows.map(r => `
@@ -326,17 +314,50 @@
 
     accountsCards() {
       const { accounts } = state;
+
+      // Configuración visual por tipo
+      const tipoConfig = {
+        bancaria: {
+          label: 'Cuenta Bancaria',
+          icon: `<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>`,
+          iconBg: 'var(--info-bg)',
+          iconColor: 'var(--info)'
+        },
+        efectivo: {
+          label: 'Efectivo',
+          icon: `<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="12" x2="6" y2="12.01"/><line x1="12" y1="12" x2="18" y2="12"/>`,
+          iconBg: 'var(--success-bg)',
+          iconColor: 'var(--success)'
+        },
+        tarjeta_credito: {
+          label: 'Tarjeta de Crédito',
+          icon: `<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="7" cy="15" r="1.5"/>`,
+          iconBg: 'var(--warning-bg)',
+          iconColor: 'var(--warning)'
+        }
+      };
+
       elements.accountsGrid.innerHTML = accounts.map(acc => {
         const balance = parseFloat(acc.saldo_actual || 0);
-        const balanceClass = balance >= 0 ? 'positive' : 'negative';
+        const tipo = acc.tipo || 'bancaria';
+        const isTC = tipo === 'tarjeta_credito';
+        const config = tipoConfig[tipo] || tipoConfig.bancaria;
+
+        // Para TC: saldo > 0 = deuda (rojo), 0 = limpio (verde)
+        // Para otras: positivo = bien, negativo = mal
+        const balanceClass = isTC
+          ? (balance > 0 ? 'negative' : 'positive')
+          : (balance >= 0 ? 'positive' : 'negative');
+
+        const limite = parseFloat(acc.limite_credito || 0);
+        const disponible = isTC ? limite - balance : null;
 
         return `
           <div class="account-card" data-id="${acc.id}">
             <div class="account-header">
-              <div class="account-icon">
+              <div class="account-icon" style="background:${config.iconBg};color:${config.iconColor};">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <line x1="1" y1="10" x2="23" y2="10"/>
+                  ${config.icon}
                 </svg>
               </div>
               <div class="account-menu">
@@ -375,9 +396,23 @@
               </div>
             </div>
             <div class="account-name">${acc.nombre}</div>
-            <div class="account-bank">${acc.nombre_banco || 'Sin banco asignado'}</div>
-            <div class="account-balance-label">Saldo Actual</div>
-            <div class="account-balance ${balanceClass}">${utils.formatMoney(balance, acc.moneda || 'MXN')}</div>
+            <div class="account-bank">${acc.nombre_banco || config.label}</div>
+            <div class="account-balance-label">${isTC ? 'Deuda Actual' : 'Saldo Actual'}</div>
+            <div class="account-balance ${balanceClass}">${utils.formatMoney(Math.abs(balance), acc.moneda || 'MXN')}</div>
+            ${isTC ? `
+              <div class="account-credit-info">
+                <div class="credit-row">
+                  <span>Disponible</span>
+                  <span class="credit-available">${utils.formatMoney(disponible, acc.moneda || 'MXN')}</span>
+                </div>
+                <div class="credit-row">
+                  <span>Límite</span>
+                  <span>${utils.formatMoney(limite, acc.moneda || 'MXN')}</span>
+                </div>
+                ${acc.fecha_corte ? `<div class="credit-row"><span>Corte día</span><span>${acc.fecha_corte}</span></div>` : ''}
+                ${acc.fecha_pago ? `<div class="credit-row"><span>Pago día</span><span>${acc.fecha_pago}</span></div>` : ''}
+              </div>
+            ` : ''}
             <div class="account-footer">
               <span>${acc.moneda || 'MXN'}</span>
               <span>${acc.total_transacciones || 0} movimientos</span>
@@ -386,7 +421,7 @@
         `;
       }).join('');
 
-      // Add event listeners to menus
+      // Event listeners para menús
       document.querySelectorAll('.account-menu-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -394,7 +429,6 @@
         });
       });
 
-      // Add event listeners to dropdown items
       document.querySelectorAll('.account-dropdown-item').forEach(item => {
         item.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -404,7 +438,6 @@
         });
       });
 
-      // Click on card goes to transactions
       document.querySelectorAll('.account-card').forEach(card => {
         card.addEventListener('click', (e) => {
           if (!e.target.closest('.account-menu')) {
@@ -417,16 +450,32 @@
 
     accountsTable() {
       const { accounts } = state;
+
+      const tipoLabels = {
+        bancaria: 'Bancaria',
+        efectivo: 'Efectivo',
+        tarjeta_credito: 'T. Crédito'
+      };
+
       elements.tableBody.innerHTML = accounts.map(acc => {
         const balance = parseFloat(acc.saldo_actual || 0);
-        const balanceClass = balance >= 0 ? 'positive' : 'negative';
-        
+        const tipo = acc.tipo || 'bancaria';
+        const isTC = tipo === 'tarjeta_credito';
+
+        const balanceClass = isTC
+          ? (balance > 0 ? 'negative' : 'positive')
+          : (balance >= 0 ? 'positive' : 'negative');
+
         return `<tr data-id="${acc.id}">
           <td><div class="cell-main">${acc.nombre}</div></td>
+          <td><span class="tipo-badge tipo-${tipo}">${tipoLabels[tipo]}</span></td>
           <td>${acc.nombre_banco || '-'}</td>
-          <td>${acc.tipo_cuenta || 'Corriente'}</td>
           <td>${acc.numero_cuenta || '-'}</td>
-          <td style="text-align:right;"><span class="balance-value ${balanceClass}">${utils.formatMoney(balance, acc.moneda || 'MXN')}</span></td>
+          <td style="text-align:right;">
+            <span class="balance-value ${balanceClass}">
+              ${isTC ? '-' : ''}${utils.formatMoney(Math.abs(balance), acc.moneda || 'MXN')}
+            </span>
+          </td>
           <td>
             <div class="table-actions">
               <button class="action-btn" title="Editar" data-action="edit" data-id="${acc.id}">
@@ -443,7 +492,6 @@
         </tr>`;
       }).join('');
 
-      // Add event listeners
       elements.tableBody.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -451,7 +499,6 @@
         });
       });
 
-      // Click on row goes to transactions
       elements.tableBody.querySelectorAll('tr').forEach(row => {
         row.addEventListener('click', (e) => {
           if (!e.target.closest('.table-actions')) {
@@ -459,24 +506,15 @@
           }
         });
       });
-    }
-    ,
+    },
 
-    /**
-     * Renderiza el select de monedas en el modal de Cuenta.
-     * Relacionado con:
-     * - truno-front/bancos/index.html (#accountCurrency)
-     * - truno-front/catalogos/catalogos.js (misma fuente /api/monedas)
-     */
     currencies(keepValue = null) {
       if (!elements.accountCurrency) return;
 
       const previous = keepValue ?? elements.accountCurrency.value;
       const monedas = Array.isArray(state.monedas) ? state.monedas : [];
 
-      // Fallback si no hay monedas cargadas o el API falló
       if (!state.monedasLoaded || !monedas.length) {
-        // No sobrescribir si el usuario ya tiene opciones manuales (defensivo)
         if (!elements.accountCurrency.options.length || elements.accountCurrency.options[0]?.value === '') {
           elements.accountCurrency.innerHTML = `
             <option value="MXN">MXN - Peso Mexicano</option>
@@ -494,13 +532,11 @@
         return `<option value="${codigo}">${codigo} - ${nombre}</option>`;
       }).join('');
 
-      // Mantener selección previa si existe
       if (previous && monedas.some(m => (m.codigo || '').toUpperCase() === previous)) {
         elements.accountCurrency.value = previous;
         return;
       }
 
-      // Si no hay selección previa, intentar elegir default del catálogo
       const def = monedas.find(m => m.es_default);
       elements.accountCurrency.value = def ? (def.codigo || 'MXN') : (monedas[0]?.codigo || 'MXN');
     }
@@ -510,12 +546,6 @@
   // HANDLERS
   // ============================================
   const handlers = {
-    /**
-     * Carga monedas del catálogo para poblar el select en Bancos.
-     * Relacionado con:
-     * - truno-front/catalogos/catalogos.js (CRUD de monedas)
-     * - truno-front/bancos/index.html (#accountCurrency)
-     */
     async loadMonedas() {
       try {
         const data = await api.getMonedas();
@@ -524,8 +554,8 @@
         render.currencies();
       } catch (error) {
         console.error('Error loading monedas:', error);
-        state.monedasLoaded = true; // evita quedar “cargando” para siempre
-        render.currencies(); // aplica fallback
+        state.monedasLoaded = true;
+        render.currencies();
       }
     },
 
@@ -548,13 +578,6 @@
       }
     },
 
-    /**
-     * Carga catálogo de plataformas + saldos por plataforma (Dinero en plataforma).
-     *
-     * Relación:
-     * - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas?activo=1
-     * - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
-     */
     async loadPlataformas() {
       try {
         const [plRes, saldosRes] = await Promise.all([
@@ -583,13 +606,11 @@
     },
 
     toggleAccountMenu(id) {
-      // Close all menus first
       document.querySelectorAll('.account-dropdown').forEach(menu => {
         if (menu.id !== `menu-${id}`) {
           menu.classList.remove('active');
         }
       });
-      // Toggle this menu
       const menu = document.getElementById(`menu-${id}`);
       menu.classList.toggle('active');
     },
@@ -620,32 +641,71 @@
       }
     },
 
-    // Account Modal
+    // Maneja cambio de tipo de cuenta
+    handleTypeChange() {
+      const tipo = elements.accountType.value;
+      const isTC = tipo === 'tarjeta_credito';
+      const isEfectivo = tipo === 'efectivo';
+
+      // Mostrar/ocultar campos de TC
+      elements.creditCardFields.style.display = isTC ? 'block' : 'none';
+      elements.accountLimit.required = isTC;
+
+      // Ocultar banco y números para efectivo
+      elements.bankGroup.style.display = isEfectivo ? 'none' : 'block';
+      elements.accountNumbersGroup.style.display = isEfectivo ? 'none' : 'grid';
+
+      // Cambiar etiqueta del saldo según tipo
+      if (isTC) {
+        elements.balanceLabel.textContent = 'Deuda Actual';
+        elements.balanceHint.textContent = 'Lo que debes actualmente (0 si está limpia)';
+      } else {
+        elements.balanceLabel.textContent = 'Saldo Inicial';
+        elements.balanceHint.textContent = 'Solo para cuentas nuevas';
+      }
+    },
+
     openCreateModal() {
       state.editingId = null;
       elements.modalTitle.textContent = 'Nueva Cuenta';
       elements.accountForm.reset();
+      elements.accountType.value = 'bancaria';
+      this.handleTypeChange();
       elements.accountBalance.disabled = false;
-      elements.accountBalance.parentElement.style.display = 'block';
+      elements.balanceGroup.style.display = 'block';
       elements.accountModal.classList.add('active');
-      // Asegurar que el select tenga las monedas del catálogo si ya se cargaron
       render.currencies();
-      elements.accountName.focus();
+      elements.accountType.focus();
     },
 
     openEditModal(account) {
       state.editingId = account.id;
       elements.modalTitle.textContent = 'Editar Cuenta';
+
+      // Setear tipo y actualizar campos condicionales
+      elements.accountType.value = account.tipo || 'bancaria';
+      this.handleTypeChange();
+
+      // Campos generales
       elements.accountName.value = account.nombre || '';
       elements.accountBank.value = account.nombre_banco || '';
       elements.accountNumber.value = account.numero_cuenta || '';
       elements.accountClabe.value = account.clabe || '';
-      // Renderizar y luego seleccionar la moneda de la cuenta
+
+      // Campos de TC
+      elements.accountLimit.value = account.limite_credito || '';
+      elements.accountCutoffDay.value = account.fecha_corte || '';
+      elements.accountPaymentDay.value = account.fecha_pago || '';
+
+      // Moneda
       render.currencies(account.moneda || 'MXN');
       elements.accountCurrency.value = account.moneda || elements.accountCurrency.value || 'MXN';
+
+      // Saldo (deshabilitado en edición)
       elements.accountBalance.value = '';
       elements.accountBalance.disabled = true;
-      elements.accountBalance.parentElement.style.display = 'none';
+      elements.balanceGroup.style.display = 'none';
+
       elements.accountNotes.value = account.notas || '';
       elements.accountModal.classList.add('active');
       elements.accountName.focus();
@@ -657,13 +717,10 @@
       state.editingId = null;
     },
 
-    // ==========================
-    // Moneda (creación rápida)
-    // ==========================
+    // Moneda rápida
     openQuickMonedaModal() {
       if (!elements.quickMonedaModal) return;
       elements.quickMonedaForm?.reset();
-      // Defaults alineados con Catálogos
       if (elements.quickMonActivo) elements.quickMonActivo.checked = true;
       if (elements.quickMonDefault) elements.quickMonDefault.checked = false;
       if (elements.quickMonDecimales) elements.quickMonDecimales.value = 2;
@@ -695,7 +752,6 @@
         const res = await api.createMoneda(payload);
         const createdCode = res?.moneda?.codigo || payload.codigo;
 
-        // Refrescar el catálogo local y seleccionar la nueva moneda
         await this.loadMonedas();
         if (elements.accountCurrency) {
           elements.accountCurrency.value = createdCode;
@@ -713,7 +769,9 @@
     async submitAccount(e) {
       e.preventDefault();
 
+      const tipo = elements.accountType.value;
       const data = {
+        tipo,
         nombre: elements.accountName.value.trim(),
         nombre_banco: elements.accountBank.value.trim() || null,
         numero_cuenta: elements.accountNumber.value.trim() || null,
@@ -722,6 +780,19 @@
         notas: elements.accountNotes.value.trim() || null
       };
 
+      // Campos específicos de TC
+      if (tipo === 'tarjeta_credito') {
+        data.limite_credito = parseFloat(elements.accountLimit.value) || 0;
+        data.fecha_corte = parseInt(elements.accountCutoffDay.value) || null;
+        data.fecha_pago = parseInt(elements.accountPaymentDay.value) || null;
+      } else {
+        // Limpiar campos TC si no es tarjeta
+        data.limite_credito = null;
+        data.fecha_corte = null;
+        data.fecha_pago = null;
+      }
+
+      // Saldo inicial solo en creación
       if (!state.editingId) {
         data.saldo_inicial = parseFloat(elements.accountBalance.value) || 0;
       }
@@ -749,7 +820,9 @@
     // Adjust Modal
     openAdjustModal(account) {
       state.adjustingId = account.id;
-      elements.currentBalance.value = utils.formatMoney(account.saldo_actual, account.moneda);
+      const isTC = account.tipo === 'tarjeta_credito';
+      const label = isTC ? 'Deuda Actual' : 'Saldo Actual';
+      elements.currentBalance.value = `${label}: ${utils.formatMoney(account.saldo_actual, account.moneda)}`;
       elements.newBalance.value = '';
       elements.adjustReason.value = '';
       elements.adjustModal.classList.add('active');
@@ -770,8 +843,9 @@
         motivo: elements.adjustReason.value.trim()
       };
 
-      elements.submitAdjust.classList.add('loading');
-      elements.submitAdjust.disabled = true;
+      const submitBtn = elements.adjustModal.querySelector('[type="submit"]') || document.getElementById('submitAdjust');
+      submitBtn.classList.add('loading');
+      submitBtn.disabled = true;
 
       try {
         await api.adjustBalance(state.adjustingId, data);
@@ -780,8 +854,8 @@
       } catch (error) {
         alert(error.message);
       } finally {
-        elements.submitAdjust.classList.remove('loading');
-        elements.submitAdjust.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
       }
     },
 
@@ -831,7 +905,6 @@
   // INIT
   // ============================================
   function init() {
-    // Check auth
     if (!utils.getToken()) {
       utils.redirect(CONFIG.REDIRECT.LOGIN);
       return;
@@ -871,7 +944,10 @@
       if (e.target === elements.accountModal) handlers.closeAccountModal();
     });
 
-    // Moneda rápida (desde el modal de cuenta)
+    // Tipo de cuenta change
+    elements.accountType.addEventListener('change', handlers.handleTypeChange.bind(handlers));
+
+    // Moneda rápida
     elements.addCurrencyQuickBtn?.addEventListener('click', handlers.openQuickMonedaModal.bind(handlers));
     elements.closeQuickMonedaModal?.addEventListener('click', handlers.closeQuickMonedaModal.bind(handlers));
     elements.cancelQuickMonedaModal?.addEventListener('click', handlers.closeQuickMonedaModal.bind(handlers));
