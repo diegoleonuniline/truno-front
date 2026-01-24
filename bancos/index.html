@@ -2,8 +2,6 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <!-- Theme (Modo Día / Modo Noche) - debe cargarse ANTES del CSS para evitar flash -->
-  <!-- Relacionado con: truno-front/theme.js y truno-front/theme.css -->
   <script src="../theme.js"></script>
   <link rel="stylesheet" href="../theme.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -25,7 +23,6 @@
           </svg>
         </div>
         <span class="sidebar-brand">TRUNO</span>
-        <!-- Botón cerrar sidebar en móvil -->
         <button class="sidebar-close" id="sidebarClose">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -129,7 +126,6 @@
           </a>
         </div>
 
-        <!-- Cerrar sesión en sidebar móvil -->
         <div class="nav-section nav-section-mobile-only">
           <div class="nav-section-title">Sesión</div>
           <button class="nav-item nav-item-logout" id="sidebarLogoutBtn">
@@ -210,7 +206,7 @@
         <div class="page-header">
           <div class="page-header-info">
             <h2>Cuentas Bancarias</h2>
-            <p>Administra tus cuentas y controla tus saldos</p>
+            <p>Administra tus cuentas, efectivo y tarjetas de crédito</p>
           </div>
           <div class="page-header-actions">
             <div class="view-toggle" id="viewToggle">
@@ -234,22 +230,13 @@
         <!-- Total Card -->
         <div class="total-card">
           <div class="total-card-info">
-            <h3>Saldo Total</h3>
+            <h3>Saldo Total Disponible</h3>
             <div class="total-card-value" id="totalBalance">$0.00</div>
             <div class="total-card-meta"><span id="accountCount">0</span> cuentas activas</div>
           </div>
         </div>
 
-        <!--
-          Sección: Plataformas (Dinero en Plataforma)
-          Objetivo:
-          - Mostrar "saldo" por plataforma, entendido como dinero en tránsito (ingresos) antes de caer al banco.
-          - Cálculo base: SUM(ingresos.monto) donde estado_operacion = en_transito agrupado por plataforma_origen.
-          Relación:
-          - truno-front/bancos/bancos.js -> handlers.loadPlataformas() + render.plataformas()
-          - truno-back/src/routes/transacciones.routes.js -> GET /api/transacciones/plataformas/saldos
-          - truno-back/src/routes/plataformas.routes.js -> GET /api/plataformas
-        -->
+        <!-- Sección: Plataformas -->
         <div class="platforms-section" id="platformsSection" style="display:none;">
           <div class="platforms-header">
             <div>
@@ -266,7 +253,6 @@
 
         <!-- Vista Tarjetas -->
         <div class="accounts-grid" id="accountsGrid">
-          <!-- Loading -->
           <div class="empty-state" id="loadingState">
             <div class="empty-state-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -284,8 +270,8 @@
             <thead>
               <tr>
                 <th>Cuenta</th>
-                <th>Banco</th>
                 <th>Tipo</th>
+                <th>Banco</th>
                 <th>Número</th>
                 <th style="text-align:right;">Saldo</th>
                 <th style="width:100px;"></th>
@@ -340,16 +326,25 @@
       <form id="accountForm">
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Nombre de la Cuenta *</label>
-            <input type="text" class="form-input" id="accountName" placeholder="Ej. Cuenta Principal" required>
+            <label class="form-label">Tipo de Cuenta *</label>
+            <select class="form-input" id="accountType" required>
+              <option value="bancaria">Cuenta Bancaria</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta_credito">Tarjeta de Crédito</option>
+            </select>
           </div>
 
           <div class="form-group">
+            <label class="form-label">Nombre de la Cuenta *</label>
+            <input type="text" class="form-input" id="accountName" placeholder="Ej. Cuenta Principal, Caja Chica, BBVA Oro" required>
+          </div>
+
+          <div class="form-group" id="bankGroup">
             <label class="form-label">Banco</label>
             <input type="text" class="form-input" id="accountBank" placeholder="Ej. BBVA, Banorte, Santander">
           </div>
 
-          <div class="form-row">
+          <div class="form-row" id="accountNumbersGroup">
             <div class="form-group">
               <label class="form-label">Número de Cuenta</label>
               <input type="text" class="form-input" id="accountNumber" placeholder="****1234">
@@ -360,23 +355,31 @@
             </div>
           </div>
 
+          <!-- Campos exclusivos para Tarjeta de Crédito -->
+          <div id="creditCardFields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Límite de Crédito *</label>
+              <input type="number" class="form-input" id="accountLimit" placeholder="50000.00" step="0.01">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Día de Corte</label>
+                <input type="number" class="form-input" id="accountCutoffDay" placeholder="15" min="1" max="31">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Día de Pago</label>
+                <input type="number" class="form-input" id="accountPaymentDay" placeholder="5" min="1" max="31">
+              </div>
+            </div>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Moneda</label>
-              <!--
-                Input Moneda + Acción rápida "Crear moneda"
-                Relacionado con:
-                - truno-front/catalogos/index.html (modal de Moneda)
-                - truno-front/catalogos/catalogos.js (POST /api/monedas)
-                - truno-front/bancos/bancos.js (carga y creación rápida de monedas)
-              -->
               <div class="form-input-action">
                 <select class="form-input" id="accountCurrency" required>
-                  <!-- Se llena dinámicamente desde /api/monedas -->
                   <option value="">Cargando monedas...</option>
                 </select>
-
-                <!-- Botón de crear moneda rápidamente sin salir del flujo de "Nueva Cuenta" -->
                 <button type="button" class="btn btn-secondary btn-icon-square" id="addCurrencyQuickBtn" title="Crear moneda">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"/>
@@ -385,10 +388,10 @@
                 </button>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Saldo Inicial</label>
+            <div class="form-group" id="balanceGroup">
+              <label class="form-label" id="balanceLabel">Saldo Inicial</label>
               <input type="number" class="form-input" id="accountBalance" placeholder="0.00" step="0.01">
-              <span class="form-hint">Solo para cuentas nuevas</span>
+              <span class="form-hint" id="balanceHint">Solo para cuentas nuevas</span>
             </div>
           </div>
 
@@ -421,10 +424,6 @@
       </div>
       <form id="quickMonedaForm">
         <div class="modal-body">
-          <!--
-            Formulario basado en el modal de Monedas en Catálogos
-            Relacionado con: truno-front/catalogos/index.html (#monedaModal)
-          -->
           <div class="form-row">
             <div class="form-group">
               <label class="form-label required">Código</label>
@@ -538,11 +537,8 @@
     </div>
   </div>
 
-  <!-- Configuración centralizada - debe cargarse primero -->
   <script src="../config.js"></script>
-  <!-- Módulo compartido de menú y perfil -->
   <script src="../menu.js"></script>
-  <!-- Módulo de bancos -->
   <script src="bancos.js"></script>
 </body>
 </html>
